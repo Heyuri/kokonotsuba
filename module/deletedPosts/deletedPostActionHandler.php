@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\Modules\deletedPosts;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\request\request;
@@ -127,12 +129,21 @@ class deletedPostActionHandler {
 			throw new BoardException("Invalid action");
 		}
 
+		// the record is looked up first: purging closes it
+		$deletedPostId = $this->deletedPostsService->getDeletedPostIdByFileId($fileId);
+
 		$this->deletedPostsService->purgeAttachmentByFileId($fileId);
+
+		if ($deletedPostId !== null) {
+			$this->rebuildBoardByDeletedPostId($deletedPostId);
+		}
 
 		return ['action' => 'purgeFile', 'message' => 'File purged'];
 	}
 
 	private function rebuildBoardsByDeletedPostIds(array $deletedPostIds): void {
+		threadFragments::forgetThreadPairs($this->deletedPostsService->getThreadPairsByDeletedPostIds($deletedPostIds));
+
 		$boardUids = $this->deletedPostsService->getBoardUidsByDeletedPostIds($deletedPostIds);
 
 		rebuildBoardsByArray(getBoardsByUIDs($boardUids));
@@ -163,6 +174,8 @@ class deletedPostActionHandler {
 		// then mark it as 'restored' by the mod since theres no more action to do on it
 		else if ($action === 'purgeAttachment' && $roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {
 			$this->deletedPostsService->purgeAttachmentOnly($deletedPostId);
+			// the post stays visible without its file, so its pages change
+			$this->rebuildBoardByDeletedPostId($deletedPostId);
 
 			return ['action' => 'purgeAttachment', 'message' => 'Attachment purged'];
 		}
@@ -190,6 +203,8 @@ class deletedPostActionHandler {
 	}
 
 	private function rebuildBoardByDeletedPostId(int $deletedPostId): void {
+		threadFragments::forgetThreadPairs($this->deletedPostsService->getThreadPairsByDeletedPostIds([$deletedPostId]));
+
 		// get the board uid by deleted post id
 		$boardUid = $this->deletedPostsService->getBoardUidByDeletedPostId($deletedPostId);
 

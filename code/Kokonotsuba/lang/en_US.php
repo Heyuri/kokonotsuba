@@ -410,6 +410,8 @@ $language['mass_moderate_no_threads'] = 'That action needs threads to be selecte
 // {action} and {count} are filled in by massModerate.js, so they are not sprintf placeholders:
 // _T() runs the string through sprintf, which would demand the arguments here.
 $language['mass_moderate_confirm'] = 'Apply "{action}" to {count} selected posts?';
+$language['mass_moderate_confirm_purge'] = 'Apply "{action}" to {count} selected posts? They are purged straight away and cannot be restored.';
+$language['delete_purge_no_permission'] = 'You do not have permission to purge posts.';
 $language['mass_moderate_done'] = '{action}: {count} done';
 $language['mass_moderate_failed'] = 'Mass action failed.';
 
@@ -541,6 +543,11 @@ $language['post_api_thread_list_field_subject']    = 'Subject of the opening pos
 $language['post_api_thread_list_field_last_bump_time'] = 'Timestamp of the last bump';
 $language['post_api_thread_list_field_created_time'] = 'Timestamp of when the thread was created';
 $language['post_api_thread_list_field_post_count'] = 'Total number of posts in the thread';
+$language['post_api_get_quote_source']        = 'Find the source of a text quote';
+$language['post_api_returns_json_quote_source'] = 'Returns the nearest earlier post of the thread that a ">text", ">file.jpg" or ">No.123" quote refers to, in the same shape as a single post. Responds 404 when nothing matches.';
+$language['post_api_before_uid_desc']         = 'The post_uid of the quoting post. Only posts before it are searched';
+$language['post_api_quote_text_desc']         = 'The quoted text without its leading ">", at most %d characters. A number is looked up as a post number, and a name with an extension also matches attachment file names';
+$language['post_api_quote_quoted_desc']       = 'Set to 1 for a ">>text" quote of a quote, which only matches posts that quote something themselves';
 
 // banner module
 $language['banner_no_file'] = 'No file uploaded.';
@@ -747,6 +754,7 @@ $language['config_desc_OVERBOARD_TITLE'] = 'Title of the overboard.';
 $language['config_desc_OVERBOARD_SUBTITLE'] = 'Subtitle of the overboard.';
 $language['config_desc_OVERBOARD_SUB_HEADER_HTML'] = 'HTML shown above the overboard filter box.';
 $language['config_desc_OVERBOARD_THREADS_PER_PAGE'] = 'How many threads per overboard page.';
+$language['config_desc_THREAD_FRAGMENT_CACHE'] = 'Store each thread\'s rendered markup for anonymous readers of the index, overboard and thread pages until the thread changes. Staff always see a live render.';
 $language['config_desc_ADMINBAR_OVERBOARD_BUTTON'] = 'Show an [Overboard] link on the admin bar.';
 $language['config_desc_CONTACT_URL'] = 'Link shown as [Contact] on the admin bar (empty = hidden).';
 
@@ -799,6 +807,7 @@ $language['config_desc_modules.ads.ADS_INLINE_EVERY_N_THREADS'] = 'Insert an inl
 $language['config_desc_modules.ads.ADS_INLINE_COUNT'] = 'Number of ads shown side-by-side in each inline row (1-5).';
 $language['config_desc_modules.ads.ADS_POST_AD_EVERY_N_POSTS'] = 'Insert a post-style ad after every N reply posts within a thread.';
 $language['config_desc_modules.ads.ADS_SLOT_DIMENSIONS'] = 'One entry per ad slot: slot name => WIDTHxHEIGHT (e.g. 728x90).';
+$language['config_desc_modules.debugBar.PROFILER_STAFF_ONLY'] = 'Offer the profile download to logged-in staff only. The timings themselves are shown to every reader of a live page.';
 
 // module/animatedGif/config.php
 $language['config_desc_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'] = 'Largest animated GIF, WebP or PNG that may be played in place of its thumbnail.';
@@ -1027,6 +1036,7 @@ $language['config_label_ModuleList.privateMessage'] = 'Private messages';
 $language['config_label_ModuleList.imageMeta'] = 'Image metadata';
 $language['config_label_ModuleList.onlineCounter'] = 'Online counter';
 $language['config_label_ModuleList.ads'] = 'Ads';
+$language['config_label_ModuleList.debugBar'] = 'Debug bar (page timings and profiler)';
 $language['config_label_ModuleList.banner'] = 'Banners';
 $language['config_label_ModuleList.addInfo'] = 'Additional info';
 $language['config_label_ModuleList.imageServer'] = 'Image server';
@@ -1043,6 +1053,7 @@ $language['config_label_OVERBOARD_TITLE'] = 'Overboard title';
 $language['config_label_OVERBOARD_SUBTITLE'] = 'Overboard subtitle';
 $language['config_label_OVERBOARD_SUB_HEADER_HTML'] = 'Overboard sub-header HTML';
 $language['config_label_OVERBOARD_THREADS_PER_PAGE'] = 'Overboard threads per page';
+$language['config_label_THREAD_FRAGMENT_CACHE'] = 'Cache rendered threads';
 $language['config_label_ADMINBAR_OVERBOARD_BUTTON'] = 'Overboard admin-bar button';
 $language['config_label_CONTACT_URL'] = 'Contact URL';
 
@@ -1090,6 +1101,7 @@ $language['config_label_modules.adminDel.JANIMUTE_LENGTH'] = 'Janitor mute lengt
 $language['config_label_modules.adminDel.JANIMUTE_REASON'] = 'Janitor mute reason';
 $language['config_label_modules.adminDel.PostMenu.delete'] = 'Post menu: Delete';
 $language['config_label_modules.adminDel.PostMenu.mute'] = 'Post menu: Delete & mute';
+$language['config_label_modules.adminDel.PostMenu.deletePurge'] = 'Post menu: Delete & purge';
 $language['config_label_modules.adminDel.AttachmentMenu.deleteFile'] = 'File menu: Delete file';
 
 // module/ads/config.php
@@ -1098,6 +1110,7 @@ $language['config_label_modules.ads.ADS_INLINE_EVERY_N_THREADS'] = 'Inline ad ev
 $language['config_label_modules.ads.ADS_INLINE_COUNT'] = 'Inline ads per row';
 $language['config_label_modules.ads.ADS_POST_AD_EVERY_N_POSTS'] = 'Post ad every N posts';
 $language['config_label_modules.ads.ADS_SLOT_DIMENSIONS'] = 'Ad slot dimensions';
+$language['config_label_modules.debugBar.PROFILER_STAFF_ONLY'] = 'Profiler for staff only';
 
 // module/animatedGif/config.php
 $language['config_label_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'] = 'Max animated image size (KB)';
@@ -1282,6 +1295,17 @@ $language['config_label_modules.wordFilter.FILTERS'] = 'Word filters';
 // module/report
 $language['report_widget_label'] = 'Report';
 $language['report_widget_title'] = 'Report post';
+
+// Debug bar
+$language['debugbar_total_time'] = 'Total';
+$language['debugbar_cpu'] = 'CPU';
+$language['debugbar_cpu_hint'] = 'CPU time of the whole server process during this request. Above 100%% means other threads of the same process were busy too, as under a threaded web server.';
+$language['debugbar_queries'] = 'Queries';
+$language['debugbar_memory'] = 'Peak memory';
+$language['debugbar_profile'] = 'Download profile';
+$language['debugbar_profile_hint'] = 'Reload this page under the Excimer sampler and download the result as speedscope JSON';
+$language['debugbar_profile_unavailable'] = 'Profiler unavailable';
+$language['debugbar_profile_unavailable_hint'] = 'The excimer PHP extension (1.1 or newer) is not loaded';
 $language['report_widget_view_reports'] = 'View reports';
 $language['report_adminbar_link'] = 'Reports';
 $language['report_form_title'] = 'Report a post';

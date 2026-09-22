@@ -8,6 +8,7 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\ban\banCheckpoint;
+use Kokonotsuba\cache\thread_fragment\threadFragments;
 use Kokonotsuba\module_classes\traits\BanCheckpointTrait;
 use Kokonotsuba\module_classes\traits\listeners\MassModerateListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
@@ -18,6 +19,8 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\generateModerateForm;
+use function Kokonotsuba\libraries\getBoardsByUIDs;
+use function Kokonotsuba\libraries\rebuildBoardsByArray;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\validatePostInput;
@@ -89,6 +92,18 @@ class moduleAdmin extends abstractModuleAdmin {
 			$noScript,
 			true,
 		);
+
+		// render delete and purge button, for staff who may purge
+		if ($this->moduleContext->postPolicy->canStaffPurge()) {
+			$modFunc .= generateModerateForm(
+				$this->generateDeletionUrl('delpurge', $postUid),
+				'DP',
+				'Delete and purge (cannot be undone)',
+				'adminDeletePurgeFunction',
+				$noScript,
+				true
+			);
+		}
 	}
 	
 	private function onMassModerateTools(array &$tools): void {
@@ -108,6 +123,16 @@ class moduleAdmin extends abstractModuleAdmin {
 			'confirm' => _T('mass_moderate_confirm'),
 			'priority' => 90,
 		]);
+
+		// skips the deleted posts queue, so only for staff who may purge
+		if ($this->moduleContext->postPolicy->canStaffPurge()) {
+			$tools[] = $this->buildMassTool('delpurge', 'Delete & purge', [
+				'group' => 'Deletion',
+				'effect' => 'purge',
+				'confirm' => _T('mass_moderate_confirm_purge'),
+				'priority' => 85,
+			]);
+		}
 
 		// takes the files off the selection and leaves the posts themselves standing
 		$tools[] = $this->buildMassTool('delfiles', 'Delete files', [
@@ -215,9 +240,19 @@ class moduleAdmin extends abstractModuleAdmin {
 			['post_uid' => $postUid, 'action' => 'delmute']
 		);
 
+		if ($this->moduleContext->postPolicy->canStaffPurge()) {
+			$deletionWidgets[] = $this->buildPurgeWidgetEntry($baseUrl, $postUid);
+		}
+
 		// add the widget to the array
 		$widgetArray = array_merge($deletionWidgets, $widgetArray);
 	}
+
+	/** The post menu's "Delete & Purge" entry, shaped like the two before it. */
+	private function buildPurgeWidgetEntry(string $baseUrl, int|string $postUid): array {
+		return $this->buildWidgetEntry($baseUrl, 'deletePurge', 'Delete & Purge', '', ['post_uid' => $postUid, 'action' => 'delpurge']);
+	}
+
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		// can view deleted posts
 		$canViewDeleted = $this->moduleContext->postRenderingPolicy->viewDeleted();
@@ -250,6 +285,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$moduleHeader .= '<template id="del-restore-tmpl">' . $this->widgetEntriesToHtml(widgetMenuPolicy::MENU_POST, [
 				$this->buildWidgetEntry($baseUrl, 'delete', 'Delete',       '', ['post_uid' => '__POSTUID__', 'action' => 'del']),
 				$this->buildWidgetEntry($baseUrl, 'mute',   'Delete & Mute', '', ['post_uid' => '__POSTUID__', 'action' => 'delmute']),
+				...($this->moduleContext->postPolicy->canStaffPurge() ? [$this->buildPurgeWidgetEntry($baseUrl, '__POSTUID__')] : []),
 			]) . '</template>';
 
 			// the same for a single file, which can be deleted again once it is restored.
@@ -297,6 +333,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		match ($action) {
 			'del', 'delete' => $this->handlePostDeletion($postUids, false),
 			'delmute', 'mute' => $this->handlePostDeletion($postUids, true),
+			'delpurge' => $this->handlePostPurge($postUids),
 			'delfiles' => $this->handleSelectionFileDeletion($postUids),
 			default => throw new BoardException('ERROR: Invalid action.'),
 		};
@@ -365,6 +402,86 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// Fallback for non-JS users: redirect
 		redirect($this->moduleContext->request->getReferer());
+	}
+
+	/**
+	 * Delete every selected post and purge it straight away, files included. Nothing is left in
+	 * the deleted posts queue, so this cannot be undone.
+	 *
+	 * The purge runs once the deletion has committed: if it fails the posts are still deleted, and
+	 * can be purged or restored from the queue by hand.
+	 */
+	private function handlePostPurge(array $postUids): void {
+		if (!$this->moduleContext->postPolicy->canStaffPurge()) {
+			throw new BoardException(_T('delete_purge_no_permission'), 403);
+		}
+
+		$posts = $this->fetchRequestedPosts($postUids);
+
+		// already deleted posts have the queue's own purge
+		$targets = array_values(array_filter($posts, fn(Post $post) => $this->canRenderButton($post)));
+
+		if (!$targets) {
+			throw new BoardException('Post already deleted!');
+		}
+
+		$targetUids = array_map(fn(Post $post) => $post->getUid(), $targets);
+
+		$this->moduleContext->postService->removePosts($targetUids, $this->moduleContext->currentUserId);
+
+		$deletedPostIds = $this->moduleContext->deletedPostsService->getDeletedPostIdsByPostUids($targetUids);
+
+		// logged below as one line per board rather than one per post
+		$this->moduleContext->deletedPostsService->purgePosts(array_values($deletedPostIds), false);
+
+		$this->logPurges($targets);
+
+		if ($this->moduleContext->request->isAjax()) {
+			sendAjaxAndDetach([
+				'success' => true,
+				'purged' => true,
+				'is_op' => $targets[0]->isOp(),
+				'results' => [],
+			]);
+
+			$this->rebuildAfterPurge($targets);
+			exit;
+		}
+
+		$this->rebuildAfterPurge($targets);
+
+		// a purged thread's own page is gone, so do not send the reader back to it
+		$purgedThread = (bool) array_filter($targets, fn(Post $post) => $post->isOp());
+
+		redirect($purgedThread ? $this->moduleContext->board->getBoardURL() : $this->moduleContext->request->getReferer());
+	}
+
+	/**
+	 * One log line per board the selection touched, as logDeletions() writes them.
+	 */
+	private function logPurges(array $posts): void {
+		$numbersByBoard = [];
+		foreach ($posts as $post) {
+			$numbersByBoard[$post->getBoardUID()][] = 'No.' . $post->getNumber();
+		}
+
+		foreach ($numbersByBoard as $boardUid => $numbers) {
+			$this->logAction('Deleted and purged post ' . implode(', ', $numbers), (int)$boardUid, actionType::POST_PURGE);
+		}
+	}
+
+	/**
+	 * The posts are gone from the table, so the boards come from the objects read beforehand.
+	 */
+	private function rebuildAfterPurge(array $posts): void {
+		if (count($posts) === 1) {
+			$this->rebuildBoardForPost(searchBoardArrayForBoard($posts[0]->getBoardUID()), $posts[0]);
+			return;
+		}
+
+		threadFragments::forgetPosts($posts);
+
+		rebuildBoardsByArray(getBoardsByUIDs(array_unique(array_map(fn(Post $post) => $post->getBoardUID(), $posts))));
 	}
 
 	/**

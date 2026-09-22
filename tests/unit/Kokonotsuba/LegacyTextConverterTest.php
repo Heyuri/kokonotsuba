@@ -62,7 +62,7 @@ final class LegacyTextConverterTest extends TestCase {
 		$this->assertSame('>>1 hello', legacyTextConverter::comment($stored));
 	}
 
-	public function testGreentextSpansCollapseToTheirText(): void {
+	public function testquoteSpansCollapseToTheirText(): void {
 		$stored = '<span class="unkfunc">&gt;implying</span>';
 
 		$this->assertSame('>implying', legacyTextConverter::comment($stored));
@@ -114,19 +114,35 @@ final class LegacyTextConverterTest extends TestCase {
 	public function testACommentRollKeepsItsNotationAndValues(): void {
 		$stored = '<span class="rollContainer">dice2d6=<span class="roll" title="This is a dice roll">4, 5 (9)</span></span>';
 
-		$this->assertSame("\n[[koko:dice:2d6:4,5]]", legacyTextConverter::comment($stored));
+		$this->assertSame("[[koko:dice:2d6:4,5]]", legacyTextConverter::comment($stored));
 	}
 
 	public function testACommentRollKeepsItsModifier(): void {
 		$stored = '<span class="rollContainer">dice2d6+1=<span class="roll">4, 5 (10)</span></span>';
 
-		$this->assertSame("\n[[koko:dice:2d6+1:4,5]]", legacyTextConverter::comment($stored));
+		$this->assertSame("[[koko:dice:2d6+1:4,5]]", legacyTextConverter::comment($stored));
 	}
 
 	public function testASingleDieRollWithNoModifierHasNoTotalToParse(): void {
 		$stored = '<span class="rollContainer">dice1d6=<span class="roll">4</span></span>';
 
-		$this->assertSame("\n[[koko:dice:1d6:4]]", legacyTextConverter::comment($stored));
+		$this->assertSame("[[koko:dice:1d6:4]]", legacyTextConverter::comment($stored));
+	}
+
+	/** A roll sat at the start of its line; the break before it becomes the marker's newline, not a second one. */
+	public function testARollKeepsTheLineItWasOn(): void {
+		$stored = 'text<br><span class="rollContainer">dice1d6=<span class="roll">4</span></span>';
+
+		$this->assertSame("text\n[[koko:dice:1d6:4]]", legacyTextConverter::comment($stored));
+	}
+
+	/** A fortune always goes on its own line, whether or not the old row broke before it. */
+	public function testAFortuneTakesOneLineBreakHoweverItWasStored(): void {
+		$fortunes = ['Great luck'];
+		$expected = "text\n[[koko:fortune:0]]";
+
+		$this->assertSame($expected, legacyTextConverter::comment('text<p class="fortune" style="color: #abc;">Your fortune: Great luck</p>', $fortunes));
+		$this->assertSame($expected, legacyTextConverter::comment('text<br><p class="fortune" style="color: #abc;">Your fortune: Great luck</p>', $fortunes));
 	}
 
 	/** The whole point of the marker: the numbers a poster rolled never change. */
@@ -150,7 +166,7 @@ final class LegacyTextConverterTest extends TestCase {
 	public function testAForgedMarkerIsStrippedBeforeRealOnesAreAdded(): void {
 		$stored = '[[koko:dice:1d1:1]]<span class="rollContainer">dice1d6=<span class="roll">4</span></span>';
 
-		$this->assertSame("\n[[koko:dice:1d6:4]]", legacyTextConverter::comment($stored));
+		$this->assertSame("[[koko:dice:1d6:4]]", legacyTextConverter::comment($stored));
 	}
 
 	// ─── Fortunes ─────────────────────────────────────────────────

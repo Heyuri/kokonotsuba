@@ -183,9 +183,9 @@ class ConfigServiceTest extends TestCase {
 
 	/** The input's min attribute is a client-side hint; a hand-crafted POST must still be clamped. */
 	public function testNegativeIntegersAreClampedToTheFieldsMinimum(): void {
-		$this->service->saveOverrides(self::BOARD, $this->submission(['PAGE_DEF' => '-5']));
+		$this->service->saveOverrides(self::BOARD, $this->submission(['MAX_KB' => '-5']));
 
-		$this->assertSame(0, $this->service->getEffectiveConfig(self::BOARD)['PAGE_DEF']);
+		$this->assertSame(0, $this->service->getEffectiveConfig(self::BOARD)['MAX_KB']);
 	}
 
 	public function testAFieldThatOptedOutOfTheZeroMinimumKeepsItsNegativeValue(): void {
@@ -329,9 +329,9 @@ class ConfigServiceTest extends TestCase {
 	}
 
 	public function testSetOverrideClampsIntegersToTheMinimum(): void {
-		$this->service->setOverride(self::BOARD, 'PAGE_DEF', '-5');
+		$this->service->setOverride(self::BOARD, 'MAX_KB', '-5');
 
-		$this->assertSame(0, $this->service->getEffectiveConfig(self::BOARD)['PAGE_DEF']);
+		$this->assertSame(0, $this->service->getEffectiveConfig(self::BOARD)['MAX_KB']);
 	}
 
 	public function testSetOverrideRejectsAnUnknownSetting(): void {

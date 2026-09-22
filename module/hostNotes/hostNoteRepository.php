@@ -130,6 +130,39 @@ class hostNoteRepository extends baseRepository {
 		);
 	}
 
+	/**
+	 * The notes for the given addresses and every wildcard note, in one read: a page of posts
+	 * needs both, and the service splits them on is_wildcard.
+	 *
+	 * @param string[] $ipPatterns
+	 * @return array[] Note rows, oldest first.
+	 */
+	public function getNotesForPatternsWithWildcards(array $ipPatterns): array {
+		$anonymizer = ipAnonymizer::fromSettings();
+		$forms = [];
+		foreach ($ipPatterns as $pattern) {
+			foreach ($anonymizer->storedForms((string) $pattern) as $form) {
+				$forms[$form] = $form;
+			}
+		}
+
+		$placeholders = [];
+		$params = [];
+		foreach (array_values($forms) as $index => $form) {
+			$placeholders[] = ":form_{$index}";
+			$params[":form_{$index}"] = $form;
+		}
+
+		$exact = $placeholders === [] ? '' : ' OR n.ip_pattern IN (' . implode(', ', $placeholders) . ')';
+
+		return $this->queryAll(
+			$this->selectClause()
+				. ' WHERE (n.is_wildcard = 1 AND n.ip_pattern IS NOT NULL)' . $exact
+				. ' ORDER BY n.note_submitted ASC, n.id ASC',
+			$params
+		);
+	}
+
 	public function getNotesForPattern(string $ipPattern): array {
 		$forms = ipAnonymizer::fromSettings()->storedForms($ipPattern);
 		$placeholders = [];

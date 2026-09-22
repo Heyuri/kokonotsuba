@@ -3,6 +3,8 @@
 
 namespace Kokonotsuba\Modules\janitor;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\ban\banImagePicker;
 use Kokonotsuba\error\BoardException;
@@ -185,6 +187,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->actionLoggerService->logAction('Warned ' . $ip . ' for post No. ' . $postNumber, $board->getBoardUID(), actionType::BAN_ISSUE);
 
+		threadFragments::forgetPosts([$post]);
 		$board->rebuildBoard();
 		redirect($board->getBoardURL());
 	}

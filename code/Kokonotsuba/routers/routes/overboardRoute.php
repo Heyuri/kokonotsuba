@@ -6,6 +6,7 @@ namespace Kokonotsuba\routers\routes;
 
 use Kokonotsuba\board\boardRepository;
 use Kokonotsuba\board\board;
+use Kokonotsuba\board\overboardBoardFilter;
 use Kokonotsuba\cookie\cookieService;
 use Kokonotsuba\overboard;
 use Kokonotsuba\request\request;
@@ -27,17 +28,7 @@ class overboardRoute {
 	public function drawOverboard(): void {
 		$this->handleOverboardFilterForm();
 
-		$blacklistCookie = $this->cookieService->get('overboard_black_list', '');
-		$blacklistBoards = ($blacklistCookie !== '') 
-			? json_decode($blacklistCookie, true) 
-			: [];
-
-		if (!is_array($blacklistBoards)) {
-			$blacklistBoards = [];
-		}
-
-		$allBoards = $this->boardRepository->getAllListedBoardUIDs();
-		$allowedBoards = array_values(array_diff($allBoards, $blacklistBoards));
+		$allowedBoards = $this->readFilter()->allowedBoards();
 
 		$filters = [
 			'board' => $allowedBoards,
@@ -71,6 +62,14 @@ class overboardRoute {
 	}
 
 
+	/** The reader's board selection, from the cookie and the boards currently listed. */
+	private function readFilter(): overboardBoardFilter {
+		return overboardBoardFilter::fromCookie(
+			(string)$this->cookieService->get(overboardBoardFilter::COOKIE_NAME, ''),
+			$this->boardRepository->getAllListedBoardUIDs()
+		);
+	}
+
 	private function handleOverboardFilterForm(): void {
 		if (!$this->request->isPost()) {
 			return;
@@ -80,22 +79,25 @@ class overboardRoute {
 
 		if ($action === 'filter') {
 			$selectedBoards = $this->request->getParameter('board', 'POST', '');
-			$selectedBoards = is_array($selectedBoards)
-				? array_map('intval', $selectedBoards)
-				: [intval($selectedBoards)];
+			$selectedBoards = is_array($selectedBoards) ? $selectedBoards : [$selectedBoards];
 
-			$allBoards = $this->boardRepository->getAllListedBoardUIDs();
+			$filter = overboardBoardFilter::fromSelection(
+				$selectedBoards,
+				$this->boardRepository->getAllListedBoardUIDs()
+			);
 
-			// Blacklist = all - selected
-			$blacklist = array_values(array_diff($allBoards, $selectedBoards));
-
-			$this->cookieService->set('overboard_black_list', json_encode($blacklist), time() + (86400 * 30), '/');
+			$this->cookieService->set(
+				overboardBoardFilter::COOKIE_NAME,
+				$filter->toCookieValue(),
+				time() + overboardBoardFilter::COOKIE_LIFETIME,
+				'/'
+			);
 
 			redirect($this->config['LIVE_INDEX_FILE'] . '?mode=overboard');
 			exit;
 
 		} elseif ($action === 'filterclear') {
-			$this->cookieService->delete('overboard_black_list', '/');
+			$this->cookieService->delete(overboardBoardFilter::COOKIE_NAME, '/');
 
 			redirect($this->config['LIVE_INDEX_FILE'] . '?mode=overboard');
 			exit;

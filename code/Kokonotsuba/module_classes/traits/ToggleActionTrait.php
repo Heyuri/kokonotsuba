@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\module_classes\traits;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\traits\listeners\MassModerateListenerTrait;
@@ -55,8 +57,8 @@ trait ToggleActionTrait {
 			$this->moduleContext->moduleEngine->addRoleProtectedListener(
 				$this->getRequiredRole(),
 				'ThreadAdminControls',
-				function(string &$modControlSection, Post &$post) {
-					$this->renderToggleButton($modControlSection, $post, true);
+				function(string &$modControlSection, Post &$post, ?Thread $thread = null) {
+					$this->renderToggleButton($modControlSection, $post, true, $thread);
 				}
 			);
 		}
@@ -142,6 +144,7 @@ trait ToggleActionTrait {
 		});
 
 		$boards = getBoardsByUIDs(array_unique(array_map(fn(Post $post) => $post->getBoardUID(), $openingPosts)));
+		threadFragments::forgetPosts($openingPosts);
 
 		if ($this->moduleContext->request->isAjax()) {
 			$results = [];
@@ -219,7 +222,7 @@ trait ToggleActionTrait {
 		}
 	}
 
-	protected function renderToggleButton(string &$modfunc, Post $post, bool $noScript): void {
+	protected function renderToggleButton(string &$modfunc, Post $post, bool $noScript, ?Thread $thread = null): void {
 		$isActive = $post->getFlags()->value($this->getToggleFlagKey());
 		$url = $this->generateToggleActionUrl($post);
 

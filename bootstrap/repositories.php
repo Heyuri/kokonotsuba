@@ -41,6 +41,8 @@ use Kokonotsuba\post\postService;
 use Kokonotsuba\post\deletion\postDeletionService;
 use Kokonotsuba\quote_link\quoteLinkRepository;
 use Kokonotsuba\quote_link\quoteLinkService;
+use Kokonotsuba\quote_link\textQuoteRepository;
+use Kokonotsuba\quote_link\textQuoteResolver;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
 
@@ -89,23 +91,21 @@ $banService->issueVisitorToken();
 $fileRepository = new fileRepository($databaseConnection, $tableNames['FILE_TABLE'], $tableNames['POST_TABLE'], $tableNames['DELETED_POSTS_TABLE']);
 $fileService = new fileService($fileRepository);
 $threadRepository = new threadRepository($databaseConnection, $tableNames['POST_TABLE'], $tableNames['THREAD_TABLE'], $tableNames['THREAD_THEMES_TABLE'], $tableNames['DELETED_POSTS_TABLE'], $tableNames['FILE_TABLE'], $tableNames['ACCOUNT_TABLE'], $tableNames['SOUDANE_TABLE'], $tableNames['NOTE_TABLE'], $tableNames['COUNTRY_FLAG_TABLE'], $tableNames['DISPLAY_IP_TABLE'], $tableNames['REPORT_TABLE']);
-$postRepository = new postRepository($databaseConnection, $tableNames['POST_TABLE'], $tableNames['THREAD_TABLE'], $tableNames['DELETED_POSTS_TABLE'], $tableNames['FILE_TABLE'], $tableNames['SOUDANE_TABLE'], $tableNames['NOTE_TABLE'], $tableNames['ACCOUNT_TABLE'], $tableNames['COUNTRY_FLAG_TABLE'], $tableNames['DISPLAY_IP_TABLE'], $tableNames['REPORT_TABLE']);
-$deletedPostsRepository = new deletedPostsRepository($databaseConnection, $tableNames['DELETED_POSTS_TABLE'], $tableNames['POST_TABLE'], $tableNames['ACCOUNT_TABLE'], $tableNames['FILE_TABLE'], $tableNames['THREAD_TABLE'], $tableNames['SOUDANE_TABLE'], $tableNames['NOTE_TABLE']);
+$postRepository = new postRepository($databaseConnection, $tableNames['POST_TABLE'], $tableNames['THREAD_TABLE'], $tableNames['DELETED_POSTS_TABLE'], $tableNames['FILE_TABLE'], $tableNames['SOUDANE_TABLE'], $tableNames['NOTE_TABLE'], $tableNames['ACCOUNT_TABLE'], $tableNames['COUNTRY_FLAG_TABLE'], $tableNames['DISPLAY_IP_TABLE'], $tableNames['REPORT_TABLE'], $tableNames['BOARD_TABLE']);
+$deletedPostsRepository = new deletedPostsRepository($databaseConnection, $tableNames['DELETED_POSTS_TABLE'], $tableNames['POST_TABLE'], $tableNames['ACCOUNT_TABLE'], $tableNames['FILE_TABLE'], $tableNames['THREAD_TABLE'], $tableNames['SOUDANE_TABLE'], $tableNames['NOTE_TABLE'], $tableNames['BOARD_TABLE']);
 $deletedPostsService = new deletedPostsService($transactionManager, $deletedPostsRepository, $fileService, $actionLoggerService, $postRepository, $threadRepository);
 $postDeletionService = new postDeletionService($postRepository, $transactionManager, $threadRepository, $deletedPostsService, $request);
 $postService = new postService($postRepository, $transactionManager, $threadRepository, $deletedPostsService, $request, $postDeletionService);
 $threadService = new threadService($threadRepository, $postRepository, $postService, $transactionManager, $deletedPostsService, $fileService);
 $quoteLinkRepository = new quoteLinkRepository($databaseConnection, $tableNames['QUOTE_LINK_TABLE'], $tableNames['POST_TABLE'], $tableNames['THREAD_TABLE'], $tableNames['DELETED_POSTS_TABLE']);
 $quoteLinkService = new quoteLinkService($quoteLinkRepository, $postRepository);
+$textQuoteResolver = new textQuoteResolver(new textQuoteRepository($databaseConnection, $tableNames['POST_TABLE'], $tableNames['THREAD_TABLE'], $tableNames['DELETED_POSTS_TABLE'], $tableNames['FILE_TABLE']));
 $postSearchRepository = new postSearchRepository($databaseConnection, $tableNames['POST_TABLE'], $tableNames['THREAD_TABLE'], $tableNames['DELETED_POSTS_TABLE'], $tableNames['FILE_TABLE'], $tableNames['SOUDANE_TABLE'], $tableNames['NOTE_TABLE'], $tableNames['ACCOUNT_TABLE'], $tableNames['COUNTRY_FLAG_TABLE'], $tableNames['DISPLAY_IP_TABLE']);
 $postSearchService = new postSearchService($postSearchRepository);
 $postRedirectRepository = new postRedirectRepository($databaseConnection, $tableNames['THREAD_REDIRECT_TABLE'], $tableNames['THREAD_TABLE']);
 $postRedirectService = new postRedirectService($postRedirectRepository, $threadService);
 $capcodeRepository = new capcodeRepository($databaseConnection, $tableNames['CAPCODE_TABLE'], $tableNames['ACCOUNT_TABLE']);
 $capcodeService = new capcodeService($capcodeRepository, $transactionManager);
-
-// init user capcodes as well - disabled ones are left out so they render as a plain tripcode
-$userCapcodes = $capcodeService->listEnabledCapcodes();
 
 // ───────────────────────────────────────
 // Register in container
@@ -129,10 +129,10 @@ $container->set('postService', $postService);
 $container->set('threadService', $threadService);
 $container->set('quoteLinkRepository', $quoteLinkRepository);
 $container->set('quoteLinkService', $quoteLinkService);
+$container->set('textQuoteResolver', $textQuoteResolver);
 $container->set('postSearchRepository', $postSearchRepository);
 $container->set('postSearchService', $postSearchService);
 $container->set('postRedirectRepository', $postRedirectRepository);
 $container->set('postRedirectService', $postRedirectService);
 $container->set('capcodeRepository', $capcodeRepository);
 $container->set('capcodeService', $capcodeService);
-$container->set('userCapcodes', $userCapcodes);

@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\threadWatcher;
 
 use Kokonotsuba\board\board;
+use Kokonotsuba\board\overboardBoardFilter;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
@@ -68,7 +69,7 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// The watcher window is opened from a top-link in the admin bar.
 		$this->listenTopLinks('onRenderTopLinks');
-		$this->registerScript('threadWatcher.js?v=26');
+		$this->registerScript('threadWatcher.js?v=27');
 		$this->listenModuleHeader('onGenerateModuleHeader');
 		$this->listenOpeningPost('onRenderOpeningPost');
 	}
@@ -77,8 +78,9 @@ class moduleMain extends abstractModuleMain {
 	 * Batch counts endpoint:
 	 *   ?mode=module&load=threadWatcher&pageName=counts&thread_uids=uid1,uid2,...&you=board:no,board:no,...
 	 *
-	 * Returns, per thread: post_count, board_title, label (display text) and quote_count
-	 * (number of live posts that quote one of the caller's own posts).
+	 * Returns, per thread: post_count, board_title, label (display text), quote_count
+	 * (number of live posts that quote one of the caller's own posts), first_unread_no
+	 * (from `seen`) and first_unread_quote_no (from `qseen`, per-thread seen-quote counts).
 	 */
 	public function ModulePage(): void {
 		$pageName = $this->moduleContext->request->getParameter('pageName', 'GET', '');
@@ -94,6 +96,7 @@ class moduleMain extends abstractModuleMain {
 		$threadUids = $this->parseThreadUids($request->getParameter('thread_uids', 'GET', ''));
 		$ownPosts = $this->parseOwnPosts($request->getParameter('you', 'GET', ''));
 		$seenMap = $this->parseSeen($request->getParameter('seen', 'GET', ''));
+		$quoteSeenMap = $this->parseSeen($request->getParameter('qseen', 'GET', ''));
 		$wantNewThreads = $request->getParameter('newthreads', 'GET', '') !== '';
 
 		$tableNames = $this->moduleContext->getTableNames();
@@ -129,6 +132,17 @@ class moduleMain extends abstractModuleMain {
 
 			$firstUnread = !empty($seenScoped) ? $repo->batchGetFirstUnreadNo($seenScoped) : [];
 
+			// Same for the first unread quote-reply, from the client's seen-quote counts.
+			$quoteSeenScoped = [];
+			foreach ($quoteCounts as $uid => $count) {
+				if (isset($quoteSeenMap[$uid]) && $quoteSeenMap[$uid] < $count) {
+					$quoteSeenScoped[$uid] = $quoteSeenMap[$uid];
+				}
+			}
+			$firstUnreadQuote = !empty($quoteSeenScoped)
+				? $repo->batchGetFirstUnreadQuoteNo($quoteSeenScoped, $ownPosts)
+				: [];
+
 			$found = [];
 			foreach ($rows as $row) {
 				$threadUid = (string) $row['thread_uid'];
@@ -155,6 +169,8 @@ class moduleMain extends abstractModuleMain {
 					// Post number of the first unread reply (null when nothing is unread),
 					// so the client can link straight to it.
 					'first_unread_no' => $firstUnread[$threadUid] ?? null,
+					// Post number of the first unread reply quoting the caller (null when none).
+					'first_unread_quote_no' => $firstUnreadQuote[$threadUid] ?? null,
 				];
 			}
 
@@ -188,8 +204,10 @@ class moduleMain extends abstractModuleMain {
 		// Items to notify about are blacklist-filtered, but the marker advances past every
 		// board (blacklist included) so a re-enabled board doesn't replay its backlog.
 		$rows = $repo->getNewThreadsSince($since, $blacklist, 25);
+		// The marker never moves backwards: deleting the newest thread would otherwise lower
+		// it, and restoring that thread would then announce it as new a second time.
 		$latest = $repo->getLatestThreadTime();
-		if ($latest === '') {
+		if ($latest === '' || $latest < $since) {
 			$latest = $since;
 		}
 
@@ -279,21 +297,7 @@ class moduleMain extends abstractModuleMain {
 	/** Read the user's overboard board blacklist (cookie) as an array of board UIDs. */
 	private function getBoardBlacklist(): array {
 		$cookieService = $this->moduleContext->getContainer()->get('cookieService');
-		$raw = (string) $cookieService->get('overboard_black_list', '');
-		if ($raw === '') {
-			return [];
-		}
-		$decoded = json_decode($raw, true);
-		if (!is_array($decoded)) {
-			return [];
-		}
-		$out = [];
-		foreach ($decoded as $v) {
-			if (is_numeric($v)) {
-				$out[] = (int) $v;
-			}
-		}
-		return $out;
+		return overboardBoardFilter::parseCookie((string) $cookieService->get(overboardBoardFilter::COOKIE_NAME, ''));
 	}
 
 	/** Parse, sanitize and cap the comma-separated list of watched thread UIDs. */

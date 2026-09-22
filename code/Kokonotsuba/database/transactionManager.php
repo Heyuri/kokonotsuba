@@ -16,6 +16,7 @@
 
 namespace Kokonotsuba\database;
 
+use PDOException;
 use Throwable;
 
 class transactionManager {
@@ -75,6 +76,32 @@ class transactionManager {
 		} catch (Throwable $e) {
 			$this->rollback();
 			throw $e;
+		}
+	}
+
+	/**
+	 * run(), started again when the server picks this transaction as a deadlock victim.
+	 *
+	 * Only for callbacks that are safe to run twice: the victim is rolled back whole and the
+	 * callback runs again from the top, so anything it did outside the database is done again. Joined to an open transaction it is a plain run(),
+	 * because it is the outer one that was rolled back and only its owner can start it again.
+	 */
+	public function runRetryingDeadlocks(callable $callback, int $attempts = 3): mixed {
+		if ($this->databaseConnection->inTransaction()) {
+			return $callback();
+		}
+
+		for ($attempt = 1; ; $attempt++) {
+			try {
+				return $this->run($callback);
+			} catch (PDOException $e) {
+				// 1213: ER_LOCK_DEADLOCK
+				if ($attempt >= $attempts || (int)($e->errorInfo[1] ?? 0) !== 1213) {
+					throw $e;
+				}
+				// let the transaction that won finish
+				usleep(random_int(5000, 40000) * $attempt);
+			}
 		}
 	}
 }

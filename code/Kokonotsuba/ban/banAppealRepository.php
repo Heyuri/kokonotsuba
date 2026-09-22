@@ -111,8 +111,14 @@ class banAppealRepository extends baseRepository {
 		return (int) $this->queryValue("SELECT COUNT(*) FROM {$this->table} ap" . $where, $params);
 	}
 
+	/** Pending appeals on bans still in force; one on a lapsed ban has nothing left to ask for. */
 	public function countPending(): int {
-		return $this->countAppeals('pending');
+		return (int) $this->queryValue(
+			"SELECT COUNT(*) FROM {$this->table} ap
+			INNER JOIN {$this->banTable} b ON b.ban_id = ap.ban_id
+			WHERE ap.status = ? AND (b.expires_at IS NULL OR b.expires_at > ?)",
+			[banAppealStatus::PENDING->value, banRepository::now()]
+		);
 	}
 
 	/**

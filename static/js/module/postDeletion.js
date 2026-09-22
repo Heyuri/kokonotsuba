@@ -7,7 +7,7 @@
 	// Utility: hide admin delete controls as required
 	function hideDeleteControls(postEl, type) {
 		if (!postEl) return [];
-		const deleteSpans = postEl.querySelectorAll('.adminDeleteFunction, #adminDeleteFunction, .adminDeleteMuteFunction, #adminDeleteMuteFunction');
+		const deleteSpans = postEl.querySelectorAll('.adminDeleteFunction, #adminDeleteFunction, .adminDeleteMuteFunction, #adminDeleteMuteFunction, .adminDeletePurgeFunction');
 		const fileDeleteSpans = postEl.querySelectorAll('.adminDeleteFileFunction, #adminDeleteFileFunction');
 
 		const hidden = [];
@@ -92,7 +92,7 @@
 				if (data && data.deleted_post_id) {
 					postEl.dataset.deletedPostId = data.deleted_post_id;
 				}
-				removeWidgetActions(postEl, ['delete', 'mute']);
+				removeWidgetActions(postEl, ['delete', 'mute', 'deletePurge']);
 			}
 		}, extraParams);
 	}
@@ -148,6 +148,19 @@
 		}
 	});
 
+	// [DP]: delete and purge, confirmed first since nothing is kept to restore
+	document.addEventListener('click', function (e) {
+		var control = e.target.closest('.adminDeletePurgeFunction');
+		if (!control) return;
+
+		var button = control.querySelector('button[formaction]');
+		var postEl = control.closest('.post');
+		if (!button || !postEl) return;
+
+		e.preventDefault();
+		deleteAndPurgePost(postEl, button.formAction);
+	});
+
 	// ====== WIDGET INTEGRATION (delete/mute + dynamic "View deleted post") ======
 	function handleWidgetDeletion(action, ctx) {
 		const postEl = ctx && (ctx.post || (ctx.arrow && ctx.arrow.closest('.post')));
@@ -179,6 +192,10 @@
 			
 			window.postWidget.registerActionHandler('mute', function (ctx) {
 				handleWidgetDeletion('mute', ctx);
+			});
+
+			window.postWidget.registerActionHandler('deletePurge', function (ctx) {
+				deleteAndPurgePost(ctx && ctx.post, ctx && ctx.url, (ctx && ctx.params) || {});
 			});
 
 			// Removed: deleteAttachment (attachments never use widgets)

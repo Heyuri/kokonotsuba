@@ -5,6 +5,8 @@
 
 namespace Kokonotsuba\libraries;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\post\postService;
 
@@ -37,6 +39,9 @@ function rebuildBoardsByArray(array $boardsToRebuild, bool $logRebuild = false):
  * @return void
  */
 function rebuildBoardsFromPosts(array $postUids, postService $postService, bool $logRebuild = false): void {
+    // the posts changed, so their threads' cached markup is stale
+    threadFragments::forgetThreadPairs($postService->getThreadPairsFromPostUids($postUids));
+
     // get board UIDs from post UIDs
     $boardUids = $postService->getBoardUidsFromPostUids($postUids);
 	

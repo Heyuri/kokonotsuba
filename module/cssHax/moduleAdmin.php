@@ -1,6 +1,8 @@
 <?php
 namespace Kokonotsuba\Modules\cssHax;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\board\board;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\database\databaseConnection;
@@ -128,6 +130,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// extract the board
 		$board = searchBoardArrayForBoard($boardUid);
+
+		// the theme is drawn into the thread page and collected for the index head
+		threadFragments::forgetThread($threadUid, (int)$boardUid);
 
 		// rebuild the board
 		$board->rebuildBoard();

@@ -22,7 +22,7 @@ use function Puchiko\strings\sanitizeStr;
  * separately, so position is offset by 1 before dividing.
  */
 function getPageForPostPosition(int $postPosition, int $repliesPerPage): int {
-	return ($postPosition <= 0) ? 1 : (int)floor(($postPosition - 1) / $repliesPerPage) + 1;
+	return ($postPosition <= 0) ? 1 : intdiv($postPosition - 1, max(1, $repliesPerPage)) + 1;
 }
 
 /**

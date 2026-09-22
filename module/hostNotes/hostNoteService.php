@@ -125,10 +125,17 @@ class hostNoteService {
 			return;
 		}
 
+		// one read brings the exact notes and the wildcard ones the matching below needs
 		$byPattern = [];
-		foreach ($this->hostNoteRepository->getNotesForPatterns(array_keys($wanted)) as $note) {
-			$byPattern[(string) $note['ip_pattern']][] = $note;
+		$wildcards = [];
+		foreach ($this->hostNoteRepository->getNotesForPatternsWithWildcards(array_keys($wanted)) as $note) {
+			if (!empty($note['is_wildcard'])) {
+				$wildcards[] = $note;
+			} else {
+				$byPattern[(string) $note['ip_pattern']][] = $note;
+			}
 		}
+		$this->wildcardNotes ??= $wildcards;
 
 		$anonymizer = ipAnonymizer::fromSettings();
 		foreach (array_keys($wanted) as $ip) {

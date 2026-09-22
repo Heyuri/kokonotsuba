@@ -1,0 +1,30 @@
+.debugBar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25em 1.25em;
+	justify-content: center;
+	margin: 0.5em auto;
+	font-family: monospace;
+	font-size: 0.8em;
+	opacity: 0.85;
+}
+
+.debugBarLabel {
+	opacity: 0.7;
+}
+
+.debugBarLabel::after {
+	content: ":";
+}
+
+.debugBarProfile {
+	padding: 0 0.4em;
+	border: 1px solid currentColor;
+	border-radius: 3px;
+	text-decoration: none;
+}
+
+.debugBarUnavailable {
+	opacity: 0.6;
+	cursor: help;
+}

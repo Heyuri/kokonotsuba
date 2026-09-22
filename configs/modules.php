@@ -87,4 +87,5 @@ return [
 	'ModuleList.youtubeEmbed' => boolField('config_label_ModuleList.youtubeEmbed', true),
 	'ModuleList.segregator'   => boolField('config_label_ModuleList.segregator', false),
 	'ModuleList.linkCleaner' => boolField('config_label_ModuleList.linkCleaner', true),
+	'ModuleList.debugBar'     => boolField('config_label_ModuleList.debugBar', false),
 ];

@@ -78,7 +78,7 @@ class boardsRoute {
 
 			// throw exception if board's not found
 			if(!$board) {
-				throw new BoardException(_T('board_not_found'));
+				throw new BoardException(_T('board_not_found'), 404);
 			}
 
 			$boardUID = $board->getBoardUID() ?? '';

@@ -110,8 +110,15 @@ class ConfigSchemaTest extends TestCase {
 
 	/** Int fields floor at zero unless they opt out with their own min. */
 	public function testIntFieldsDefaultToAMinimumOfZero(): void {
-		$this->assertSame(0, configSchema::getFieldMeta('PAGE_DEF')['min']);
 		$this->assertSame(0, configSchema::getFieldMeta('MAX_KB')['min']);
+		$this->assertSame(0, configSchema::getFieldMeta('RE_DEF')['min']);
+	}
+
+	/** Page sizes divide, so they floor at one rather than zero. */
+	public function testPageSizesFloorAtOne(): void {
+		foreach (['PAGE_DEF', 'ADMIN_PAGE_DEF', 'REPLIES_PER_PAGE'] as $field) {
+			$this->assertSame(1, configSchema::getFieldMeta($field)['min']);
+		}
 	}
 
 	public function testIntFieldCanOptOutOfTheZeroMinimum(): void {

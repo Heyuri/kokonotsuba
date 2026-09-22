@@ -183,15 +183,25 @@
 					subjectEl.textContent = (params.thread_subject || '').trim() || '(no subject)';
 				}
 
-				// A thread can't be merged into itself, so drop its own row from the list
-				if (threadUid) {
-					const ownRow = form.querySelector(`.mergeThreadItem[data-thread-uid="${CSS.escape(threadUid)}"]`);
-					if (ownRow) ownRow.remove();
+				// The list is fetched now rather than carried on every page; the server leaves
+				// the destination thread out of it, so nothing has to be dropped here.
+				const list = form.querySelector('.mergeThreadList');
+				if (list) {
+					list.innerHTML = `<li>${metaContent('postApiFetchingText', 'Fetching threads...')}</li>`;
+					const action = form.getAttribute('action') || '';
+					const url = `${action}${action.includes('?') ? '&' : '?'}pageName=mergeList&thread_uid=${encodeURIComponent(threadUid)}`;
+					fetch(url, { credentials: 'same-origin' })
+						.then(res => (res.ok ? res.json() : null))
+						.then(data => {
+							if (!form.isConnected) return;
+							list.innerHTML = data?.html || '<li>No threads to merge.</li>';
+							const detachPreviews = attachThreadPreviews(form);
+							if (win) win.onclose = detachPreviews;
+						})
+						.catch(() => {
+							list.innerHTML = '<li>The thread list could not be loaded.</li>';
+						});
 				}
-
-				// after the removal above, so the dropped row is never wired up
-				const detachPreviews = attachThreadPreviews(form);
-				if (win) win.onclose = detachPreviews;
 			},
 			onSubmit: ({ form }) => {
 				const ticked = form.querySelectorAll('[name="merge-source-uids[]"]:checked').length;

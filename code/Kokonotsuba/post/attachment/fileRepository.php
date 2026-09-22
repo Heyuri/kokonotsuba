@@ -136,7 +136,7 @@ class fileRepository extends baseRepository {
 	 * @param string|null $mime_type           MIME type string.
 	 * @param bool        $is_hidden           Whether the file is in purgatory.
 	 * @param bool        $is_deleted          Whether the file is marked deleted.
-	 * @return void
+	 * @return int The id the row was given.
 	 */
 	public function insertFileRow(
 		int $post_uid,
@@ -152,7 +152,7 @@ class fileRepository extends baseRepository {
 		?string $mime_type,
 		bool $is_hidden,
 		bool $is_deleted = false,
-	): void {
+	): int {
 		$this->insert([
 			'post_uid' => $post_uid,
 			'file_name' => $file_name,
@@ -168,6 +168,8 @@ class fileRepository extends baseRepository {
 			'is_hidden' => (int) $is_hidden,
 			'is_deleted' => (int) $is_deleted,
 		]);
+
+		return (int)$this->lastInsertId();
 	}
 
 	/**
@@ -232,13 +234,4 @@ class fileRepository extends baseRepository {
         $result = $this->queryColumn($query, $params);
         return $result > 0;
     }
-
-	/**
-	 * Return the next AUTO_INCREMENT value for the files table.
-	 *
-	 * @return int Next available file ID.
-	 */
-	public function getNextId(): int {
-		return $this->getNextAutoIncrement();
-	}
 }

@@ -2,6 +2,8 @@
 
 /* Prevent the user from aborting script execution */
 
+use Kokonotsuba\debug\requestMetrics;
+use Kokonotsuba\debug\requestProfiler;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\kokoLibrary;
 use Kokonotsuba\routers\modeHandler;
@@ -32,6 +34,11 @@ if (PHP_SAPI !== 'cli' && \Puchiko\request\isDirectRequestFor(__FILE__, $_SERVER
 
 // Create request object from superglobals (must be early, before other bootstrap files)
 $request = \Kokonotsuba\request\request::fromGlobals();
+
+// Timings for the debug bar, and the request sampler when a profile was asked for. Both are
+// started here, ahead of the bootstrap, so what they measure is the whole request.
+requestMetrics::begin($request->getRequestTimeFloat());
+requestProfiler::startIfRequested($request);
 
 // Set the app root for this request
 $kokoInstanceRoot = __DIR__ . '/';
@@ -76,17 +83,21 @@ try {
 	// get error message
 	$errorMessage = $boardException->getMessage();
 
+	// a refusal is the client's doing unless the exception says otherwise; 500 is kept for crashes
+	$statusCode = $boardException->getCode();
+	$statusCode = is_int($statusCode) && $statusCode >= 400 && $statusCode <= 599 ? $statusCode : 400;
+
 	// if its a request made by js, then serve json error
 	if($request->isAjax()) {
 		// strip html tags - message.js doesn't accept any raw html
 		$errorMessage = strip_tags($errorMessage);
 
 		// render the json page
-		renderJsonErrorPage($errorMessage);
+		renderJsonErrorPage($errorMessage, $statusCode);
 	}
 	// otherwise its a regular request - serve html error page
 	else {
-		$softErrorHandler->errorAndExit($errorMessage);
+		$softErrorHandler->errorAndExit($errorMessage, $statusCode);
 	}
 } catch (\Throwable $e) {
 	// log message
@@ -94,7 +105,7 @@ try {
 		->error($e->__toString());
 
 	// throw blanket error message
-	$softErrorHandler->errorAndExit(_T('blanket_error'), 0, true);
+	$softErrorHandler->errorAndExit(_T('blanket_error'), 500, true);
 }
 
 clearstatcache();

@@ -868,7 +868,7 @@ testCase('approving an appeal lifts the ban', function () use ($makeService, $cl
 	$banId = $service->fileBan('203.0.113.22', GLOBAL_BOARD_UID, ['post'], time() + 3600, 'test', null);
 	$appealId = $service->fileAppeal($bans->findById($banId), 'let me back', 24);
 
-	assertSameValue(1, $service->approveAppeals([$appealId], null, 'fine'), 'the appeal was not closed');
+	assertSameValue(1, $service->approveAppeals([$appealId], null, 'fine')['count'], 'the appeal was not closed');
 	assertTrueValue($bans->findById($banId)->isRevoked(), 'approving did not lift the ban');
 	assertSameValue(banAppealStatus::APPROVED, $appeals->findById($appealId)->status, 'the appeal was not marked approved');
 	assertSameValue(null, $service->findBlockingBan(banCheckpoint::POST), 'the lifted ban was still enforced');

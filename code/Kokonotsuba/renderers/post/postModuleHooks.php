@@ -26,7 +26,13 @@ final class postModuleHooks {
 		$post = $ctx->post;
 		$html = '';
 
-		$this->moduleEngine->dispatch($ctx->isOp ? 'ThreadAdminControls' : 'ReplyAdminControls', [&$html, &$post]);
+		// the thread row rides along for the thread's controls, so a toggle can read its flags
+		// rather than ask the table for them
+		if ($ctx->isOp) {
+			$this->moduleEngine->dispatch('ThreadAdminControls', [&$html, &$post, $ctx->thread]);
+		} else {
+			$this->moduleEngine->dispatch('ReplyAdminControls', [&$html, &$post]);
+		}
 		$this->moduleEngine->dispatch('PostAdminControls', [&$html, &$post]);
 
 		return $html;

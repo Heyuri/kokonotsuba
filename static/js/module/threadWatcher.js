@@ -10,6 +10,9 @@ const kktwch = { name: "KK Thread watcher",
 	// Watched threads asked about per request. The whole list in one query string runs
 	// past the web server's URI limit (414), so a poll fans out over several requests.
 	POLL_CHUNK_SIZE: 50,
+	// Character budget for a chunk's thread lists. A uid is sent up to three times (asked
+	// about, seen, quotes seen), so 64 character uids fill a URI long before 50 of them.
+	POLL_CHUNK_MAX_CHARS: 3500,
 	// Character budget for the own-post list repeated on every chunk, so a long posting
 	// history can't push the URI over the limit either.
 	OWN_TOKENS_MAX_CHARS: 2000,
@@ -208,6 +211,8 @@ const kktwch = { name: "KK Thread watcher",
 			quoteCount: 0,
 			// null until the first poll, so pre-existing quotes aren't flagged as new.
 			seenQuoteCount: null,
+			// First unread quoting post, resolved by the server each poll.
+			firstUnreadQuoteNo: null,
 			lastChecked: Date.now(),
 			// When the thread was first watched; used to order the watch list
 			// most-recent-first (Object.keys order is unreliable for numeric uids).
@@ -798,6 +803,27 @@ const kktwch = { name: "KK Thread watcher",
 		}).slice(0, max);
 	},
 
+	// Split the watch list into chunks that each fit the URI budget, whatever mix of short
+	// and long uids it holds.
+	chunkThreadUids: function (threadUids) {
+		var chunks = [];
+		var chunk = [];
+		var used = 0;
+		threadUids.forEach(function (uid) {
+			// The uid in each of the three lists, plus separators and two counts.
+			var cost = 3 * (encodeURIComponent(uid).length + 1) + 12;
+			if (chunk.length && (chunk.length >= kktwch.POLL_CHUNK_SIZE || used + cost > kktwch.POLL_CHUNK_MAX_CHARS)) {
+				chunks.push(chunk);
+				chunk = [];
+				used = 0;
+			}
+			chunk.push(uid);
+			used += cost;
+		});
+		if (chunk.length) chunks.push(chunk);
+		return chunks;
+	},
+
 	// Encode the own-post tokens as the `you` parameter's value, dropping the oldest ones
 	// once they'd push a chunk's URI past the budget. Every chunk carries this list, so it
 	// has to stay short whatever the poster's history looks like.
@@ -887,8 +913,9 @@ const kktwch = { name: "KK Thread watcher",
 		// run concurrently and their responses are merged before anything is applied, so a
 		// poll still lands as one update.
 		var urls = [];
-		for (var i = 0; i < threadUids.length; i += kktwch.POLL_CHUNK_SIZE) {
-			var chunk = threadUids.slice(i, i + kktwch.POLL_CHUNK_SIZE);
+		var chunks = kktwch.chunkThreadUids(threadUids);
+		for (var i = 0; i < chunks.length; i++) {
+			var chunk = chunks[i];
 			var params = ['thread_uids=' + chunk.map(encodeURIComponent).join(',')];
 			// Send the user's own posts so the server can flag threads that quote them.
 			if (ownTokens !== '') {
@@ -907,6 +934,18 @@ const kktwch = { name: "KK Thread watcher",
 			});
 			if (seenPairs.length) {
 				params.push('seen=' + seenPairs.join(','));
+			}
+			// Likewise the seen-quote counts, so the server can resolve the first unread
+			// reply that quotes the user.
+			var quoteSeenPairs = [];
+			chunk.forEach(function (uid) {
+				var e = watched[uid];
+				if (e && e.seenQuoteCount !== null && e.seenQuoteCount !== undefined) {
+					quoteSeenPairs.push(encodeURIComponent(uid) + ':' + (e.seenQuoteCount || 0));
+				}
+			});
+			if (quoteSeenPairs.length) {
+				params.push('qseen=' + quoteSeenPairs.join(','));
 			}
 			urls.push(apiUrl + separator + params.join('&'));
 		}
@@ -1020,6 +1059,11 @@ const kktwch = { name: "KK Thread watcher",
 							entry.seenQuoteCount = newQuoteCount;
 						}
 						entry.quoteCount = newQuoteCount;
+						// First unread quoting post, so the link can land on it. Null when
+						// the server saw no unread quote.
+						entry.firstUnreadQuoteNo = (typeof info.first_unread_quote_no === 'number')
+							? info.first_unread_quote_no
+							: null;
 
 						// Only count growth once seeded, so first watching a thread never
 						// notifies for posts that already existed.
@@ -1225,19 +1269,27 @@ const kktwch = { name: "KK Thread watcher",
 		return kktwch.getUnreadCount(entry);
 	},
 
-	// Build the watch-list link target. When the thread has unread replies and the
-	// server has told us the first unread post's number, anchor the link to that post
-	// (post elements have id "p{boardId}_{no}") so the page jumps to it. Otherwise link
-	// to the thread as captured at watch time.
-	buildThreadUrl: function (entry, hasUnread) {
+	// Build the watch-list link target. An unread quote-reply wins: the link lands on
+	// the first unread post that quotes the user. Otherwise, when the thread has unread
+	// replies and the server has told us the first unread post's number, anchor there
+	// (post elements have id "p{boardId}_{no}") so reading resumes where it left off.
+	// Otherwise link to the thread as captured at watch time.
+	buildThreadUrl: function (entry) {
 		var base = entry.url || '#';
-		if (hasUnread && entry.firstUnreadNo && entry.boardId && base !== '#') {
-			// Drop any existing fragment before appending our own.
-			var hashIdx = base.indexOf('#');
-			if (hashIdx !== -1) base = base.slice(0, hashIdx);
-			return base + '#p' + entry.boardId + '_' + entry.firstUnreadNo;
+		if (base === '#' || !entry.boardId) return base;
+
+		var anchorNo = null;
+		if (kktwch.hasUnreadQuote(entry) && entry.firstUnreadQuoteNo) {
+			anchorNo = entry.firstUnreadQuoteNo;
+		} else if (kktwch.getUnreadCount(entry) > 0 && entry.firstUnreadNo) {
+			anchorNo = entry.firstUnreadNo;
 		}
-		return base;
+		if (!anchorNo) return base;
+
+		// Drop any existing fragment before appending our own.
+		var hashIdx = base.indexOf('#');
+		if (hashIdx !== -1) base = base.slice(0, hashIdx);
+		return base + '#p' + entry.boardId + '_' + anchorNo;
 	},
 
 	// Max characters for a client-side label fallback; read from the server-emitted meta
@@ -1395,7 +1447,7 @@ const kktwch = { name: "KK Thread watcher",
 					notif.onclick = function () {
 						window.focus();
 						if (entry.url) {
-							window.location.href = entry.url;
+							window.location.href = kktwch.buildThreadUrl(entry);
 						}
 						notif.close();
 					};
@@ -1661,7 +1713,7 @@ const kktwch = { name: "KK Thread watcher",
 			// Fill in the link. When there are unread replies and we know the first one,
 			// anchor the link directly to it so clicking jumps to where reading resumes.
 			var link = row.querySelector('.threadWatcherLink');
-			link.href = kktwch.buildThreadUrl(entry, hasUnread);
+			link.href = kktwch.buildThreadUrl(entry);
 			link.textContent = displayName;
 			link.title = displayName;
 			link.setAttribute('data-thread-uid', threadUid);

@@ -915,6 +915,11 @@ class deletedPostsService {
 		return $this->deletedPostsRepository->getBoardUidsByDeletedPostIds($deletedPostIds);
 	}
 
+	/** @return array<array{thread_uid: string, boardUID: int}> */
+	public function getThreadPairsByDeletedPostIds(array $deletedPostIds): array {
+		return $this->deletedPostsRepository->getThreadPairsByDeletedPostIds($deletedPostIds);
+	}
+
 	public function getBoardUidByDeletedPostId(int $deletedPostId): ?int {
 		// fetch board uid from database based on the deleted id
 		$boardUid = $this->deletedPostsRepository->getBoardUidByDeletedPostId($deletedPostId);

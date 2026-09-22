@@ -50,7 +50,7 @@ class moduleRoute {
 			}
 
 		} else {
-			$this->softErrorHandler->errorAndExit("Module Not Found(" . htmlspecialchars($load) . ")");
+			$this->softErrorHandler->errorAndExit("Module Not Found(" . htmlspecialchars($load) . ")", 404);
 		}
 	}
 

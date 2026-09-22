@@ -12,4 +12,9 @@ trait TransactionalTrait {
 	protected function inTransaction(callable $callback): mixed {
 		return $this->transactionManager->run($callback);
 	}
+
+	/** For callbacks that are safe to run twice; see transactionManager::runRetryingDeadlocks(). */
+	protected function inRetriedTransaction(callable $callback): mixed {
+		return $this->transactionManager->runRetryingDeadlocks($callback);
+	}
 }

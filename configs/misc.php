@@ -12,6 +12,7 @@ return [
 	'_group' => 'Miscellaneous',
 
 	'TIME_ZONE'                 => stringField('config_label_TIME_ZONE', '0', 'config_desc_TIME_ZONE'),
+	'THREAD_FRAGMENT_CACHE'     => boolField('config_label_THREAD_FRAGMENT_CACHE', true, 'config_desc_THREAD_FRAGMENT_CACHE'),
 	'TRUST_HTTP_X_FORWARDED_FOR'=> boolField('config_label_TRUST_HTTP_X_FORWARDED_FOR', false, 'config_desc_TRUST_HTTP_X_FORWARDED_FOR'),
 
 	'DISCORD_WH' => stringField('config_label_DISCORD_WH', '', 'config_desc_DISCORD_WH'),

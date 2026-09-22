@@ -132,12 +132,7 @@ function bindThreadFilterParameters(array &$params, string &$query, array $filte
 	// Apply the 'board' filter and bind parameters
 	$boards = applyArrayFilter($filters, 'board');
 	if (!empty($boards)) {
-		$query .= " AND (";
-		foreach ($boards as $index => $board) {
-			$query .= ($index > 0 ? " OR " : "") . "t.boardUID = :board_$index";
-			$params[":board_$index"] = (int)$board;
-		}
-		$query .= ")";
+		bindBoardUIDFilter($params, $query, array_map('intval', $boards), 't.boardUID');
 	}
 
 	// Apply 'thread_uid' partial match

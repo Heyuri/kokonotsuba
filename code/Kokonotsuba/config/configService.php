@@ -27,6 +27,12 @@ class configService {
 	/** @var array<int, array<string, mixed>> Overrides already read this request, by scope. */
 	private array $overridesCache = [];
 
+	/** True once every scope's row has been read, so a scope with no row needs no query. */
+	private bool $allOverridesLoaded = false;
+
+	/** @var array<int, true> Scopes written since the bulk read, which are re-read on their own. */
+	private array $staleOverrides = [];
+
 	public function __construct(
 		private readonly configRepository $configRepository
 	) {}
@@ -42,8 +48,31 @@ class configService {
 			return $this->overridesCache[$boardUid];
 		}
 
-		$stored = $this->configRepository->getOverridesByBoardUid($boardUid);
+		// Every board is assembled at bootstrap, each against its own scope and the global one,
+		// so the first miss reads every row at once rather than one row per board.
+		if (!$this->allOverridesLoaded) {
+			foreach ($this->configRepository->getAllOverrides() as $uid => $stored) {
+				$this->overridesCache[$uid] = self::knownFields($stored);
+			}
+			$this->allOverridesLoaded = true;
+			$this->staleOverrides = [];
 
+			if (isset($this->overridesCache[$boardUid])) {
+				return $this->overridesCache[$boardUid];
+			}
+		}
+
+		// A scope missing from the bulk read has no row, unless it was written since.
+		if (!isset($this->staleOverrides[$boardUid])) {
+			return $this->overridesCache[$boardUid] = [];
+		}
+		unset($this->staleOverrides[$boardUid]);
+
+		return $this->overridesCache[$boardUid] = self::knownFields($this->configRepository->getOverridesByBoardUid($boardUid));
+	}
+
+	/** Stored overrides filtered to fields still present in the schema. */
+	private static function knownFields(array $stored): array {
 		$overrides = [];
 		foreach ($stored as $dotpath => $value) {
 			if (configSchema::hasField((string)$dotpath)) {
@@ -51,7 +80,13 @@ class configService {
 			}
 		}
 
-		return $this->overridesCache[$boardUid] = $overrides;
+		return $overrides;
+	}
+
+	/** Drop what is cached for a scope after a write, so the next read comes from the table. */
+	private function forgetOverrides(int $boardUid): void {
+		unset($this->overridesCache[$boardUid]);
+		$this->staleOverrides[$boardUid] = true;
 	}
 
 	/**
@@ -204,7 +239,7 @@ class configService {
 	 * @return void
 	 */
 	public function resetOverrides(int $boardUid): void {
-		unset($this->overridesCache[$boardUid]);
+		$this->forgetOverrides($boardUid);
 		$this->configRepository->deleteOverridesForBoardUid($boardUid);
 	}
 
@@ -273,7 +308,7 @@ class configService {
 	 * @return void
 	 */
 	private function persistOverrides(int $boardUid, array $overrides): void {
-		unset($this->overridesCache[$boardUid]);
+		$this->forgetOverrides($boardUid);
 		if (empty($overrides)) {
 			$this->configRepository->deleteOverridesForBoardUid($boardUid);
 		} else {

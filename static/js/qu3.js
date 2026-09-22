@@ -12,6 +12,15 @@ let cleanupTimer   = null
 // Cache for remote post API fetches (keyed by post_uid)
 const fetchCache = new Map()
 
+// Text quote rules and the API client for them; loaded by the page header, or by
+// ensureLookupLibrary() on a static page built before quoteLookup.js existed
+const LOOKUP_LIBRARY_SRC = (document.currentScript?.src || '').replace(/qu3\.js(\?.*)?$/, 'quoteLookup.js')
+let quoteResolver = null
+
+// What findSource() needs to know about a post and about a thread's posts, read once
+let postRecords   = new WeakMap()
+let threadPosts   = new WeakMap()
+
 function createPreviewBox(notFound = false, loading = false) {
 	const box = document.createElement('div')
 	box.classList.add('previewBox')
@@ -42,6 +51,18 @@ function getPostApiUrl() {
 	return document.querySelector('meta[name="postApiUrl"]')?.content || null
 }
 
+/**
+ * Whether a preview should be asked for with this reader's session.
+ *
+ * Staff do: a post is then rendered for them as it would be on the page, with the controls and
+ * the poster's address, and the answer is marked so no cache keeps it. Everybody else asks
+ * without cookies, which makes every reader's request identical and lets a shared cache answer
+ * it. The page says which, and static html never claims staff.
+ */
+function apiCredentials() {
+	return document.querySelector('meta[name="postApiStaff"]') ? 'include' : 'omit'
+}
+
 /** Fetch post data from the API by post_uid. Returns a promise; results are cached. */
 function fetchPostData(postUid) {
 	if (fetchCache.has(postUid)) return fetchCache.get(postUid)
@@ -56,7 +77,7 @@ function fetchPostData(postUid) {
 	const separator = apiUrl.includes('?') ? '&' : '?'
 	const url = `${apiUrl}${separator}post_uid=${encodeURIComponent(postUid)}`
 
-	const promise = fetch(url)
+	const promise = fetch(url, { credentials: apiCredentials() })
 		.then(res => res.ok ? res.json() : null)
 		.catch(() => null)
 
@@ -77,6 +98,9 @@ function buildPostFromApi(data) {
 	// Remove the deletion checkbox from the preview
 	const checkbox = post.querySelector('.deletionCheckbox')
 	if (checkbox) checkbox.remove()
+
+	// a reply does not say which thread it is from, and its own text quotes need to
+	if (data.parent_thread_uid) post.dataset.threadUid = data.parent_thread_uid
 
 	return post
 }
@@ -144,6 +168,106 @@ function removeRecursively(obj) {
 	previewStack = previewStack.filter(c => c !== obj)
 }
 
+/** Open a preview box for a trigger and return its stack entry. */
+function openPreview(trigger, contextPost, notFound = false, loading = false) {
+	const parentBox  = trigger.closest('.previewBox')
+	const parentPrev = parentBox
+		? previewStack.find(o => o.box === parentBox)
+		: null
+
+	const box = createPreviewBox(notFound, loading)
+	const obj = { box, trigger, parent: parentPrev, contextPost }
+	previewStack.push(obj)
+	attachPreviewHandlers(obj)
+	return obj
+}
+
+function showPreview(obj) {
+	positionPreviewBox(obj.box, lastMouseEvent)
+	obj.box.style.display = 'block'
+}
+
+/** Put a post into a preview box: a copy of one on the page, or one the API rendered. */
+function fillPreview(box, post, isCopy) {
+	const shown = isCopy ? post.cloneNode(true) : post
+
+	// a preview is a copy of something, so it carries no ids: two elements answering to one id
+	// would send every getElementById on the page into the preview
+	shown.removeAttribute('id')
+	shown.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'))
+
+	shown.style.margin = '0'
+	box.innerHTML = ''
+	box.appendChild(shown)
+	applyHoverListeners(box)
+}
+
+function fillNotFound(box) {
+	box.innerHTML = `<div class="post reply">Quote source not found</div>`
+}
+
+/** Fill a preview from an API answer, preferring the page's own copy of that post. */
+function fillFromApi(box, data) {
+	const rendered = buildPostFromApi(data)
+	if (!rendered) return false
+
+	const onPage = rendered.id ? document.getElementById(rendered.id) : null
+	if (onPage && !onPage.closest('.previewBox')) fillPreview(box, onPage, true)
+	else fillPreview(box, rendered, false)
+	return true
+}
+
+function getQuoteResolver() {
+	if (!quoteResolver && window.kkQuoteLookup && getPostApiUrl()) {
+		quoteResolver = window.kkQuoteLookup.createResolver({
+			apiUrl: getPostApiUrl(),
+			fetch: url => fetch(url, { credentials: apiCredentials() }),
+		})
+	}
+	return quoteResolver
+}
+
+/**
+ * Preview a text quote whose source may be among posts the page does not hold: ask the API,
+ * and fall back to the match the page has, if any.
+ */
+function showLookupPreview(trigger) {
+	const resolver = getQuoteResolver()
+	const fallback = document.getElementById(trigger.dataset.targetId)
+
+	if (!resolver) {
+		const obj = openPreview(trigger, fallback, !fallback)
+		if (fallback) fillPreview(obj.box, fallback, true)
+		showPreview(obj)
+		return
+	}
+
+	const obj = openPreview(trigger, fallback, false, true)
+	showPreview(obj)
+
+	resolver.resolve(
+		trigger.dataset.quoteThread,
+		trigger.dataset.quoteBefore,
+		trigger.dataset.quoteText,
+		trigger.dataset.quoteQuoted === '1'
+	).then(data => {
+		if (!previewStack.includes(obj)) return
+
+		if (data && fillFromApi(obj.box, data)) {
+			// numbered quotes of the same post can reuse the answer
+			if (data.post_uid && !fetchCache.has(String(data.post_uid))) {
+				fetchCache.set(String(data.post_uid), Promise.resolve(data))
+			}
+		} else if (fallback) {
+			fillPreview(obj.box, fallback, true)
+		} else {
+			fillNotFound(obj.box)
+		}
+
+		if (lastMouseEvent) positionPreviewBox(obj.box, lastMouseEvent)
+	})
+}
+
 function startHover(event) {
 	const trigger = event.currentTarget
 	if (trigger.hoverTimeout) return
@@ -164,72 +288,40 @@ function startHover(event) {
 		const targetId = trigger.dataset.targetId
 		if (!targetId) return
 
-		const post       = document.getElementById(targetId)
-		const parentBox  = trigger.closest('.previewBox')
-		const parentPrev = parentBox
-			? previewStack.find(o => o.box === parentBox)
-			: null
+		if (trigger.dataset.quoteLookup) {
+			showLookupPreview(trigger)
+			return
+		}
+
+		const post = document.getElementById(targetId)
 
 		// Post is in the DOM — show it directly
 		if (post) {
-			const box = createPreviewBox()
-			const obj = { box, trigger, parent: parentPrev, contextPost: post }
-			previewStack.push(obj)
-
-			box.innerHTML = ''
-			const clone = post.cloneNode(true)
-			clone.removeAttribute('id')
-			clone.style.margin = '0'
-			box.appendChild(clone)
-
-			attachPreviewHandlers(obj)
-			applyHoverListeners(box)
-			positionPreviewBox(box, lastMouseEvent)
-			box.style.display = 'block'
+			const obj = openPreview(trigger, post)
+			fillPreview(obj.box, post, true)
+			showPreview(obj)
 			return
 		}
 
 		// Post not in DOM — try remote fetch via data-post-uid
 		const postUid = trigger.dataset.postUid
 		if (!postUid) {
-			const box = createPreviewBox(true)
-			const obj = { box, trigger, parent: parentPrev, contextPost: null }
-			previewStack.push(obj)
-			attachPreviewHandlers(obj)
-			positionPreviewBox(box, lastMouseEvent)
-			box.style.display = 'block'
+			showPreview(openPreview(trigger, null, true))
 			return
 		}
 
 		// Show loading state, then fetch
-		const box = createPreviewBox(false, true)
-		const obj = { box, trigger, parent: parentPrev, contextPost: null }
-		previewStack.push(obj)
-		attachPreviewHandlers(obj)
-		positionPreviewBox(box, lastMouseEvent)
-		box.style.display = 'block'
+		const obj = openPreview(trigger, null, false, true)
+		showPreview(obj)
 
 		fetchPostData(postUid).then(data => {
 			// If the preview was already removed while fetching, bail out
 			if (!previewStack.includes(obj)) return
 
-			if (!data) {
-				box.innerHTML = `<div class="post reply">Quote source not found</div>`
-				return
-			}
-
-			const rendered = buildPostFromApi(data)
-			if (rendered) {
-				box.innerHTML = ''
-				rendered.style.margin = '0'
-				box.appendChild(rendered)
-				applyHoverListeners(box)
-			} else {
-				box.innerHTML = `<div class="post reply">Quote source not found</div>`
-			}
+			if (!data || !fillFromApi(obj.box, data)) fillNotFound(obj.box)
 
 			// Reposition after content change
-			if (lastMouseEvent) positionPreviewBox(box, lastMouseEvent)
+			if (lastMouseEvent) positionPreviewBox(obj.box, lastMouseEvent)
 		})
 	}, PREVIEW_DELAY)
 }
@@ -292,58 +384,125 @@ function showAggregated(trigger, e) {
 	box.style.display = 'block'
 }
 
-function findMatchingPostId(text, selfId, includeUnkfunc) {
-	const nm = text.match(/^(?:No\. ?)?(\d+)$/)
-	if (nm) {
-		// restore >No.X quoting by reusing the same thread prefix as selfId
-		const num     = nm[1]
-		const prefix  = selfId.split('_')[0]    // e.g. "p1" from "p1_53"
-		const postId  = `${prefix}_${num}`      // e.g. "p1_47"
-		const postElm = document.getElementById(postId)
-		if (postElm) {
-			// only allow if that post is before self in document order
-			const threadElem  = document.getElementById(selfId).closest('.thread')
-			const allPosts    = Array.from((threadElem || document).querySelectorAll('.post.op, .post.reply'))
-			const selfIndex   = allPosts.findIndex(p => p.id === selfId)
-			const postIndex   = allPosts.findIndex(p => p.id === postId)
-			if (postIndex !== -1 && postIndex < selfIndex) {
-				return postId
-			}
-		}
-		return 'notFound'
+/** What a text quote is matched against, read from a post once and kept until it changes. */
+function postRecord(post) {
+	let record = postRecords.get(post)
+	if (record) return record
+
+	record = {
+		id: post.id,
+		number: Number(post.dataset.postNumber || post.id.split('_').pop()),
+		lines: commentLines(post.querySelector('.comment')),
+		fileNames: fileNamesOf(post),
+		gapBefore: false,
+	}
+	postRecords.set(post, record)
+	return record
+}
+
+/** The comment's lines as a reader sees them, which is what the server compares against. */
+function commentLines(comment) {
+	if (!comment) return []
+
+	// <br> contributes nothing to textContent, so it becomes a real break first
+	const clone = comment.cloneNode(true)
+	clone.querySelectorAll('br').forEach(br => br.replaceWith(document.createTextNode('\n')))
+
+	return clone.textContent.split(/\r\n|\r|\n/)
+}
+
+/** The full names of a post's attachments, as the file line shows them. */
+function fileNamesOf(post) {
+	// the download link carries the whole name; the visible one is truncated
+	let names = Array.from(post.querySelectorAll('.filesize a[data-filename]'), a => a.dataset.filename)
+
+	if (!names.length) {
+		names = Array.from(post.querySelectorAll('.filesize'), bar => {
+			const shown = bar.querySelector('a')
+			return shown
+				? (shown.getAttribute('onmouseover')?.match(/this\.textContent='([^']+)'/)?.[1] || shown.textContent.trim())
+				: ''
+		})
 	}
 
-		const threadElem = document.getElementById(selfId).closest('.thread')
-		const allPosts   = Array.from((threadElem || document).querySelectorAll('.post.op, .post.reply'))
-		const selfIndex  = allPosts.findIndex(p => p.id === selfId)
-		// take only those before selfId, then reverse so nearest is first
-		const posts     = allPosts
-			.slice(0, selfIndex !== -1 ? selfIndex : allPosts.length)
-			.reverse()
-	for (const p of posts) {
-		if (includeUnkfunc && !p.querySelector('.comment .unkfunc')) continue
-		const comment = p.querySelector('.comment')
-		if (comment) {
-			let content
-			if (!includeUnkfunc) {
-				const clone = comment.cloneNode(true)
-				clone.querySelectorAll('.unkfunc').forEach(el => el.remove())
-				content = clone.textContent
-			} else {
-				content = comment.textContent
-			}
-			if (content.includes(text)) return p.id
+	return Array.from(new Set(names.filter(Boolean)))
+}
+
+/** A thread's posts on the page, in order, and whether replies are missing after the OP. */
+function postsOfThread(threadElem) {
+	let entry = threadPosts.get(threadElem)
+	if (!entry) {
+		const notices = Array.from(threadElem.querySelectorAll('.omittedposts'))
+		entry = {
+			posts: Array.from(threadElem.querySelectorAll('.post.op, .post.reply'))
+				.filter(p => !p.closest('.previewBox')),
+			// a notice without data-gap was drawn before the attribute existed: assume a gap
+			hasGap: notices.some(n => n.dataset.gap !== '0'),
 		}
-		const fl = p.querySelector('.filesize a')
-		if (fl) {
-			const vis  = fl.textContent.trim()
-			const full = fl.getAttribute('onmouseover')
-				?.match(/this\.textContent='([^']+)'/)?.[1] || vis
-			if (full === text) return p.id
-		}
+		threadPosts.set(threadElem, entry)
 	}
-	// no match → signal "not found" so the preview shows your error message
-	return 'notFound'
+	return entry
+}
+
+/**
+ * Find the source of a text quote among the posts on the page.
+ *
+ * @returns {{id: string, lookup: object|null}} id is a post's element id or 'notFound';
+ * lookup is set when the API should be asked on hover, because the page is missing posts
+ * the source could be among
+ */
+function findQuoteSource(text, post, quoted) {
+	const lib = window.kkQuoteLookup
+	const ownThread = post.closest('.thread')
+	const threadUid = ownThread?.dataset.threadUid || post.dataset.threadUid
+	const threadElem = ownThread || (threadUid
+		? document.querySelector(`.thread[data-thread-uid="${CSS.escape(threadUid)}"]`)
+		: null)
+	const selfUid = Number(post.dataset.postUid)
+
+	let posts, selfIndex, outsidePage = false
+	if (threadElem) {
+		const entry = postsOfThread(threadElem)
+		posts = entry.posts
+		selfIndex = posts.indexOf(post)
+		if (selfIndex === -1) {
+			// a post the API rendered: only what was posted before it counts, and the
+			// page says nothing about the posts around it
+			outsidePage = true
+			posts = posts.filter((p, i) => i === 0 || Number(p.dataset.postUid) < selfUid)
+			selfIndex = posts.length
+		}
+	} else if (threadUid) {
+		// a post the API rendered from a thread that is not on the page at all
+		outsidePage = true
+		posts = []
+		selfIndex = 0
+	} else {
+		// no thread to go by (a search result, say): whatever the page holds
+		posts = Array.from(document.querySelectorAll('.post.op, .post.reply')).filter(p => !p.closest('.previewBox'))
+		selfIndex = posts.indexOf(post)
+		if (selfIndex === -1) selfIndex = posts.length
+	}
+
+	const hasGap = threadElem ? postsOfThread(threadElem).hasGap : false
+	const records = posts.map((p, i) => {
+		const record = postRecord(p)
+		// the only place a page leaves replies out is between the OP and the first one drawn
+		return i === 1 && hasGap ? Object.assign({}, record, { gapBefore: true }) : record
+	})
+
+	const found = lib.findSource(records, selfIndex, text, quoted)
+	// a post number names one post, so finding it on the page settles it
+	const settled = found.id && lib.postNumber(text) !== null
+	const needsLookup = found.crossedGap || (outsidePage && !settled)
+	const needle = lib.normalizeNeedle(text)
+
+	return {
+		id: found.id || 'notFound',
+		lookup: needsLookup && threadUid && selfUid > 0 && needle !== null
+			? { thread: threadUid, before: selfUid, text: needle, quoted }
+			: null,
+	}
 }
 
 function processPost(post) {
@@ -353,7 +512,10 @@ function processPost(post) {
 	const numEl   = post.querySelector('.postnum .qu')
 	if (!numEl) return
 	const replyNum = numEl.textContent.trim()
-	const wantBack = _kkSetting('addbacklinks')
+
+	// a post drawn inside a preview is a throwaway copy: its quotes still get their targets, so
+	// hovering them works, but it must not add itself to the backlinks of the posts it quotes
+	const wantBack = _kkSetting('addbacklinks') && !post.closest('.previewBox')
 
 	post.querySelectorAll('.comment .unkfunc, .comment a.quotelink').forEach(el => {
 		let targetId = el.dataset.targetId
@@ -364,15 +526,21 @@ function processPost(post) {
 			if (href.includes('#')) {
 				targetId = href.split('#').pop()
 			} else {
-				const raw = el.textContent.trim()
-				if (!raw.startsWith('>')) return
-				let txt = raw.slice(1).trim()
-				let dbl = false
-				if (txt.startsWith('>')) {
-					dbl = true
-					txt = txt.slice(1).trim()
+				// a quote line holding a >>123 link is previewed by the link
+				if (el.querySelector('a.quotelink')) return
+
+				const quote = window.kkQuoteLookup.parseQuote(el.textContent)
+				if (!quote) return
+
+				const source = findQuoteSource(quote.text, post, quote.quoted)
+				targetId = source.id
+				if (source.lookup) {
+					el.dataset.quoteLookup = '1'
+					el.dataset.quoteThread = source.lookup.thread
+					el.dataset.quoteBefore = source.lookup.before
+					el.dataset.quoteText   = source.lookup.text
+					el.dataset.quoteQuoted = source.lookup.quoted ? '1' : '0'
 				}
-				targetId = findMatchingPostId(txt, post.id, dbl)
 			}
 		}
 		if (!targetId) return
@@ -422,9 +590,20 @@ function processPost(post) {
 	applyHoverListeners(post)
 }
 
+function hasPostNode(nodes) {
+	return Array.from(nodes).some(n => n.nodeType === 1 && !n.classList.contains('previewBox')
+		&& (n.matches('.post, .omittedposts') || n.querySelector('.post, .omittedposts')))
+}
+
 function observeNewPosts() {
 	const obs = new MutationObserver(muts => {
 		muts.forEach(m => {
+			// what was read from a post is stale once its comment or file line changes
+			const changed = m.target.nodeType === 1 && m.target.closest('.comment, .filesize')?.closest('.post')
+			if (changed) postRecords.delete(changed)
+			const inPreview = m.target.nodeType === 1 && m.target.closest('.previewBox')
+			if (!inPreview && (hasPostNode(m.addedNodes) || hasPostNode(m.removedNodes))) threadPosts = new WeakMap()
+
 			m.addedNodes.forEach(n => {
 				if (n.nodeType !== 1) return
 				if (n.matches('.post.op, .post.reply')) processPost(n)
@@ -459,6 +638,17 @@ function applyHoverListeners(root) {
 	})
 }
 
+/** Run once the text quote library is there, loading it when the page's header predates it. */
+function ensureLookupLibrary(then) {
+	if (window.kkQuoteLookup) return then()
+
+	const script = document.createElement('script')
+	script.src = LOOKUP_LIBRARY_SRC
+	script.onload = then
+	script.onerror = () => console.error('ERROR: quoteLookup.js could not be loaded; hover previews are off.')
+	document.head.appendChild(script)
+}
+
 function init() {
 	document.addEventListener('mousemove', e => {
 		lastMouseEvent = e
@@ -478,7 +668,7 @@ function init() {
 const kkhoverbacklink = {
 	name: "Heyuri Hover Previews + Backlinks",
 	startup: function() {
-		init()
+		ensureLookupLibrary(init)
 		return true
 	},
 	reset: function() {
@@ -486,6 +676,8 @@ const kkhoverbacklink = {
 		document.querySelectorAll('.backlinks').forEach(el => el.remove())
 		document.querySelectorAll('[data-backlinks-processed]').forEach(el => el.removeAttribute('data-backlinks-processed'))
 		previewStack = []
+		postRecords  = new WeakMap()
+		threadPosts  = new WeakMap()
 	},
 }
 

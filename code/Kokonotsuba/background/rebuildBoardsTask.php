@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\background;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Puchiko\background\BackgroundTaskInterface;
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\containers\appContainer;
@@ -81,6 +83,14 @@ class rebuildBoardsTask implements BackgroundTaskInterface {
 
 		// ── Rebuild ───────────────────────────────────────────────────────
 		$boards = $boardService->getBoardsFromUIDs($boardUIDs);
+
+		// a config save or manual rebuild may change how every thread renders
+		if (!empty($args['dropFragments'])) {
+			foreach ($boards as $board) {
+				threadFragments::forgetBoard($board);
+			}
+		}
+
 		rebuildBoardsByArray($boards, false);
 	}
 }

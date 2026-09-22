@@ -27,8 +27,8 @@ class moduleMain extends abstractModuleMain {
 		// add attachment widget listener for hide image
 		$this->listenAttachmentWidget('onRenderAttachmentWidget');
 
-		// include the filter js for the hide post widget
-		$this->registerScript('filter.js');
+		// loaded in <head> without defer so stored filters apply before posts paint
+		$this->registerScript('filter.js', false);
 	}
 
 	private function onRenderPostWidget(array &$widgetArray): void {

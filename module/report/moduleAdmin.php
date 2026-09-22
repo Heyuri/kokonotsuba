@@ -18,6 +18,7 @@ use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\renderJsonPage;
 use function Puchiko\json\renderPrivateJsonPage;
@@ -392,9 +393,18 @@ class moduleAdmin extends abstractModuleAdmin {
 		// meaningful for an approval; dismissing never touched the post.
 		$deletePost = $this->moduleContext->request->getParameter('deletePost', 'POST', '') !== '';
 
-		$affected = $isApproval
-			? $this->reportService->approveReports($reportIds, $this->getActorAccountId(), $publicReason, $privateReason, $deletePost)
-			: $this->reportService->dismissReports($reportIds, $this->getActorAccountId(), $publicReason, $privateReason);
+		if ($isApproval) {
+			$postUids = $this->reportService->approveReports($reportIds, $this->getActorAccountId(), $publicReason, $privateReason, $deletePost);
+			$affected = count($postUids);
+
+			// The deletion is committed by now, so this also drops the threads' cached markup
+			// after the fact, and regenerates every board the posts were on.
+			if ($deletePost && $postUids !== []) {
+				rebuildBoardsFromPosts($postUids, $this->moduleContext->postService);
+			}
+		} else {
+			$affected = $this->reportService->dismissReports($reportIds, $this->getActorAccountId(), $publicReason, $privateReason);
+		}
 
 		if ($affected > 0) {
 			$this->logAction(

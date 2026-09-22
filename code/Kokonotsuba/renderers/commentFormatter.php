@@ -14,7 +14,7 @@ use function Puchiko\strings\sanitizeStr;
  *
  * Posts are stored as the poster typed them, so everything that makes a comment look like a
  * comment happens here: escaping, autolinking, line breaks, and the markers left behind by
- * whatever was decided at post time. Quote links, greentext and the module PostComment hooks
+ * whatever was decided at post time. Quote links, quote and the module PostComment hooks
  * run after this, on the HTML it returns.
  *
  * Rows written before the plain-text switch carry textFormat::LEGACY_HTML and pass straight
@@ -45,9 +45,9 @@ class commentFormatter {
 
 		$html = newLinesToBreakLines($html);
 
-		// Any newline left over is dropped, so the stored comment's line structure is carried
-		// entirely by <br> and the markup below never straddles a raw newline.
-		$html = str_replace("\n", '', $html);
+		// Any newline left over is dropped, CR included, so the stored comment's line structure is
+		// carried entirely by <br> and the markup below never straddles a raw newline.
+		$html = str_replace(["\r", "\n"], '', $html);
 
 		return $this->expandMarkers($html);
 	}

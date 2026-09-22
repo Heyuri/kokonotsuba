@@ -28,6 +28,15 @@ class InMemoryConfigRepository extends configRepository {
 		return is_array($decoded) ? $decoded : [];
 	}
 
+	public function getAllOverrides(): array {
+		$all = [];
+		foreach (array_keys($this->rows) as $boardUid) {
+			$all[$boardUid] = $this->getOverridesByBoardUid($boardUid);
+		}
+
+		return $all;
+	}
+
 	public function saveOverridesForBoardUid(int $boardUid, array $overrides): void {
 		// Store the encoded string, exactly as the real column does, so a value that cannot make
 		// the round trip fails here too rather than only in production.

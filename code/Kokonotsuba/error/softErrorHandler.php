@@ -34,15 +34,12 @@ class softErrorHandler {
 	/**
 	 * Render an error page and stop.
 	 *
+	 * @param int $statusCode 0 for the default: a refusal (400). A crash says 500 itself.
 	 * @param bool $showErrorImage Show the oopsie image - reserved for the blanket error, where
 	 *                             the message alone says nothing about what went wrong.
 	 */
 	public function errorAndExit(string $errorMessage, int $statusCode = 0, bool $showErrorImage = false): void {
-		if ($statusCode > 0) {
-			http_response_code($statusCode);
-		} else {
-			http_response_code(500); // Default to generic error if none is specified
-		}
+		http_response_code($statusCode > 0 ? $statusCode : 400);
 
 		$pte_vals = array(
 			'{$SELF2}' => $this->boardIndexFile.'?'.time(),

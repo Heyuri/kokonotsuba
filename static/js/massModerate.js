@@ -372,7 +372,7 @@
 
 		if (result.deleted_link) postEl.dataset.deletedLink = result.deleted_link;
 		if (result.deleted_post_id) postEl.dataset.deletedPostId = result.deleted_post_id;
-		if (typeof removeWidgetActions === 'function') removeWidgetActions(postEl, ['delete', 'mute']);
+		if (typeof removeWidgetActions === 'function') removeWidgetActions(postEl, ['delete', 'mute', 'deletePurge']);
 	}
 
 	/**

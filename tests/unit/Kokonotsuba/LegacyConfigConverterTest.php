@@ -194,7 +194,7 @@ class LegacyConfigConverterTest extends TestCase {
 	}
 
 	public function testNegativeIntegersAreClampedUnlessTheFieldOptedOut(): void {
-		$this->assertSame(0, legacyConfigConverter::convertValue('PAGE_DEF', configSchema::getFieldMeta('PAGE_DEF'), -5));
+		$this->assertSame(0, legacyConfigConverter::convertValue('MAX_KB', configSchema::getFieldMeta('MAX_KB'), -5));
 		$this->assertSame(-1, legacyConfigConverter::convertValue('STATIC_HTML_UNTIL', configSchema::getFieldMeta('STATIC_HTML_UNTIL'), -1));
 	}
 

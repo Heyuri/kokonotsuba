@@ -4,6 +4,8 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\ban\banService;
 use Kokonotsuba\board\board;
@@ -200,11 +202,8 @@ class registRoute {
 					: null
 			);
 
-			// get the post uid
-			$nextPostUid = $this->postRepository->getNextPostUid();
-
 			// Add post to database
-			$this->postService->addPostToThread($this->board, $postRegistData, $nextPostUid);
+			$nextPostUid = $this->postService->addPostToThread($this->board, $postRegistData);
 
 			// Dispatch post-inserted event (used by modules that store data per post, e.g. country flags)
 			$this->moduleEngine->dispatch('RegistPostInserted', [$nextPostUid, $postData['ip']]);
@@ -806,6 +805,9 @@ class registRoute {
 			// rebuild all static pages
 			$this->board->rebuildBoard();
 		} else {
+			// a new thread has nothing cached yet; a reply changes its thread's preview and pages
+			threadFragments::forgetThread((string)$postData['thread_uid'], $this->board->getBoardUID());
+
 			$pageToRebuild = getPageOfThread($postData['thread_uid'], $threadList, $this->config['PAGE_DEF']);
 
 			// static page limit

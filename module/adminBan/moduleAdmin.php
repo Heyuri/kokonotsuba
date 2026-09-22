@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\Modules\adminBan;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\ban\banAppeal;
 use Kokonotsuba\ban\banDuration;
@@ -23,6 +25,7 @@ use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
+use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\generateBoardListCheckBoxHTML;
@@ -60,8 +63,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function pendingAppeals(): int {
 		if ($this->pendingAppeals === null) {
-			// an appeal whose ban has since expired has nothing to ask for, so it should not be counted
-			$this->getBanService()->pruneExpiredAppeals();
+			// the count leaves out appeals on lapsed bans by itself; pruning them is for the
+			// pages that list appeals, not for every page a staff member opens
 			$this->pendingAppeals = $this->getBanService()->countPendingAppeals();
 		}
 
@@ -398,7 +401,27 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->logAction(_T('ban_log_revoked', $ban->ipPattern, $ban->id), $ban->boardUid, actionType::BAN_REVOKE);
 		}
 
+		$this->rebuildBoardsForLiftedBans($revoked);
 		$this->redirectBack();
+	}
+
+	/**
+	 * Revoking withdraws the public notice under the post, so the post has to be redrawn: its
+	 * thread's cached markup dropped and its board regenerated. One rebuild per board reached.
+	 *
+	 * @param list<banEntry> $bans
+	 */
+	private function rebuildBoardsForLiftedBans(array $bans): void {
+		$postUids = [];
+		foreach ($bans as $ban) {
+			if ($ban->postUid !== null && (string) $ban->publicReason !== '') {
+				$postUids[] = $ban->postUid;
+			}
+		}
+
+		if ($postUids !== []) {
+			rebuildBoardsFromPosts(array_values(array_unique($postUids)), $this->moduleContext->postService);
+		}
 	}
 
 	private function handleAppealDecision(bool $approve): void {
@@ -423,12 +446,13 @@ class moduleAdmin extends abstractModuleAdmin {
 			$reduceSeconds = $reduceTo === '' ? 0 : banDuration::toSeconds($reduceTo);
 			$newExpiresAt = $reduceSeconds > 0 ? $request->getRequestTime() + $reduceSeconds : null;
 
-			$count = $this->getBanService()->approveAppeals(
+			['count' => $count, 'revoked' => $revoked] = $this->getBanService()->approveAppeals(
 				$appealIds,
 				$this->currentAccountId > 0 ? $this->currentAccountId : null,
 				$staffNote,
 				$newExpiresAt
 			);
+			$this->rebuildBoardsForLiftedBans($revoked);
 
 			$this->logAction(
 				$newExpiresAt === null
@@ -452,6 +476,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	/** Regenerate the board a post lives on, so a static render picks the change up. */
 	private function rebuildBoardForPost(Post $post): void {
+		threadFragments::forgetPosts([$post]);
 		searchBoardArrayForBoard($post->getBoardUID())?->rebuildBoard();
 	}
 

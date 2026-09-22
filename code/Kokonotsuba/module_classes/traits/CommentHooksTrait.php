@@ -8,7 +8,7 @@ use function Kokonotsuba\libraries\html\quote_unkfunc;
 
 /**
  * Shared comment-processing pipeline: dispatches PostComment hooks
- * and applies greentext quoting.
+ * and applies quote quoting.
  */
 trait CommentHooksTrait {
 	abstract protected function getModuleEngine(): moduleEngine;

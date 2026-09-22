@@ -73,13 +73,51 @@ The test bootstrap promotes PHP warnings/notices to exceptions, so a fuzzed inpu
 that makes a function read an undefined key or mis-handle an encoding is caught
 as a crash rather than silently passing.
 
+## Running the JavaScript tests
+
+`static/js/quoteLookup.js` holds the rules a text quote is matched by and the client that asks
+the post API about the ones a page cannot answer. It is plain CommonJS with no DOM in it, so
+node runs it directly - no package manager, nothing to install:
+
+```sh
+node --test tests/js/                              # unit tests
+node tests/js/quoteLookup.fuzz.js                  # 2000 iterations/target, random seed
+node tests/js/quoteLookup.fuzz.js --iterations=50000 --seed=12345
+node tests/js/quoteLookup.fuzz.js --target=resolver
+```
+
+The fuzzer checks the parsers against their contracts, the matcher against a plain re-statement
+of the same rules, and the API client against a server that is slow, missing, broken and lying
+at once - the cache, the queue and the back-off must stay inside their bounds and every lookup
+must settle.
+
+The same rules live in PHP as `Kokonotsuba\quote_link\textQuoteMatcher`, and
+`tests/integration/textQuotes.php` runs both against the same threads, so a change to one side
+that the other did not get fails there.
+
+## Running the browser check
+
+What only a DOM can answer - a comment read back as its lines, an attachment read by its full
+name rather than the truncated one, which quote needs the API, what a hover puts on the page -
+is checked in a real browser against real board markup, with the API stubbed:
+
+```sh
+firefox --headless --screenshot /tmp/quoteHover.png --window-size=1100,600 \
+    tests/browser/quoteHover.html
+```
+
+The page shows PASS or FAIL per case with a count at the top, so the screenshot is the report;
+opening the file by hand works the same way, with the details in the console.
+
 ## Layout
 
 ```
 tests/
   bootstrap.php          Loads autoloader + Puchiko + lib_tripcode; warnings→exceptions
   run.php                Unit-test CLI entry point
-  fuzz.php               Fuzzer CLI entry point + target definitions
+  fuzz.php               Fuzzer CLI entry point + the helper-function targets
+  fuzz/                  Further targets, one domain per file (config, debug bar,
+                         rendering, page rebuilding); every *.php here is included
   framework/
     TestCase.php         Base class: assertions, setUp/tearDown
     TestRunner.php       Discovery + execution + coloured reporting
@@ -99,11 +137,80 @@ tests/
     loginAttempts.php    Staff login brute-force ledger: counting, clearing, warning
     bans.php             Ban enforcement: scope, checkpoints, wildcards, visitor
                          tokens, seen state, appeals, listing
+    textQuotes.php       Text quote lookups: the queries behind them, the page
+                         script and the in-memory rules, on the same threads
     repositoryHelpers.php  baseRepository's shared query helpers, and the repository
                            methods built on them
+  js/                    JavaScript tests; run with node, NOT picked up by run.php
+    quoteLookup.test.js  Quote matching rules and the post API client
+    quoteLookup.fuzz.js  Fuzzer for the same, plus random API traffic
+  browser/               Opened in a browser, not run by anything
+    quoteHover.html      The DOM half of the hover previews, with the API stubbed
+  stress/                Concurrency tests, run directly; NOT picked up by run.php
+    quoteLookups.php         Text quote lookups under load, against a running install
+    threadFragmentCache.php  Forked workers against one fragment cache directory
+    fragmentTraffic.php      HTTP traffic against a running scratch install
   fixtures/
     global/              Committed homoglyph map so normalisation tests stay offline
 ```
+
+## Running the stress tests
+
+What only shows when requests overlap. `threadFragmentCache.php` needs nothing but
+`pcntl`: it forks readers, repliers, editors and config saves onto one cache
+directory and checks that no read is torn, no temp file is left, and that nothing
+stale is still served once the traffic stops.
+
+```sh
+php tests/stress/threadFragmentCache.php --workers=16 --seconds=30
+php tests/stress/threadFragmentCache.php --threads=4 --render-ms=20   # more contention
+```
+
+`fragmentTraffic.php` drives a running install over HTTP: reads of many different
+pages over a cold cache, then the same with votes, replies, new threads and
+deletions mixed in on several boards at once,
+then votes timed to land while their thread's page is being drawn. After each
+phase every page is fetched as the cache has it and again with the cache emptied;
+the two must match. It also fails on any unhandled error page and on a new thread
+that does not point at its own OP, which is how it caught posting races that have
+nothing to do with the cache. It posts and deletes, so it refuses any database not named
+`koko_test*` / `koko_bench*`, and it wants a server that answers in parallel
+(`PHP_CLI_SERVER_WORKERS=16 php -S ...`).
+
+```sh
+KOKO_TEST_DSN='mysql:host=127.0.0.1;dbname=koko_bench_fuzz;charset=utf8mb4' \
+KOKO_TEST_USER=claude KOKO_TEST_PASS=claude_local_dev \
+php tests/stress/fragmentTraffic.php --base=http://127.0.0.1:8097 \
+    --storages=/path/to/scratch/app/global/board-storages
+```
+
+`quoteLookups.php` loads the text quote endpoint the way a board full of readers would. Every
+lookup is answered once on its own and recorded, then all of them are replayed at once - a
+lookup is a pure read, so no answer may change - and the worst case is aimed at on purpose:
+needles nothing holds, on the longest threads, where the search runs its whole window for
+nothing. It times ordinary page loads alone and again while the lookups run flat out, which is
+what "does this strain the site" means in practice, and it throws hostile parameters at the
+endpoint (overlong, wildcard, binary, repeated). It only reads, but it still refuses any
+database not named `koko_test*` / `koko_bench*`, and it wants a server that answers in parallel.
+
+```sh
+KOKO_TEST_DSN='mysql:host=127.0.0.1;dbname=koko_bench;charset=utf8mb4' \
+KOKO_TEST_USER=claude KOKO_TEST_PASS=claude_local_dev \
+php tests/stress/quoteLookups.php --base=http://127.0.0.1:8099 \
+    --threads=40 --seconds=20 --concurrency=24
+```
+
+The install it points at needs a session store its own user can write (`php -S -d
+session.save_path=...`), or PHP quietly keeps no session at all and the phase that measures what
+carrying one costs measures nothing.
+
+A lookup is one statement, and `--max-statements` is what keeps it that way. The count it
+measures is the whole request, so it also covers the board being booted and the post being
+fetched and drawn: a miss costs four statements, three of which are the request itself.
+
+It fails on a 5xx, on an answer that changed under load, on a lookup that returns a post holding
+neither the text nor a file of that name, and when `--max-miss-ms`, `--max-statements` or
+`--max-slowdown` is exceeded.
 
 ## Running the integration tests
 

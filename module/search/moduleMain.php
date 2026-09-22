@@ -18,6 +18,8 @@ use function Kokonotsuba\libraries\html\generateBoardListCheckBoxHTML;
 use function Kokonotsuba\libraries\stripExtension;
 use function Kokonotsuba\libraries\html\getThreadTitle;
 use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\html\generateFooterHtml;
+use function Kokonotsuba\libraries\html\generateHeadHtml;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 
 class moduleMain extends abstractModuleMain {
@@ -81,8 +83,18 @@ class moduleMain extends abstractModuleMain {
 
 		$dat = '';
 
-		$dat .= $this->moduleContext->board->getBoardHead("Search");
-		
+		// the head is drawn with the results' template, so the page ships the scripts their markup
+		// expects even on a board whose own template has a different set (kokoflash, kokotxt),
+		// and with the staff head, so the admin controls on the results have their scripts
+		$dat .= generateHeadHtml(
+			$this->moduleContext->board->loadBoardConfig(),
+			$this->moduleTemplateEngine,
+			$this->moduleContext->moduleEngine,
+			'Search',
+			0,
+			$adminMode
+		);
+
 		$dat .= $this->renderReturnLink();
 		$dat .= $this->renderSearchHeader();
 		$dat .= $this->renderSearchForm($filtersFromRequest, $cleanUrl, $boards);
@@ -131,7 +143,7 @@ class moduleMain extends abstractModuleMain {
 		// close tag
 		$dat .= "</div>";
 
-		$dat .= $this->moduleContext->board->getBoardFooter();
+		$dat .= generateFooterHtml($this->moduleTemplateEngine, $this->moduleContext->moduleEngine);
 	
 		echo $dat;
 	}

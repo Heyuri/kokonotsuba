@@ -19,6 +19,20 @@ class adRepository extends baseRepository {
 	}
 
 	/**
+	 * Every enabled ad, grouped by slot and ordered by ID within it.
+	 *
+	 * @return array<string, adEntry[]>
+	 */
+	public function getAllEnabledBySlot(): array {
+		$bySlot = [];
+		foreach ($this->queryAllAsClass("SELECT * FROM {$this->table} WHERE enabled = 1 ORDER BY id ASC", [], adEntry::class) as $ad) {
+			$bySlot[$ad->slot][] = $ad;
+		}
+
+		return $bySlot;
+	}
+
+	/**
 	 * Return a paginated page of ads, optionally filtered by slot.
 	 */
 	public function getPagedAds(int $limit, int $offset, ?string $slot = null): array {

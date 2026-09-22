@@ -11,6 +11,8 @@ use Kokonotsuba\post\Post;
 
 use function Puchiko\strings\sanitizeStr;
 
+require_once __DIR__ . '/emoteReplacer.php';
+
 class moduleMain extends abstractModuleMain {
 	use PostCommentListenerTrait;
 	use CommentExtrasListenerTrait;
@@ -23,6 +25,8 @@ class moduleMain extends abstractModuleMain {
 
     // The url of where emotes are stored in the static emote web directory
     private string $baseEmoteUrl;
+
+    private emoteReplacer $replacer;
 
 	public function getName(): string {
 		return 'Emote renderer';
@@ -39,6 +43,7 @@ class moduleMain extends abstractModuleMain {
 
         // get base emote url
         $this->baseEmoteUrl = $this->getConfig('STATIC_URL') . 'image/emote/';
+        $this->replacer = new emoteReplacer($this->emotes, $this->baseEmoteUrl);
 
         // add hook point listener for post
 		$this->listenPostComment('onRenderComment');
@@ -87,31 +92,6 @@ class moduleMain extends abstractModuleMain {
 	}
 
     private function onRenderComment(string &$comment, ?Post $post): void {
-        // modify rendered comment to include emotes
-        $this->searchAndReplaceEmotes($comment);
-    }
-
-    private function searchAndReplaceEmotes(string &$comment): void {
-        // loop through comment and str replace
-        foreach ($this->emotes as $emo=>$name) {
-            // build url
-            $url = $this->baseEmoteUrl . $name;
-
-            // perform replacement outside HTML tags, so emote codes that land
-            // inside a tag's markup (e.g. a bbcode link's href) aren't mangled
-            $comment = preg_replace_callback(
-                '/<[^>]+>|:(?:' . preg_quote($emo, '/') . '):/i',
-                function ($m) use ($emo, $url) {
-                    // if it's an HTML tag, return unchanged
-                    if ($m[0][0] === '<') {
-                        return $m[0];
-                    }
-                    // otherwise replace the emote
-                    return "<img title=\":$emo:\" class=\"emote\" src=\"$url\" alt=\":$emo:\">";
-                },
-                $comment
-            );
-
-        }
+        $comment = $this->replacer->replace($comment);
     }
 }

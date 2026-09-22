@@ -115,8 +115,8 @@ class defaultRoute {
 		// Try to resolve the thread UID directly from the post number
 		$thread_uid = $this->threadRepository->resolveThreadUidFromResno($this->board, $resno);
 
-		// If the thread UID is not valid, try to resolve from a child post
-		if (!$this->threadRepository->isThread($thread_uid)) {
+		// Resolved from the threads table, so a hit is a thread; a miss means a child post number
+		if (!$thread_uid) {
 			$post_uid = $this->postRepository->resolvePostUidFromPostNumber($this->board, $resno);
 
 			// get the post
@@ -124,7 +124,7 @@ class defaultRoute {
 
 			// throw error if the post still isn't found
 			if (!$post) {
-				throw new BoardException(_T('thread_not_found'));
+				throw new BoardException(_T('thread_not_found'), 404);
 			}
 
 			// Fetch the thread UID from the post's data
@@ -135,7 +135,7 @@ class defaultRoute {
 
 			// If still not valid, show error
 			if (!$this->threadRepository->isThread($newThreadUid)) {
-				throw new BoardException(_T('thread_not_found'));
+				throw new BoardException(_T('thread_not_found'), 404);
 			}
 
 			// then get replies per page config value

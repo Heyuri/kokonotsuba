@@ -7,6 +7,7 @@ use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\template\templateEngine;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfMetaTag;
+use function Kokonotsuba\libraries\getOrCreateCsrfToken;
 use function Puchiko\strings\sanitizeStr;
 
 function buildTagSelectOptions(array $tags, string $currentTag = '', string $emptyLabel = '--'): string {
@@ -97,7 +98,7 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 		$moduleEngine->dispatch('PlaceHolderIntercept', [&$pte_vals]);
 	}
 
-	$moduleEngine->dispatch('TopLinks', array(&$pte_vals['{$HOOKLINKS}'], !empty($resto)));
+	$moduleEngine->dispatch('TopLinks', array(&$pte_vals['{$HOOKLINKS}'], $resno));
 	$moduleEngine->dispatch('PageTop', array(&$pte_vals['{$BANNER}'])); // Hook: AboveTitle
 
 	// Hook: TopNavSection — the top of the nav section, above the board list.
@@ -169,6 +170,66 @@ function generateBoardStylesheets(array $styles, string $staticUrl, string $cssD
 	}
 
 	return $html;
+}
+
+/**
+ * Template values shared by every page that lists threads: a board index, a thread page and the
+ * overboard. The hooks that fill the thread area are dispatched here, since a page that shows
+ * threads is exactly a page that runs them.
+ *
+ * @param bool  $isThreadView A single thread rather than a list of them.
+ * @param bool  $isStaff      Staff session, which gets the delete form its CSRF token.
+ * @param array $options      'boardScopedHooks' also dispatches the board's own above/below thread
+ *                            area hooks, which draw chrome belonging to one board;
+ *                            'returnAfterDelete' keeps the delete form's func field, which sends
+ *                            the poster back to the page they deleted from;
+ *                            'dispatchPlaceHolderIntercept' runs that hook over these values.
+ */
+function buildThreadAreaTemplateValues(moduleEngine $moduleEngine, bool $isThreadView, bool $isStaff, array $options = []): array {
+	// The delete form's func field is what sends the poster back to the page they deleted from.
+	// A board page takes the template's own out and gives it to staff alone, so a visitor lands on
+	// the board; the overboard leaves it in place, so everyone comes back to the overboard.
+	$keepTemplateDeleteFunc = !empty($options['returnAfterDelete']);
+	$deleteFuncField = '<input type="hidden" name="func" value="delete">';
+
+	$pte_vals = [
+		'{$THREADS}' => '',
+		'{$THREADFRONT}' => '',
+		'{$THREADREAR}' => '',
+		'{$FORMDAT}' => '',
+		'{$DELFORM_CSRF}' => $isStaff
+			? '<input type="hidden" name="csrf_token" value="' . sanitizeStr(getOrCreateCsrfToken()) . '">'
+			: '',
+		'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel">' . _T('del_head'),
+		'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
+		'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
+		'{$DEL_PASS_TEXT}' => ($isStaff && !$keepTemplateDeleteFunc ? $deleteFuncField : '') . _T('del_pass'),
+		'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="' . _T('del_btn') . '">',
+		'{$IS_THREAD}' => $isThreadView,
+	];
+
+	if (!$keepTemplateDeleteFunc) {
+		$pte_vals[$deleteFuncField . ' <input type="password" class="inputtext" name="pwd" id="pwd2" value="">']
+			= '<input type="password" class="inputtext" name="pwd" id="pwd2" value="">';
+	}
+
+	$boardScoped = !empty($options['boardScopedHooks']);
+
+	if ($boardScoped) {
+		$moduleEngine->dispatch('AboveThreadArea', array(&$pte_vals['{$THREADFRONT}'], !$isThreadView));
+	}
+	$moduleEngine->dispatch('AboveThreadsGlobal', array(&$pte_vals['{$THREADFRONT}']));
+
+	if ($boardScoped) {
+		$moduleEngine->dispatch('BelowThreadArea', array(&$pte_vals['{$THREADREAR}'], !$isThreadView));
+	}
+	$moduleEngine->dispatch('BelowThreadsGlobal', array(&$pte_vals['{$THREADREAR}']));
+
+	if (!empty($options['dispatchPlaceHolderIntercept'])) {
+		$moduleEngine->dispatch('PlaceHolderIntercept', [&$pte_vals]);
+	}
+
+	return $pte_vals;
 }
 
 function prepareBaseTemplateValues(int $resno, bool $isStaff) {

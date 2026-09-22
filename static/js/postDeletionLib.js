@@ -166,6 +166,24 @@ function removeAttachmentWidgetActions(attachmentEl, actions) {
  * @param {Function} [options.onSuccess]       Called with parsed JSON data on success
  * @param {Object} [extraParams]   Additional key-value pairs to include in the POST body
  */
+/**
+ * Delete a post and purge it in one request. Nothing is kept to restore, so it asks first.
+ */
+function deleteAndPurgePost(postEl, url, params) {
+	if (!postEl || !url) return;
+
+	var what = postEl.classList.contains('op') ? 'this whole thread' : 'this post';
+	if (!window.confirm('Delete and purge ' + what + '? It cannot be restored.')) return;
+
+	sendModuleAction(url, {
+		successMessage: 'Post deleted and purged.',
+		errorMessage: 'Failed to delete and purge.',
+		onSuccess: function () {
+			fadeAndRemovePost(postEl);
+		}
+	}, params);
+}
+
 function sendModuleAction(url, options, extraParams) {
 	var csrfToken = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
 	var body = new URLSearchParams();

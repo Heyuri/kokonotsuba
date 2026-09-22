@@ -786,9 +786,14 @@ class banService {
 	 * @param int|null  $newExpiresAt Unix expiry to reduce the bans to; null lifts them outright.
 	 * @return int Appeals closed.
 	 */
-	public function approveAppeals(array $appealIds, ?int $accountId, string $staffNote, ?int $newExpiresAt = null): int {
+	/**
+	 * @return array{count: int, revoked: list<banEntry>} How many appeals were closed, and the
+	 *         bans lifted outright (none when the sentence was reduced instead).
+	 */
+	public function approveAppeals(array $appealIds, ?int $accountId, string $staffNote, ?int $newExpiresAt = null): array {
 		$appealIds = array_map('intval', $appealIds);
 		$banIds = [];
+		$revoked = [];
 
 		foreach ($appealIds as $appealId) {
 			$appeal = $this->banAppealRepository->findById($appealId);
@@ -799,14 +804,17 @@ class banService {
 		}
 
 		if ($newExpiresAt === null) {
-			$this->revokeBans($banIds, $accountId);
+			$revoked = $this->revokeBans($banIds, $accountId);
 		} else {
 			foreach ($banIds as $banId) {
 				$this->banRepository->setExpiry($banId, $newExpiresAt);
 			}
 		}
 
-		return $this->banAppealRepository->decideAppeals($appealIds, banAppealStatus::APPROVED, $accountId, $staffNote);
+		return [
+			'count' => $this->banAppealRepository->decideAppeals($appealIds, banAppealStatus::APPROVED, $accountId, $staffNote),
+			'revoked' => $revoked,
+		];
 	}
 
 	/** @param list<int> $appealIds */

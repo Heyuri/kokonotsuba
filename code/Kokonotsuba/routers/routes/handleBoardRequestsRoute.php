@@ -114,7 +114,19 @@ class handleBoardRequestsRoute {
 				throw new BoardException("Invalid storage directory, doesn't exist.");
 			}
 
+			// Other boards' pages link to this one by identifier and subdomain, so a change to
+			// either goes into every board's markup; a title change stays within its own.
+			$addressChanged = (is_string($fields['board_identifier']) && $fields['board_identifier'] !== $modifiedBoard->getBoardIdentifier())
+				|| (string) $fields['subdomain'] !== $modifiedBoard->getBoardSubdomain();
+
 			$this->boardService->editBoard($modifiedBoard, $fields);
+
+			// The title line and links are drawn into the static pages and cached threads.
+			$this->queueBoardRebuild(
+				$addressChanged
+					? array_map(fn($board) => $board->getBoardUID(), GLOBAL_BOARD_ARRAY)
+					: $modifiedBoard->getBoardUID()
+			);
 		} catch (Exception $e) {
 			http_response_code(500);
 			echo "Error: " . $e->getMessage();
@@ -215,9 +227,9 @@ class handleBoardRequestsRoute {
 	 * this request. The config is already committed by this point, so a rebuild that fails to
 	 * dispatch is logged and left for the Rebuild page; it never fails the save.
 	 */
-	private function queueBoardRebuild(int $boardUid): void {
+	private function queueBoardRebuild(int|array $boardUids): void {
 		try {
-			BackgroundTaskDispatcher::dispatch('rebuild_boards', ['boardUIDs' => [$boardUid]]);
+			BackgroundTaskDispatcher::dispatch('rebuild_boards', ['boardUIDs' => (array) $boardUids, 'dropFragments' => true]);
 		} catch (\Throwable $e) {
 			logError('[boardConfig] rebuild dispatch failed: ' . $e->getMessage());
 		}

@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\module_classes\traits\listeners;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\post\Post;
 use Kokonotsuba\board\board;
 use Kokonotsuba\thread\Thread;
@@ -202,6 +204,8 @@ trait PostControlHooksTrait {
 	 * single-page rebuild for replies.
 	 */
 	protected function rebuildBoardForPost(board $board, Post $post): void {
+		threadFragments::forgetPosts([$post]);
+
 		if ($post->isOp()) {
 			$board->rebuildBoard();
 		} else {

@@ -152,7 +152,7 @@ class globalConfigRoute {
 		}
 
 		try {
-			BackgroundTaskDispatcher::dispatch('rebuild_boards', ['boardUIDs' => $boardUids]);
+			BackgroundTaskDispatcher::dispatch('rebuild_boards', ['boardUIDs' => $boardUids, 'dropFragments' => true]);
 		} catch (Throwable $e) {
 			logError('[globalConfig] rebuild dispatch failed: ' . $e->getMessage());
 		}

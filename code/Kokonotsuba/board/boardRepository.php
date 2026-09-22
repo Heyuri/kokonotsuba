@@ -55,6 +55,15 @@ class boardRepository extends baseRepository {
 		$cacheKey = __METHOD__ . ':' . intval($uid);
 
 		return $this->cacheMethodResult($cacheKey, function () use ($uid) {
+			// the bootstrap has usually read every board already; take the row from there
+			foreach ([self::class . '::getAllRegularBoards', self::class . '::getAllBoards'] as $listKey) {
+				foreach (self::$boardResultCache[$listKey] ?? [] as $boardData) {
+					if ($boardData->getBoardUID() === intval($uid)) {
+						return $boardData;
+					}
+				}
+			}
+
 			return $this->findBy('board_uid', $uid, '\Kokonotsuba\board\boardData');
 		});
 	}
@@ -135,6 +144,15 @@ class boardRepository extends baseRepository {
 	 */
 	public function getAllListedBoardUIDs() {
 		return $this->cacheMethodResult(__METHOD__, function () {
+			// answered from the full list when the bootstrap has read it
+			$boards = self::$boardResultCache[self::class . '::getAllRegularBoards'] ?? null;
+			if ($boards !== null) {
+				return array_values(array_map(
+					fn(boardData $boardData) => $boardData->getBoardUID(),
+					array_filter($boards, fn(boardData $boardData) => $boardData->getBoardListed())
+				));
+			}
+
 			return $this->pluckAll('board_uid', 'listed', true);
 		});
 	}

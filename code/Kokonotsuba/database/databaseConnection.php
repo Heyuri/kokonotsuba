@@ -5,6 +5,7 @@ namespace Kokonotsuba\database;
 use Exception;
 use InvalidArgumentException;
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\debug\requestMetrics;
 use PDO;
 use PDOException;
 use RuntimeException;
@@ -64,22 +65,59 @@ class databaseConnection {
 			default:
 				throw new InvalidArgumentException("Unsupported driver: {$dbSettings['DATABASE_DRIVER']}");
 		}
-		// Return the PDO instance
 		try {
-			return new PDO($dsn, $dbSettings['DATABASE_USERNAME'], $dbSettings['DATABASE_PASSWORD'], [
+			$pdo = new PDO($dsn, $dbSettings['DATABASE_USERNAME'], $dbSettings['DATABASE_PASSWORD'], [
 				PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
 				PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
 			]);
 		} catch (PDOException $e) {
 			throw new RuntimeException('There was a problem connecting to the database.', 0, $e);
 		}
+
+		if ($dbSettings['DATABASE_DRIVER'] === 'mysql') {
+			self::disableSnapshotIsolation($pdo);
+		}
+
+		return $pdo;
+	}
+
+	/**
+	 * MariaDB 11.6+ fails a locking read or an update of a row that changed since the
+	 * transaction's snapshot (error 1020), where older servers and MySQL wait and read the latest.
+	 * Transactions here read before they lock, so two posters at once would lose one of them.
+	 * Servers without the variable already behave the old way.
+	 */
+	private static function disableSnapshotIsolation(PDO $pdo): void {
+		try {
+			$pdo->exec('SET SESSION innodb_snapshot_isolation = OFF');
+		} catch (PDOException) {
+			// unknown variable: nothing to switch off
+		}
 	}
 
 	// Public method to execute a query (for INSERT, UPDATE, DELETE)
 	public function execute(string $query, array $params = []) {
-		$stmt = $this->pdo->prepare($query);
-		$this->bindTypedParams($stmt, $params);
-		return $stmt->execute();
+		$this->run($query, $params);
+		return true;
+	}
+
+	/**
+	 * Prepare, bind and execute one statement, timed for the debug bar.
+	 *
+	 * Every query goes through here, so the request's statement count and time are complete.
+	 * PDO throws on failure (ERRMODE_EXCEPTION), which is why execute() can answer true.
+	 */
+	private function run(string $query, array $params): \PDOStatement {
+		$started = hrtime(true);
+		try {
+			$stmt = $this->pdo->prepare($query);
+			$this->bindTypedParams($stmt, $params);
+			$stmt->execute();
+		} finally {
+			requestMetrics::recordQuery((hrtime(true) - $started) / 1e9, $query);
+		}
+
+		return $stmt;
 	}
 
 	/**
@@ -93,10 +131,7 @@ class databaseConnection {
 	 * @return int Rows affected by the statement.
 	 */
 	public function executeWithRowCount(string $query, array $params = []): int {
-		$stmt = $this->pdo->prepare($query);
-		$this->bindTypedParams($stmt, $params);
-		$stmt->execute();
-		return $stmt->rowCount();
+		return $this->run($query, $params)->rowCount();
 	}
 
 	// Bind parameters with proper PDO types (int params as PARAM_INT so LIMIT/OFFSET work)
@@ -135,53 +170,33 @@ class databaseConnection {
 	}
 
 	public function fetchAllAsClass(string $query, array $params = [], string $className = '') {
-		$stmt = $this->pdo->prepare($query);
-		$this->bindTypedParams($stmt, $params);
-		$stmt->execute();
-		return $stmt->fetchAll(PDO::FETCH_CLASS, $className);
+		return $this->run($query, $params)->fetchAll(PDO::FETCH_CLASS, $className);
 	}
 
 	public function fetchAllAsArray(string $query, array $params = []) {
-		$stmt = $this->pdo->prepare($query);
-		$this->bindTypedParams($stmt, $params);
-		$stmt->execute();
-		return $stmt->fetchAll(PDO::FETCH_ASSOC);
+		return $this->run($query, $params)->fetchAll(PDO::FETCH_ASSOC);
 	}
 	
 	public function fetchAllAsIndexArray(string $query, array $params = []) {
-		$stmt = $this->pdo->prepare($query);
-		$this->bindTypedParams($stmt, $params);
-		$stmt->execute();
-		return $stmt->fetchAll(PDO::FETCH_NUM);
+		return $this->run($query, $params)->fetchAll(PDO::FETCH_NUM);
 	}
 	
 	public function fetchAsClass(string $query, array $params = [], string $className = '') {
-		$stmt = $this->pdo->prepare($query);
-		$this->bindTypedParams($stmt, $params);
-		$stmt->execute();
+		$stmt = $this->run($query, $params);
 		$stmt->setFetchMode(PDO::FETCH_CLASS, $className);
 		return $stmt->fetch();
 	}
 
 	public function fetchColumn(string $query, array $params = [], int $columnIndex = 0) {
-		$stmt = $this->pdo->prepare($query);
-		$this->bindTypedParams($stmt, $params);
-		$stmt->execute();
-		return $stmt->fetchColumn($columnIndex);
+		return $this->run($query, $params)->fetchColumn($columnIndex);
 	}
 
 	public function fetchOne(string $query, array $params = [], int $fetchMode = PDO::FETCH_ASSOC) {
-		$stmt = $this->pdo->prepare($query);
-		$this->bindTypedParams($stmt, $params);
-		$stmt->execute();
-		return $stmt->fetch($fetchMode);
+		return $this->run($query, $params)->fetch($fetchMode);
 	}
 
 	public function fetchValue(string $query, array $params = [], int $columnIndex = 0) {
-		$stmt = $this->pdo->prepare($query);
-		$this->bindTypedParams($stmt, $params);
-		$stmt->execute();
-		return $stmt->fetchColumn($columnIndex);
+		return $this->run($query, $params)->fetchColumn($columnIndex);
 	}
 
 	public function lastInsertId() {
@@ -200,8 +215,7 @@ class databaseConnection {
 					  WHERE TABLE_SCHEMA = :databaseName 
 					  AND TABLE_NAME = :tableName";
 	
-			$stmt = $this->pdo->prepare($query);
-			$stmt->execute([
+			$stmt = $this->run($query, [
 				':databaseName' => $this->dbName,
 				':tableName' => $tableName,
 			]);

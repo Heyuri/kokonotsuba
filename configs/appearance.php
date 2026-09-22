@@ -25,10 +25,11 @@ return [
 
 	'TOP_THREAD_PAGER'   => boolField('config_label_TOP_THREAD_PAGER', false, 'config_desc_TOP_THREAD_PAGER'),
 	'RENDER_REPLY_NUMBER'=> boolField('config_label_RENDER_REPLY_NUMBER', true, 'config_desc_RENDER_REPLY_NUMBER'),
-	'REPLIES_PER_PAGE'   => intField('config_label_REPLIES_PER_PAGE', 200, 'config_desc_REPLIES_PER_PAGE'),
+	// Page sizes divide: 0 is not a size but a crash in every pager and quote link.
+	'REPLIES_PER_PAGE'   => intField('config_label_REPLIES_PER_PAGE', 200, 'config_desc_REPLIES_PER_PAGE', 1),
 
-	'PAGE_DEF'           => intField('config_label_PAGE_DEF', 15, 'config_desc_PAGE_DEF'),
-	'ADMIN_PAGE_DEF'     => intField('config_label_ADMIN_PAGE_DEF', 100, 'config_desc_ADMIN_PAGE_DEF'),
+	'PAGE_DEF'           => intField('config_label_PAGE_DEF', 15, 'config_desc_PAGE_DEF', 1),
+	'ADMIN_PAGE_DEF'     => intField('config_label_ADMIN_PAGE_DEF', 100, 'config_desc_ADMIN_PAGE_DEF', 1),
 	'RE_DEF'             => intField('config_label_RE_DEF', 5, 'config_desc_RE_DEF'),
 	'RE_PAGE_DEF'        => intField('config_label_RE_PAGE_DEF', 1000, 'config_desc_RE_PAGE_DEF'),
 	'MAX_RES'            => intField('config_label_MAX_RES', 1000, 'config_desc_MAX_RES'),
