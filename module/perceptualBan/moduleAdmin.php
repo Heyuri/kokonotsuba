@@ -10,6 +10,7 @@ require_once __DIR__ . '/perceptualHasher.php';
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 use Kokonotsuba\post\Post;
@@ -23,6 +24,7 @@ use function Kokonotsuba\Modules\perceptualBan\getPerceptualBanService;
 use function Kokonotsuba\Modules\perceptualBan\getPerceptualHasher;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use AuditableTrait;
 	use PostControlHooksTrait;
 
 	private perceptualBanService $perceptualBanService;
@@ -50,6 +52,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->listenProtected('ModerateAttachmentWidget', function(array &$widgetArray, array &$fileData) {
 			$this->onRenderAttachmentWidget($widgetArray, $fileData);
 		});
+		// makes an enforced file ban clickable in the action log
+		$this->registerActionReference('perceptualban', fn(string $id): string => $this->getModulePageURL(['id' => (int) $id], false));
+
 		$this->registerLinksAboveBarHook(_T('admin_nav_perceptual_ban_title'), $this->moduleUrl, _T('admin_nav_perceptual_ban'), 'files');
 	}
 
@@ -252,8 +257,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		$page = (int) ($_GET['page'] ?? 0);
 		$threshold = $this->getModuleConfig('HAMMING_THRESHOLD', 10);
 
-		$entries = $this->perceptualBanService->getEntries($entriesPerPage, $page);
-		$totalEntries = $this->perceptualBanService->getTotalEntries();
+		$entryId = isset($_GET['id']) ? (int) $_GET['id'] : null;
+
+		$entries = $this->perceptualBanService->getEntries($entriesPerPage, $page, $entryId);
+		$totalEntries = $this->perceptualBanService->getTotalEntries($entryId);
 
 		$templateRows = [];
 		foreach ($entries as $entry) {

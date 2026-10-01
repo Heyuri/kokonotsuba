@@ -347,7 +347,7 @@ $language['admin_nav_live_frontend'] = 'Canlı arayüz';
 $language['admin_nav_return'] = 'Geri dön';
 
 // fileBan module
-$language['file_ban_blocked'] = 'Yükleme başarısız.<br> Dosyaya izin verilmiyor.';
+$language['file_ban_blocked'] = 'Yükleme başarısız.<br> Dosyaya izin verilmiyor. (%s)';
 $language['file_ban_btn_title'] = 'Bu dosya hash\'ini yasakla';
 $language['file_ban_bd_btn_title'] = 'Dosya hash\'ini yasakla ve sil';
 $language['file_ban_invalid_action'] = 'Dosya yasaklama işlemi geçersiz.';

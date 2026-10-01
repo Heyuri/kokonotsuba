@@ -468,7 +468,7 @@ $language['admin_nav_live_frontend'] = 'Live frontend';
 $language['admin_nav_return'] = 'Return';
 
 // fileBan module
-$language['file_ban_blocked'] = 'Upload failed.<br> File not allowed.';
+$language['file_ban_blocked'] = 'Upload failed.<br> File not allowed. (%s)';
 $language['file_ban_btn_title'] = 'Ban this file hash';
 $language['file_ban_bd_btn_title'] = 'Ban file hash and delete';
 $language['file_ban_invalid_action'] = 'Invalid file ban action.';

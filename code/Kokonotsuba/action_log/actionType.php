@@ -24,6 +24,7 @@ enum actionType: string {
 	case BAN_REVOKE = 'ban.revoke';
 	case BAN_APPEAL = 'ban.appeal';
 	case BAN_TRIGGER = 'ban.trigger';
+	case FILE_BAN_TRIGGER = 'file_ban.trigger';
 
 	case ACCOUNT_LOGIN = 'account.login';
 	case ACCOUNT_LOGIN_FAILED = 'account.login_failed';
@@ -61,6 +62,7 @@ enum actionType: string {
 			self::BAN_REVOKE => 'Ban revoked',
 			self::BAN_APPEAL => 'Ban appeal',
 			self::BAN_TRIGGER => 'Ban enforced',
+			self::FILE_BAN_TRIGGER => 'File ban enforced',
 			self::ACCOUNT_LOGIN => 'Logged in',
 			self::ACCOUNT_LOGIN_FAILED => 'Failed log-in',
 			self::ACCOUNT_CREATE => 'Account created',
@@ -86,7 +88,7 @@ enum actionType: string {
 			self::POST_PURGE, self::POST_EDIT, self::POST_MOVE, self::POST_FLAG => actionTypeGroup::POST,
 
 			self::BAN_ISSUE, self::BAN_EDIT, self::BAN_REVOKE, self::BAN_APPEAL,
-			self::BAN_TRIGGER => actionTypeGroup::BAN,
+			self::BAN_TRIGGER, self::FILE_BAN_TRIGGER => actionTypeGroup::BAN,
 
 			self::ACCOUNT_LOGIN, self::ACCOUNT_LOGIN_FAILED, self::ACCOUNT_CREATE,
 			self::ACCOUNT_PASSWORD => actionTypeGroup::ACCOUNT,

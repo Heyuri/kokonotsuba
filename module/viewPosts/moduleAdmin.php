@@ -225,9 +225,21 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$label = substr($hash, 0, visitorTokenSigner::DISPLAY_LENGTH);
 
-		return ' <span class="visitorToken"><i>(<a class="visitorTokenLink" href="'
+		return ' <span class="visitorToken"><i>(<a class="visitorTokenLink" style="'
+			. $this->visitorTokenStyle($hash) . '" href="'
 			. htmlspecialchars($this->generateViewTokenUrl($hash)) . '" title="'
 			. htmlspecialchars(_T('view_posts_by_browser')) . '">'
 			. htmlspecialchars($label) . '</a>)</i></span>';
+	}
+
+	/**
+	 * Inline style giving each token its own background colour, so posts by one browser stand out.
+	 *
+	 * Hue comes from the hash; lightness stays fixed so dark text reads on every theme.
+	 */
+	private function visitorTokenStyle(string $hash): string {
+		$hue = hexdec(substr(md5($hash), 0, 4)) % 360;
+
+		return "background-color:hsl({$hue},70%,80%);color:#000;padding:0 2px;border-radius:2px";
 	}
 }

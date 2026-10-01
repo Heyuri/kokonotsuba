@@ -25,7 +25,7 @@ class perceptualBanRepository extends baseRepository {
 	 */
 	public function findMatchingBans(int $hashInt, int $threshold): array {
 		$query = "
-			SELECT id, phash, BIT_COUNT(phash ^ :hash) AS distance
+			SELECT id, phash, phash_hex, BIT_COUNT(phash ^ :hash) AS distance
 			FROM {$this->table}
 			WHERE BIT_COUNT(phash ^ :hash2) <= :threshold
 			ORDER BY distance ASC
@@ -63,15 +63,17 @@ class perceptualBanRepository extends baseRepository {
 	 * @param int $offset Row offset for pagination
 	 * @return array Ban rows ordered newest-first
 	 */
-	public function getEntries(int $limit, int $offset): array {
+	public function getEntries(int $limit, int $offset, ?int $entryId = null): array {
+		$where = $entryId === null ? '' : 'WHERE pb.id = :id';
 		$query = "
 			SELECT pb.*, a.username AS added_by_username
 			FROM {$this->table} pb
 			LEFT JOIN {$this->accountTable} a ON a.id = pb.added_by
+			{$where}
 			ORDER BY pb.id DESC
 		";
 
-		$params = [];
+		$params = $entryId === null ? [] : [':id' => $entryId];
 		$this->paginate($query, $params, $limit, $offset);
 
 		return $this->queryAll($query, $params);
@@ -82,8 +84,8 @@ class perceptualBanRepository extends baseRepository {
 	 *
 	 * @return int Total count
 	 */
-	public function getTotalEntries(): int {
-		return $this->count();
+	public function getTotalEntries(?int $entryId = null): int {
+		return $entryId === null ? $this->count() : $this->count('id = :id', [':id' => $entryId]);
 	}
 
 	/**
