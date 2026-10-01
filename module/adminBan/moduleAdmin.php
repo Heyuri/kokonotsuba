@@ -965,19 +965,14 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	/**
-	 * The ban's length as a duration string the form can take back.
-	 *
-	 * Rendered in hours so an odd length survives a round trip through the form without being
-	 * rounded into a different sentence.
+	 * The ban's length as a duration string the form can take back; see banDuration::format().
 	 */
 	private function buildEditDuration(banEntry $ban): string {
 		if ($ban->expiresAt === null) {
 			return '';
 		}
 
-		$hours = max(1, (int) round(($ban->expiresAt - $ban->filedAt) / 3600));
-
-		return $hours . 'h';
+		return banDuration::format($ban->expiresAt - $ban->filedAt);
 	}
 
 	/** Turn the stored <br /> back into newlines so a textarea round-trips cleanly. */

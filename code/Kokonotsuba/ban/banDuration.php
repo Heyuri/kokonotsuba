@@ -31,6 +31,41 @@ class banDuration {
 	}
 
 	/**
+	 * A length written back the way the form takes it, so a ban's own page shows "3d" rather
+	 * than "72h". Only the expiry is stored, not what was typed, so this is the plainest string
+	 * that reads back to the same length: one unit when one divides it ("10d", "2w"), otherwise
+	 * the largest units first ("1y2m", "1d12h"). What is left under a day is rounded to the hour,
+	 * the form's smallest unit; a month is not a whole number of hours, so nothing is rounded
+	 * before the larger units are taken out.
+	 */
+	public static function format(int $seconds): string {
+		$seconds = max(0, $seconds);
+
+		foreach (['y', 'm', 'w', 'd'] as $unit) {
+			if ($seconds > 0 && $seconds % self::UNITS[$unit] === 0) {
+				return ($seconds / self::UNITS[$unit]) . $unit;
+			}
+		}
+
+		$parts = '';
+
+		foreach (['y', 'm', 'w', 'd'] as $unit) {
+			if ($seconds >= self::UNITS[$unit]) {
+				$parts .= intdiv($seconds, self::UNITS[$unit]) . $unit;
+				$seconds %= self::UNITS[$unit];
+			}
+		}
+
+		$hours = (int) round($seconds / self::UNITS['h']);
+
+		if ($hours > 0 || $parts === '') {
+			$parts .= max(1, $hours) . 'h';
+		}
+
+		return $parts;
+	}
+
+	/**
 	 * Whether the string is an explicit zero ("0", "0d"), which the ban form reads as a warning.
 	 *
 	 * Blank or unparseable input is not the same thing: it means nothing was said about the

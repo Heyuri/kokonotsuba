@@ -24,6 +24,7 @@ use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
+use function Puchiko\json\sendJsonResponse;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
@@ -161,6 +162,18 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function ModulePage() {
+		// The unread poll runs in the background on every page, so a ban answers it with nothing
+		// rather than being shown, logged and marked seen on each tick, where no one reads it.
+		if (!$this->moduleContext->request->isPost() && $this->moduleContext->request->hasParameter('notifications')) {
+			if ($this->findBlockingBan(banCheckpoint::PM) !== null) {
+				sendJsonResponse(['unreadCount' => 0]);
+				return;
+			}
+
+			$this->messageRequestHandler->handleGetRequest();
+			return;
+		}
+
 		// check if the user is banned from private messages
 		$this->assertNotBanned(banCheckpoint::PM);
 
