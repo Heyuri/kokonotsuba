@@ -19,6 +19,7 @@ use Kokonotsuba\module_classes\traits\IndicatorTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\module_classes\traits\listeners\StaffAlertsListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\StaffNavListenerTrait;
+use Kokonotsuba\post\managePostsLink;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
@@ -99,7 +100,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// notice" - so the fallback is applied here, where the static paths are known.
 		$configuredMessage = trim((string) $this->getModuleConfig('DEFAULT_BAN_MESSAGE', ''));
 		$this->defaultBanMessage = $configuredMessage !== ''
-			? str_replace('{$BAN_IMAGE}', $this->pickBanImage()->url, $configuredMessage)
+			? str_replace('{$BAN_IMAGE}', $this->banHammer()->url, $configuredMessage)
 			: $this->stockBanNotice();
 
 		$this->banPolicy = new banPolicy(
@@ -151,9 +152,15 @@ class moduleAdmin extends abstractModuleAdmin {
 	 * Kept on ModuleAdminHeader rather than joining the script above: it carries a live CSRF
 	 * token, and ModuleHeader also runs while static HTML is generated, where a baked-in token
 	 * would be stale for whoever reads that page later.
+	 *
+	 * The window only ever opens on a post, so the browser tie is drawn usable here rather than
+	 * left for ban.js to enable once the post uid is filled in.
 	 */
 	private function onGenerateBanWindowTemplate(string &$moduleHeader): void {
-		$moduleHeader .= $this->generateTemplate('banFormTemplate', $this->renderBanForm(0, ''));
+		$moduleHeader .= $this->generateTemplate('banFormTemplate', $this->renderBanForm(0, '', null, [
+			'{$TOKEN_DISABLED}' => '',
+			'{$DESC_TOKEN}' => sanitizeStr(_T('ban_form_desc_token')),
+		]));
 	}
 
 	/**
@@ -482,25 +489,20 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	/** The built-in "(USER WAS BANNED FOR THIS POST)" notice, banhammer and all. */
 	private function stockBanNotice(): string {
-		$image = $this->pickBanImage();
+		$image = $this->banHammer();
 
 		return '<p class="warning">(USER WAS BANNED FOR THIS POST) <img class="banIcon icon" alt="banhammer" src="'
 			. $image->url . '" ' . $image->dimensionAttributes() . '></p>';
 	}
 
-	/**
-	 * One of the images in static/image/ban/, or the stock hammer when there are none.
-	 *
-	 * Drawn once per request, so the picture is settled before the form is rendered and the ban
-	 * keeps whatever the moderator was shown.
-	 */
-	private function pickBanImage(): banImage {
+	/** hammer.gif, which every public notice carries; the rotation is the ban page's alone. */
+	private function banHammer(): banImage {
 		$picker = new banImagePicker(
 			(string) $this->getConfig('STATIC_PATH'),
 			(string) $this->getConfig('STATIC_URL')
 		);
 
-		return $picker->random();
+		return $picker->hammer();
 	}
 
 	/**
@@ -1400,9 +1402,24 @@ class moduleAdmin extends abstractModuleAdmin {
 			return sanitizeStr(_T('ban_ip_hidden'));
 		}
 
-		return '<a class="banIpLink" href="' . sanitizeStr($this->buildIpFilterUrl($ipPattern))
+		if ($ipPattern === '') {
+			return '';
+		}
+
+		$html = '<a class="banIpLink" href="' . sanitizeStr($this->buildIpFilterUrl($ipPattern))
 			. '" title="' . sanitizeStr(_T('ban_ip_filter_title')) . '">'
 			. sanitizeStr($ipPattern) . '</a>';
+
+		// a wildcard or anonymized pattern has no single host to look up
+		if (filter_var($ipPattern, FILTER_VALIDATE_IP)) {
+			$html .= ' <a target="_blank" href="https://whatismyipaddress.com/ip/' . rawurlencode($ipPattern) . '" title="Resolve hostname">'
+				. '<img height="12" src="' . sanitizeStr((string) $this->getConfig('STATIC_URL')) . 'image/glass.png" alt="🔎"></a>';
+		}
+
+		// manage posts matches wildcards itself, so every pattern gets this one
+		$postsUrl = managePostsLink::forIp($this->moduleContext->request->getCurrentUrlNoQuery(), $ipPattern);
+
+		return $html . ' <a href="' . sanitizeStr($postsUrl) . '" title="See all posts">★</a>';
 	}
 
 	/**

@@ -20,10 +20,15 @@ use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostWidgetListenerTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\post\textFormat;
+use Kokonotsuba\userRole;
+
+use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\getOrCreateCsrfToken;
+use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Kokonotsuba\libraries\html\buildTagSelectOptions;
 use function Kokonotsuba\libraries\html\getPageForPostPosition;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
@@ -38,15 +43,12 @@ use function Puchiko\strings\sanitizeStr;
 use function Puchiko\strings\strlenUnicode;
 
 /**
- * Reader-facing half of the edit module: editing your own post with its password.
+ * The post editor, for readers and staff alike.
  *
- * It is the moderator editor with one thing added and one thing taken away. Added is the post
- * password, which is the only thing standing in for an identity here — the same secret that
- * deletes a post, checked the same way. Taken away is the reach: a reader edits one post, on its
- * own board, while it is still young enough, and never a deleted one.
- *
- * The window is the moderator's window (static/js/module/postEdit.js registers both), so the two
- * cannot drift apart, and the plain form page below it is what people without JS get.
+ * There is one menu entry, one form and one endpoint; who is asking decides the rules. A reader
+ * proves the post is theirs with its password and edits one live post, on its own board, while it
+ * is still young enough. Staff holding CAN_EDIT_POST edit any post, deleted ones included, with no
+ * password, no time limits and the attachments always open. Edit history lives in moduleAdmin.
  */
 class moduleMain extends abstractModuleMain {
 	use AuditableTrait;
@@ -58,8 +60,8 @@ class moduleMain extends abstractModuleMain {
 	/** GET pageName that answers with the post's editable fields as JSON. */
 	private const FIELDS_PAGE = 'fields';
 
-	/** The post menu action this module's entry carries; postEdit.js opens the window on it. */
-	private const WIDGET_ACTION = 'editOwnPost';
+	/** The post menu action the edit entry carries; postEdit.js opens the window on it. */
+	private const WIDGET_ACTION = 'editPost';
 
 	private editAttachments $attachments;
 	private postRevisionService $revisions;
@@ -73,12 +75,6 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		// Nothing is hooked when the board has reader editing off, so no menu entry, no link and
-		// no form ever appear — ModulePage() refuses on its own for anyone holding an old URL.
-		if (!$this->userEditingEnabled()) {
-			return;
-		}
-
 		$this->attachments = new editAttachments($this->moduleContext);
 
 		$this->revisions = new postRevisionService(new postRevisionRepository(
@@ -87,9 +83,26 @@ class moduleMain extends abstractModuleMain {
 			$this->moduleContext->getTableName('ACCOUNT_TABLE')
 		));
 
+		$this->listenModuleHeader('onGenerateModuleHeader');
+
+		$engine = $this->moduleContext->moduleEngine;
+
+		$engine->addRoleProtectedListener($this->getStaffEditRole(), 'ModeratePostWidget', function(array &$widgetArray, Post &$post) {
+			$this->onRenderModerateWidget($widgetArray, $post);
+		});
+
+		// noscript fallback in the admin controls row
+		$engine->addRoleProtectedListener($this->getStaffEditRole(), 'PostAdminControls', function(string &$modControlSection, Post &$post) {
+			$modControlSection .= generateModerateButton($this->getStaffEditUrl($post->getUid()), 'E', _T('edit_post'), 'adminEditFunction', true);
+		});
+
+		// With reader editing off the entry is staff-only, and ModulePage() refuses readers holding an old URL.
+		if (!$this->userEditingEnabled()) {
+			return;
+		}
+
 		$this->listenPostWidget('onRenderPostWidget');
 		$this->listenPost('onRenderPost');
-		$this->listenModuleHeader('onGenerateModuleHeader');
 	}
 
 	// ─── Frontend hooks ───────────────────────────────────────────
@@ -109,6 +122,18 @@ class moduleMain extends abstractModuleMain {
 			_T('edit_own_post'),
 			''
 		);
+	}
+
+	/**
+	 * Staff get the same entry on every post. Where the reader entry is already drawn it covers
+	 * them too, since the endpoint decides by role, so it is only added where that one is not.
+	 */
+	private function onRenderModerateWidget(array &$widgetArray, Post $post): void {
+		if ($this->userEditingEnabled() && $this->isReaderEditable($post)) {
+			return;
+		}
+
+		$widgetArray[] = $this->buildWidgetEntry($this->getStaffEditUrl($post->getUid()), self::WIDGET_ACTION, _T('edit_own_post'), '');
 	}
 
 	/**
@@ -136,17 +161,19 @@ class moduleMain extends abstractModuleMain {
 		$this->includeScript('postEdit.js', $moduleHeader);
 
 		$formHtml = $this->moduleContext->adminPageRenderer->ParseBlock(
-			'USER_POST_EDIT_FORM',
+			'POST_EDIT_FORM',
 			$this->buildFormValues()
 		);
 
-		$moduleHeader .= $this->generateTemplate('userPostEditFormTemplate', $formHtml);
+		$moduleHeader .= $this->generateTemplate('postEditFormTemplate', $formHtml);
 	}
 
 	// ─── Routing ──────────────────────────────────────────────────
 
 	public function ModulePage(): void {
-		if (!$this->userEditingEnabled()) {
+		$isStaff = $this->isStaffEditor();
+
+		if (!$isStaff && !$this->userEditingEnabled()) {
 			throw new BoardException(_T('edit_own_disabled'), 403);
 		}
 
@@ -157,16 +184,29 @@ class moduleMain extends abstractModuleMain {
 
 		if ($request->isPost()) {
 			requirePostWithCsrf($request);
-			$this->handleEditRequest((int)$postUid);
+
+			if ($isStaff) {
+				$this->handleStaffEditRequest((int)$postUid);
+			} else {
+				$this->handleEditRequest((int)$postUid);
+			}
 			return;
 		}
 
 		if ((string)$request->getParameter('pageName', 'GET', '') === self::FIELDS_PAGE) {
-			$this->sendFields((int)$postUid);
+			if ($isStaff) {
+				$this->sendStaffFields((int)$postUid);
+			} else {
+				$this->sendFields((int)$postUid);
+			}
 			return;
 		}
 
-		$this->drawEditFormPage((int)$postUid);
+		if ($isStaff) {
+			$this->drawStaffEditFormPage((int)$postUid);
+		} else {
+			$this->drawEditFormPage((int)$postUid);
+		}
 	}
 
 	/**
@@ -187,7 +227,7 @@ class moduleMain extends abstractModuleMain {
 
 		$this->assertEditable($post);
 
-		$contentHtml = $this->moduleContext->adminPageRenderer->ParseBlock('USER_POST_EDIT_FORM', $this->buildFormValues(
+		$contentHtml = $this->moduleContext->adminPageRenderer->ParseBlock('POST_EDIT_FORM', $this->buildFormValues(
 			$post->getUid(),
 			$post->getNumber(),
 			sanitizeStr($post->getName()),
@@ -204,6 +244,37 @@ class moduleMain extends abstractModuleMain {
 			'{$PAGE_CONTENT}' => $contentHtml,
 			'{$PAGER}' => '',
 		], false);
+	}
+
+	/** Staff fields: no attachment window, and the window told to drop the password row. */
+	private function sendStaffFields(int $postUid): void {
+		$post = $this->getStaffPost($postUid);
+
+		renderPrivateJsonPage(
+			$this->buildFieldsPayload($post, $this->attachments->payload($post))
+			+ ['csrfToken' => getOrCreateCsrfToken(), 'staffEdit' => true]
+		);
+	}
+
+	/** The plain edit form for staff, without the password row. */
+	private function drawStaffEditFormPage(int $postUid): void {
+		$post = $this->getStaffPost($postUid);
+
+		$contentHtml = $this->moduleContext->adminPageRenderer->ParseBlock('POST_EDIT_FORM', $this->buildFormValues(
+			$post->getUid(),
+			$post->getNumber(),
+			sanitizeStr($post->getName()),
+			sanitizeStr($post->getEmail()),
+			sanitizeStr($post->getSubject()),
+			sanitizeStr(editPostFields::commentToEditableText($post->getComment(), $post->getTextFormat())),
+			buildTagSelectOptions($this->getConfig('TAGS', []), $post->getTag()),
+			getCsrfHiddenInput(),
+			$this->attachments->enabledFor($post),
+			$this->attachments->renderList($post),
+			false
+		));
+
+		echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $contentHtml], true);
 	}
 
 	// ─── Saving an edit ───────────────────────────────────────────
@@ -254,6 +325,57 @@ class moduleMain extends abstractModuleMain {
 		});
 
 		$this->logAction("Edited own post No.{$editedPost->getNumber()}", $editedPost->getBoardUID(), actionType::POST_EDIT);
+
+		$this->finishEdit($editedPost);
+	}
+
+	/**
+	 * Save a staff edit: no password, no time limits and no field limits, and the attachments
+	 * open on any post the board takes files on. A field the form did not send is left alone.
+	 */
+	private function handleStaffEditRequest(int $postUid): void {
+		$request = $this->moduleContext->request;
+		$accountId = (int)$this->moduleContext->currentUserId;
+
+		// worked out before anything is written, so a refused upload leaves the post untouched
+		$attachmentPlan = $this->attachments->plan($this->getStaffPost($postUid));
+
+		$editedPost = null;
+
+		$this->moduleContext->transactionManager->run(function() use ($request, $postUid, $accountId, $attachmentPlan, &$editedPost) {
+			$post = $this->getStaffPost($postUid);
+
+			$fields = array_filter([
+				'name' => $request->getParameter('postUserName', 'POST'),
+				'email' => $request->getParameter('postEmail', 'POST'),
+				'sub' => $request->getParameter('subject', 'POST'),
+				'com' => $request->getParameter('comment', 'POST'),
+				'tag' => $request->getParameter('tag', 'POST'),
+			], static fn($value) => $value !== null);
+
+			if (isset($fields['com'])) {
+				$fields['com'] = editPostFields::editableTextToComment((string)$fields['com'], $post->getTextFormat());
+			}
+
+			$this->revisions->record($post, $accountId);
+
+			if ($fields) {
+				$this->moduleContext->postRepository->updatePost($postUid, $fields);
+			}
+
+			$this->attachments->commit($post, $attachmentPlan, $accountId);
+
+			$editedPost = $this->getStaffPost($postUid);
+		});
+
+		$this->logAction("Edited post No.{$editedPost->getNumber()}", $editedPost->getBoardUID() ?? GLOBAL_BOARD_UID, actionType::POST_EDIT);
+
+		$this->finishEdit($editedPost);
+	}
+
+	/** Answer a saved edit: the re-rendered post for the window, or a redirect back to it. */
+	private function finishEdit(Post $editedPost): void {
+		$postUid = $editedPost->getUid();
 
 		if ($this->moduleContext->request->isAjax()) {
 			// built first: rendering a post rewrites its comment in place with the quote links,
@@ -428,6 +550,36 @@ class moduleMain extends abstractModuleMain {
 		return (bool)$this->getModuleConfig('ALLOW_USER_EDIT', true);
 	}
 
+	private function getStaffEditRole(): userRole {
+		return $this->getConfig('AuthLevels.CAN_EDIT_POST', userRole::LEV_MODERATOR);
+	}
+
+	/** Whether the viewer edits as staff rather than as a poster. */
+	private function isStaffEditor(): bool {
+		return getRoleLevelFromSession()->isAtLeast($this->getStaffEditRole());
+	}
+
+	/**
+	 * Fetch a post for staff, deleted ones included where the viewer may see them.
+	 */
+	private function getStaffPost(int $postUid): Post {
+		$post = $this->moduleContext->postRepository->getPostByUID(
+			$postUid,
+			$this->moduleContext->postRenderingPolicy->viewDeleted()
+		);
+
+		validatePostInput($post, false);
+
+		return $post;
+	}
+
+	/**
+	 * Edit URL for staff, against the current script: staff edit from pages listing every board.
+	 */
+	private function getStaffEditUrl(int $postUid): string {
+		return $this->getModulePageURL(['postUid' => $postUid], false, true);
+	}
+
 	/**
 	 * Whether this post's text is safe to hand a reader an editor for.
 	 *
@@ -463,9 +615,10 @@ class moduleMain extends abstractModuleMain {
 	 * The post as the edit form wants it: the stored values, with a legacy comment's <br> turned
 	 * back into newlines so the textarea shows lines rather than markup.
 	 *
+	 * @param array|null $attachments The attachment half, or null for the reader's.
 	 * @return array<string, mixed> JSON payload.
 	 */
-	private function buildFieldsPayload(Post $post): array {
+	private function buildFieldsPayload(Post $post, ?array $attachments = null): array {
 		return [
 			'postUid' => $post->getUid(),
 			'postNumber' => $post->getNumber(),
@@ -475,7 +628,7 @@ class moduleMain extends abstractModuleMain {
 			'comment' => editPostFields::commentToEditableText($post->getComment(), $post->getTextFormat()),
 			'tag' => $post->getTag(),
 			'textFormat' => $post->getTextFormat()->value,
-		] + $this->attachmentPayload($post);
+		] + ($attachments ?? $this->attachmentPayload($post));
 	}
 
 	/**
@@ -493,8 +646,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	/**
-	 * Template values for USER_POST_EDIT_FORM. Filled in twice: blank for the <template> the
-	 * window clones, and populated for the no-JS page.
+	 * Template values for POST_EDIT_FORM. Filled in twice: blank for the <template> the window
+	 * clones, and populated for the no-JS page. Staff get no password row.
 	 */
 	private function buildFormValues(
 		int $postUid = 0,
@@ -506,7 +659,8 @@ class moduleMain extends abstractModuleMain {
 		?string $tagSelect = null,
 		?string $csrfInput = null,
 		bool $showAttachments = false,
-		string $attachmentList = ''
+		string $attachmentList = '',
+		bool $showPassword = true
 	): array {
 		return [
 			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
@@ -522,6 +676,7 @@ class moduleMain extends abstractModuleMain {
 			'{$ATTACHMENTS_DESCRIPTION}' => _T('edit_attachments_description'),
 			'{$NO_ATTACHMENTS_TEXT}' => sanitizeStr(_T('edit_attachments_none')),
 			'{$SHOW_ATTACHMENTS}' => $showAttachments,
+			'{$SHOW_PASSWORD}' => $showPassword,
 			'{$ATTACHMENT_LIST}' => $attachmentList,
 			'{$FORM_TITLE}' => sanitizeStr(_T('edit_own_form_title')),
 			'{$FORM_NAME}' => sanitizeStr(_T('form_name')),

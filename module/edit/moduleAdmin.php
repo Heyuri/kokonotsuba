@@ -2,9 +2,6 @@
 
 namespace Kokonotsuba\Modules\edit;
 
-require_once __DIR__ . '/editAttachments.php';
-require_once __DIR__ . '/editPostFields.php';
-require_once __DIR__ . '/editedPostRenderer.php';
 require_once __DIR__ . '/postRevisionService.php';
 
 use Kokonotsuba\action_log\actionType;
@@ -12,54 +9,40 @@ use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
-use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 use function Kokonotsuba\libraries\_T;
-use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
-use function Kokonotsuba\libraries\html\getPageForPostPosition;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 use function Kokonotsuba\libraries\requirePostWithCsrf;
-use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\validatePostInput;
-use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
-use function Kokonotsuba\libraries\html\buildTagSelectOptions;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use AuditableTrait;
-	use PostControlHooksTrait;
-
-	/** GET pageName that answers with the post's editable fields as JSON. */
-	private const FIELDS_PAGE = 'fields';
 
 	/** GET pageName that draws a post's edit history. */
 	private const REVISIONS_PAGE = 'revisions';
 
-	private editAttachments $attachments;
 	private postRevisionService $revisions;
 
 	/**
-	 * The module lets in whoever may do the least of what it offers.
+	 * The staff half of the edit module: a post's edit history. Editing itself, for staff and
+	 * readers alike, is moduleMain's.
 	 *
-	 * Reading a post's edit history is not editing it, and the two are separate capabilities, so
-	 * the gate here is the lower of them and every path below asks for the one it needs.
+	 * Reading the history and restoring from it are separate capabilities, so the gate here is
+	 * the lower of them and every path below asks for the one it needs.
 	 */
 	public function getRequiredRole(): userRole {
-		$editRole = $this->getEditRole();
 		$viewRole = $this->getViewRevisionsRole();
+		$restoreRole = $this->getRestoreRevisionsRole();
 
-		return $viewRole->isLessThan($editRole) ? $viewRole : $editRole;
-	}
-
-	private function getEditRole(): userRole {
-		return $this->getConfig('AuthLevels.CAN_EDIT_POST', userRole::LEV_MODERATOR);
+		return $viewRole->isLessThan($restoreRole) ? $viewRole : $restoreRole;
 	}
 
 	private function getViewRevisionsRole(): userRole {
@@ -90,33 +73,11 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->attachments = new editAttachments($this->moduleContext);
-
 		$this->revisions = new postRevisionService(new postRevisionRepository(
 			databaseConnection::getInstance(),
 			$this->moduleContext->getTableName('POST_EDIT_REVISION_TABLE'),
 			$this->moduleContext->getTableName('ACCOUNT_TABLE')
 		));
-
-		// Registered by hand rather than through registerAdminHeaderHook() and
-		// registerSimplePostWidget(), which gate on the module's own role - and that is now the
-		// lower of two. Only somebody who may edit needs the edit window's form and script.
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getEditRole(),
-			'ModuleAdminHeader',
-			function(string &$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getEditRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, Post &$post) {
-				$url = $this->getModulePageURL(['postUid' => $post->getUid()], false, true);
-				$widgetArray[] = $this->buildWidgetEntry($url, 'editPost', _T('edit_post'), '');
-			}
-		);
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getViewRevisionsRole(),
@@ -130,114 +91,11 @@ class moduleAdmin extends abstractModuleAdmin {
 				);
 			}
 		);
-
-		// noscript fallback: link to edit form page
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getEditRole(),
-			'PostAdminControls',
-			function(string &$modControlSection, Post &$post) {
-				$url = $this->getModulePageURL(['postUid' => $post->getUid()], false, true);
-				$modControlSection .= generateModerateButton($url, 'E', _T('edit_post'), 'adminEditFunction', true);
-			}
-		);
 	}
 
 	/** This module's history page for a post. */
 	private function getRevisionsUrl(int $postUid, bool $forHtml = true): string {
 		return $this->getModulePageURL(['postUid' => $postUid, 'pageName' => self::REVISIONS_PAGE], $forHtml, true);
-	}
-
-	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// include the post edit js for the mod tool
-		$this->includeScript('postEdit.js', $moduleHeader);
-
-		// Render empty create form
-		$postEditFormTemplate = $this->moduleContext->adminPageRenderer->ParseBlock('POST_EDIT_FORM', $this->buildFormValues());
-
-		// append the form template to the module header so it's available on the page (but hidden until triggered)
-		$moduleHeader .= $this->generateTemplate('postEditFormTemplate', $postEditFormTemplate);
-	}
-
-	/**
-	 * Template values for POST_EDIT_FORM, filled in twice: blank for the <template> the window
-	 * clones, and populated for the plain page. The attachment row is drawn out of the blank one
-	 * because the window builds the list itself from the fields response.
-	 */
-	private function buildFormValues(?Post $post = null): array {
-		return [
-			'{$POST_UID}' => $post?->getUid() ?? 0,
-			'{$POST_NUMBER}' => $post?->getNumber() ?? 0,
-			'{$NAME}' => $post ? sanitizeStr($post->getName()) : '',
-			'{$COMMENT}' => $post ? sanitizeStr(editPostFields::commentToEditableText($post->getComment(), $post->getTextFormat())) : '',
-			'{$SUBJECT}' => $post ? sanitizeStr($post->getSubject()) : '',
-			'{$EMAIL}' => $post ? sanitizeStr($post->getEmail()) : '',
-			'{$FORM_NAME}' => _T('form_name'),
-			'{$FORM_EMAIL}' => _T('form_email'),
-			'{$FORM_TOPIC}' => _T('form_topic'),
-			'{$FORM_COMMENT}' => _T('form_comment'),
-			'{$FORM_TAG}' => _T('form_tag'),
-			'{$FORM_ATTACHMENTS}' => sanitizeStr(_T('edit_attachments')),
-			'{$ATTACHMENTS_DESCRIPTION}' => _T('edit_attachments_description'),
-			'{$NO_ATTACHMENTS_TEXT}' => sanitizeStr(_T('edit_attachments_none')),
-			'{$SHOW_ATTACHMENTS}' => $post !== null && $this->attachments->enabledFor($post),
-			'{$ATTACHMENT_LIST}' => $post ? $this->attachments->renderList($post) : '',
-			'{$TAG_SELECT}' => buildTagSelectOptions($this->getConfig('TAGS', []), $post?->getTag() ?? ''),
-			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
-			'{$CSRF_TOKEN}' => getCsrfHiddenInput()
-		];
-	}
-
-	private function editPost(
-		Post $post,
-		?string $name,
-		?string $comment,
-		?string $subject,
-		?string $email,
-		?string $tag
-	): void {
-		// parameters to update in the query
-		$updatePostParameters = [
-			'name' => $name,
-			'com' => $comment,
-			'sub' => $subject,
-			'email' => $email,
-			'tag' => $tag
-		];
-
-		// store the comment the way this post's rows are stored
-		if($comment !== null) {
-			$updatePostParameters['com'] = editPostFields::editableTextToComment($comment, $post->getTextFormat());
-		}
-
-		// Filter out null values
-		$updatePostParameters = array_filter($updatePostParameters, function($v) { return $v !== null; });
-
-		// update the post in database
-		$this->moduleContext->postRepository->updatePost($post->getUid(), $updatePostParameters);
-	}
-
-	/**
-	 * The post as the edit form wants it: the stored values, with a legacy comment's <br> turned
-	 * back into newlines so the textarea shows lines rather than markup.
-	 *
-	 * textFormat rides along because these values are stored text, not markup: the window falls
-	 * back on them to patch the page when the board's template has no post block to render, and
-	 * has to know whether it is holding HTML or something to put in as text.
-	 *
-	 * @param Post $post The post being edited.
-	 * @return array<string, mixed> JSON payload.
-	 */
-	private function buildFieldsPayload(Post $post): array {
-		return [
-			'postUid' => $post->getUid() ?? '',
-			'postNumber' => $post->getNumber() ?? '',
-			'postUserName' => $post->getName() ?? '',
-			'postEmail' => $post->getEmail() ?? '',
-			'subject' => $post->getSubject() ?? '',
-			'comment' => editPostFields::commentToEditableText($post->getComment() ?? '', $post->getTextFormat()),
-			'tag' => $post->getTag() ?? '',
-			'textFormat' => $post->getTextFormat()->value,
-		] + $this->attachments->payload($post);
 	}
 
 	/** Fetch a post, or throw if the uid does not name one. */
@@ -250,131 +108,6 @@ class moduleAdmin extends abstractModuleAdmin {
 		validatePostInput($post, false);
 
 		return $post;
-	}
-
-	/** Answer the window's request for the values to put in its fields. */
-	private function sendFields(int $postUid): void {
-		$this->assertRole($this->getEditRole());
-
-		sendAjaxAndDetach($this->buildFieldsPayload($this->getPost($postUid)));
-		exit;
-	}
-
-	/**
-	 * Send the user back to the post they just edited.
-	 *
-	 * The edit form is reachable from mod pages that list posts from every board, so the redirect
-	 * has to be built from the edited post's own board rather than the one this request happens to
-	 * be served from — otherwise editing a post on another board drops you on the current board.
-	 */
-	private function redirect(?Post $post): void {
-		// no post to go back to, so fall back to the board this request was served from
-		if($post === null) {
-			redirect($this->moduleContext->board->getBoardURL());
-			return;
-		}
-
-		// the board the edited post was made to
-		$board = searchBoardArrayForBoard($post->getBoardUID()) ?? $this->moduleContext->board;
-
-		$postNumber = $post->getNumber();
-
-		// fallback redirect to the board if the post number isn't available for some reason
-		if(!$postNumber) {
-			redirect($board->getBoardURL());
-			return;
-		}
-
-		// replies live under their thread, so link the thread and anchor the post within it
-		$threadNumber = $post->getOpNumber() ?: $postNumber;
-		$page = getPageForPostPosition($post->getObjectivePosition(), $board->getConfigValue('REPLIES_PER_PAGE', 200));
-
-		redirect($board->getBoardThreadURL($threadNumber, $postNumber, false, $page));
-	}
-
-	/**
-	 * Whether the page the edit was made from shows a single thread.
-	 *
-	 * The window sends its own context because this request is made against the module URL, which
-	 * carries none: the same post is marked up differently in a thread than in an index listing.
-	 */
-	private function isThreadViewRequest(): bool {
-		return $this->moduleContext->request->getParameter('threadView', 'POST', '1') !== '0';
-	}
-
-	private function handleEditRequest(int $postUid): void {
-		$this->assertRole($this->getEditRole());
-
-		// the post as it stands after the edit, used for the response and the redirect
-		$editedPost = null;
-
-		// worked out before the transaction opens: an upload that will be refused should be
-		// refused before anything about the post has moved
-		$attachmentPlan = $this->attachments->plan($this->getPost($postUid));
-
-		// wrap in transaction to ensure data integrity
-		$this->moduleContext->transactionManager->run(function() use ($postUid, $attachmentPlan, &$editedPost) {
-			// check the post exists before touching it, and read how its text is stored
-			$post = $this->getPost($postUid);
-
-			// get the parameters
-			$name = $this->moduleContext->request->getParameter('postUserName', 'POST');
-			$comment = $this->moduleContext->request->getParameter('comment', 'POST');
-			$subject = $this->moduleContext->request->getParameter('subject', 'POST');
-			$email = $this->moduleContext->request->getParameter('postEmail', 'POST');
-			$tag = $this->moduleContext->request->getParameter('tag', 'POST');
-
-			// what the post said before this edit, so the history has something to show
-			$this->revisions->record($post, (int)$this->moduleContext->currentUserId);
-
-			// handle the edit
-			$this->editPost($post, $name, $comment, $subject, $email, $tag);
-
-			$this->attachments->commit($post, $attachmentPlan, (int)$this->moduleContext->currentUserId);
-
-			// read the post back so the response and the redirect describe what was actually saved
-			$editedPost = $this->getPost($postUid);
-		});
-
-		// log the edit action
-		$this->logAction(
-			"Edited post No.{$editedPost->getNumber()}",
-			$editedPost->getBoardUID() ?? GLOBAL_BOARD_UID,
-			actionType::POST_EDIT
-		);
-
-		// send json data back if it's a js request
-		if($this->moduleContext->request->isAjax()) {
-			// built first: rendering a post rewrites its comment in place with the quote links,
-			// and the fields the window falls back on have to stay as they are stored
-			$payload = $this->buildFieldsPayload($editedPost);
-
-			$renderer = new editedPostRenderer($this->moduleContext);
-			$payload['html'] = $renderer->render($editedPost, $this->isThreadViewRequest());
-
-			// answer the window before rebuilding: the page it edits is already up to date from
-			// this payload, and an OP edit rebuilds every static page of the board
-			sendAjaxAndDetach($payload);
-			rebuildBoardsFromPosts([$postUid], $this->moduleContext->postService);
-			exit;
-		}
-
-		// rebuild the board html of the post
-		rebuildBoardsFromPosts([$postUid], $this->moduleContext->postService);
-
-		// redirect back to the post after edit
-		$this->redirect($editedPost);
-	}
-
-	private function handleEditPage(int $postUid): void {
-		// get post details for widget
-		$post = $this->getPost($postUid);
-
-		// page content
-		$pageContent = $this->moduleContext->adminPageRenderer->ParseBlock('POST_EDIT_FORM', $this->buildFormValues($post));
-
-		// render the edit form with post details
-		echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $pageContent], true);
 	}
 
 	// ─── Edit history ─────────────────────────────────────────────
@@ -498,29 +231,18 @@ class moduleAdmin extends abstractModuleAdmin {
 		// validate post uid
 		validatePostInput($postUid);
 
-		// handle the main edit requests
 		if($this->moduleContext->request->isPost()) {
 			requirePostWithCsrf($this->moduleContext->request);
 
-			if($this->moduleContext->request->getParameter('action', 'POST', '') === 'restoreRevision') {
-				$this->handleRestoreRequest((int)$postUid);
-				return;
+			if($this->moduleContext->request->getParameter('action', 'POST', '') !== 'restoreRevision') {
+				throw new BoardException(_T('post_revision_not_found'), 400);
 			}
 
-			$this->handleEditRequest($postUid);
+			$this->handleRestoreRequest((int)$postUid);
+			return;
 		}
-		// the window asking for the values to fill its fields with
-		else if($this->moduleContext->request->getParameter('pageName', 'GET', '') === self::FIELDS_PAGE) {
-			$this->sendFields($postUid);
-		}
-		// the post's edit history
-		else if($this->moduleContext->request->getParameter('pageName', 'GET', '') === self::REVISIONS_PAGE) {
-			$this->drawRevisionsPage((int)$postUid);
-		}
-		// otherwise just render the form
-		else {
-			$this->assertRole($this->getEditRole());
-			$this->handleEditPage($postUid);
-		}
+
+		// the post's edit history, which is all this half draws now
+		$this->drawRevisionsPage((int)$postUid);
 	}
 }

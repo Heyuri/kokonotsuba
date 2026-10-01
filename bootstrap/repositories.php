@@ -78,7 +78,8 @@ $banService = new banService(
 	(string) ($globalConfig['VISITOR_TOKEN_COOKIE'] ?? 'koko'),
 	(int) ($globalConfig['VISITOR_TOKEN_DAYS'] ?? 730),
 	new visitorTokenSigner($visitorTokenSecret),
-	$actionLoggerService
+	$actionLoggerService,
+	$transactionManager
 );
 
 // Hand every visitor a token if they haven't got one. Costs a cookie header and nothing else:

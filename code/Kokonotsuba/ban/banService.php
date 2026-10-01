@@ -6,6 +6,7 @@ use Kokonotsuba\action_log\actionLogReferences;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\cookie\cookieService;
+use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\request\request;
 
@@ -57,6 +58,8 @@ class banService {
 		private readonly visitorTokenSigner $tokenSigner,
 		/** Optional: without it a ban still stops what it stops, it just leaves no log line. */
 		private readonly ?actionLoggerService $actionLoggerService = null,
+		/** Optional: lets a ban hit inside a transaction still leave its log line and seen mark. */
+		private readonly ?transactionManager $transactionManager = null,
 	) {
 		$this->checkpoints = new banCheckpointRegistry();
 	}
@@ -249,6 +252,11 @@ class banService {
 	 */
 	public function presentBan(banEntry $ban, banCheckpoint|string|null $checkpoint = null): void {
 		$lapsed = $ban->awaitsExpiryNotice($this->request->getRequestTime());
+
+		// A checkpoint can sit inside a transaction (posting checks bans mid-insert), and this
+		// ends the request without committing it, so the log line and seen mark written below
+		// would be rolled back with it. The request is being abandoned, so roll it back first.
+		$this->transactionManager?->rollback();
 
 		$this->logTrigger($ban, $checkpoint, $lapsed);
 

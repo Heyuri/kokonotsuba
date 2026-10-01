@@ -6,16 +6,14 @@
  * back the edited post rendered through the normal pipeline, so the pieces an edit can change are
  * lifted straight out of that render: what you end up looking at is what a reload would show.
  *
- * Both edit windows run on this: the staff one, and the reader one for editing your own post.
- * They differ only in the form they clone and the endpoint their menu entry points at, so
- * register() takes both and everything below is shared.
+ * Readers and staff share one entry, form and endpoint: the server decides by role, and tells
+ * the window when the post password is not needed.
  *
  * Depends on: postWidget.js, windowLibrary.js, message.js
  */
 (function () {
 	'use strict';
 
-	// The staff and reader modules each ship this file, so a page showing both loads it twice.
 	if (window.postEditWindow) return;
 
 	// Wrappers that hold exactly one post. Some templates keep the subject and the tag outside
@@ -333,6 +331,9 @@
 					fillTag(form, fields.tag);
 					fillAttachments(form, fields);
 
+					const passwordRow = form.querySelector('.editPasswordRow');
+					if (passwordRow) passwordRow.hidden = !!fields.staffEdit;
+
 					// A form whose <template> was baked into a cached page carries no usable token,
 					// so the fields response hands it a fresh one. Staff forms send their own.
 					if (fields.csrfToken) fillField(form, 'csrf_token', fields.csrfToken);
@@ -366,7 +367,7 @@
 
 	window.postEditWindow = { register: register };
 
-	// Staff editing any post, and a poster editing their own with its password.
 	register('editPost', '#postEditFormTemplate');
-	register('editOwnPost', '#userPostEditFormTemplate');
+	// entries and headers drawn before the two editors were merged
+	register('editOwnPost', '#postEditFormTemplate, #userPostEditFormTemplate');
 })();

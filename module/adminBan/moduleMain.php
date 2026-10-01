@@ -64,8 +64,8 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		$staticUrl = $this->getConfig('STATIC_URL');
 
-		// Drawn from static/image/ban/ on every render, so the notice is not always the same
-		// picture - one file in there is a rotation of one, which is still the rotation.
+		// The ban page's picture is drawn from static/image/ban/ on every render; post notices
+		// always use hammer.gif.
 		$this->banImagePicker = new banImagePicker((string) $this->getConfig('STATIC_PATH'), $staticUrl);
 		$this->modulePageUrl = $this->getModulePageURL([], false);
 		$this->statusUrl = $this->getModulePageURL(['status' => '1'], false, true);

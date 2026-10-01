@@ -1,5 +1,5 @@
 	<div class="editFormContainer">
-		<h3>Edit post No.<span class="noteFormPostNumber" id="post_number">{$POST_NUMBER}</span></h3>
+		<h3>{$FORM_TITLE} No.<span class="noteFormPostNumber" id="post_number">{$POST_NUMBER}</span></h3>
 		<div class="editForm">
 			<form method="POST" action="{$MODULE_URL}" enctype="multipart/form-data">
 				{$CSRF_TOKEN}
@@ -7,33 +7,33 @@
 				<table>
 					<tbody>
 						<tr>
-							<td class="postblock"><label for="editName">{$FORM_NAME}</label></td>
+							<td class="postblock"><label for="userEditName">{$FORM_NAME}</label></td>
 							<td>
-								<input name="postUserName" id="editName" value="{$NAME}">
+								<input name="postUserName" id="userEditName" value="{$NAME}">
 							</td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="editEmail">{$FORM_EMAIL}</label></td>
+							<td class="postblock"><label for="userEditEmail">{$FORM_EMAIL}</label></td>
 							<td>
-								<input name="postEmail" id="editEmail" value="{$EMAIL}">
+								<input name="postEmail" id="userEditEmail" value="{$EMAIL}">
 							</td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="editSubject">{$FORM_TOPIC}</label></td>
+							<td class="postblock"><label for="userEditSubject">{$FORM_TOPIC}</label></td>
 							<td>
-								<input name="subject" id="editSubject" value="{$SUBJECT}">
+								<input name="subject" id="userEditSubject" value="{$SUBJECT}">
 							</td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="editComment">{$FORM_COMMENT}</label></td>
+							<td class="postblock"><label for="userEditComment">{$FORM_COMMENT}</label></td>
 							<td>
-								<textarea name="comment" id="editComment" rows="4" cols="40">{$COMMENT}</textarea>
+								<textarea name="comment" id="userEditComment" rows="4" cols="40">{$COMMENT}</textarea>
 							</td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="editTag">{$FORM_TAG}</label></td>
+							<td class="postblock"><label for="userEditTag">{$FORM_TAG}</label></td>
 							<td>
-								<select name="tag" id="editTag">
+								<select name="tag" id="userEditTag">
 									{$TAG_SELECT}
 								</select>
 							</td>
@@ -46,12 +46,19 @@
 								<input type="file" name="upfile[]" class="editAttachmentUpload" multiple>
 							</td>
 						</tr>
+						<tr class="editPasswordRow" <!--&IF($SHOW_PASSWORD,'','hidden')-->>
+							<td class="postblock"><label for="userEditPassword">{$FORM_PASSWORD}</label></td>
+							<td>
+								<div class="formItemDescription">{$PASSWORD_HINT}</div>
+								<input type="password" name="pwd" id="userEditPassword" autocomplete="current-password">
+							</td>
+						</tr>
 					</tbody>
 				</table>
 
 				<div class="buttonSection">
-					<input type="submit" value="Save">
+					<input type="submit" value="{$SUBMIT_TEXT}">
 				</div>
 			</form>
 		</div>
-	</div>	
+	</div>
