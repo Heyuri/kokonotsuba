@@ -22,6 +22,9 @@ use Throwable;
 class transactionManager {
 	private databaseConnection $databaseConnection;
 
+	/** @var callable[] Run once the open transaction is rolled back, dropped on commit. */
+	private array $afterRollback = [];
+
 	public function __construct(databaseConnection $databaseConnection) {
 		$this->databaseConnection = $databaseConnection;
 	}
@@ -47,12 +50,37 @@ class transactionManager {
 		if ($this->databaseConnection->inTransaction()) {
 			$this->databaseConnection->commit();
 		}
+		$this->afterRollback = [];
 	}
 
 	public function rollback(): void {
-		if ($this->databaseConnection->inTransaction()) {
-			$this->databaseConnection->rollBack();
+		if (!$this->databaseConnection->inTransaction()) {
+			return;
 		}
+		$this->databaseConnection->rollBack();
+
+		$callbacks = $this->afterRollback;
+		$this->afterRollback = [];
+		foreach ($callbacks as $callback) {
+			try {
+				$callback();
+			} catch (Throwable $e) {
+				// must not replace the exception that caused the rollback
+				error_log('afterRollback callback failed: ' . $e->getMessage());
+			}
+		}
+	}
+
+	/**
+	 * Run a write that has to outlive the open transaction, such as logging why it was rejected.
+	 * Deferred until the transaction rolls back and dropped if it commits; run now when none is open.
+	 */
+	public function afterRollback(callable $callback): void {
+		if (!$this->databaseConnection->inTransaction()) {
+			$callback();
+			return;
+		}
+		$this->afterRollback[] = $callback;
 	}
 
 	/**

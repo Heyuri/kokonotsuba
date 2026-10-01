@@ -28,6 +28,7 @@ class threadService {
 		private transactionManager $transactionManager,
 		private deletedPostsService $deletedPostsService,
 		private fileService $fileService,
+		private threadExtrasService $threadExtrasService,
 	) {
 		$this->allowedOrderFields = ['post_op_number', 'post_op_post_uid', 'last_bump_time', 'last_reply_time', 'thread_created_time', 'insert_id', 'post_uid', 'number_of_posts'];
 	}
@@ -506,6 +507,16 @@ class threadService {
 			// go through and mark replies in the new thread that were deleted in the old one
 			$this->markDeletedPosts($postUidMapping, $fileIdMapping);
 
+			// votes, flags, notes and the theme belong to the thread, not to the board it sat on
+			$this->threadExtrasService->copyPostExtras($postUidMapping);
+			$this->threadExtrasService->copyThreadTheme($originalThreadUid, $newThreadUid);
+
+			$sourceThread = $this->threadRepository->getThreadByUid($originalThreadUid, true);
+
+			if ($sourceThread && $sourceThread->isSticky()) {
+				$this->threadRepository->stickyThread($newThreadUid);
+			}
+
 			$moveData = [
 				'threadUid'   => $newThreadUid,
 				'postUidMap'  => $postUidMapping,
@@ -602,6 +613,11 @@ class threadService {
 			$fileIdMapping = $this->copyAttachmentsData($attachments, $postUidMapping);
 
 			$this->markDeletedPosts($postUidMapping, $fileIdMapping);
+
+			// carry the copied posts' votes, flags and notes over, and the source's theme if the
+			// destination has none of its own
+			$this->threadExtrasService->copyPostExtras($postUidMapping);
+			$this->threadExtrasService->copyThreadTheme($sourceThreadUid, $destinationThreadUid);
 
 			$this->threadRepository->reindexPostPositions($destinationThreadUid);
 			$this->threadRepository->bumpThread($destinationThreadUid);

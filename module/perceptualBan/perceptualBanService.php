@@ -16,18 +16,16 @@ class perceptualBanService {
 	 *
 	 * @param string $filePath Path to the image file on disk
 	 * @param int $threshold Maximum hamming distance to consider a match
-	 * @return bool True if the file matches a banned perceptual hash
+	 * @return array|null The closest matching ban row, or null
 	 */
-	public function isPerceptuallyBanned(string $filePath, int $threshold): bool {
+	public function findMatchingBan(string $filePath, int $threshold): ?array {
 		$hashHex = $this->perceptualHasher->computeHash($filePath);
 		if ($hashHex === null) {
-			return false;
+			return null;
 		}
 
 		$hashInt = $this->perceptualHasher->hexToInt($hashHex);
-		$matches = $this->perceptualBanRepository->findMatchingBans($hashInt, $threshold);
-
-		return !empty($matches);
+		return $this->perceptualBanRepository->findMatchingBans($hashInt, $threshold)[0] ?? null;
 	}
 
 	/**
@@ -35,18 +33,16 @@ class perceptualBanService {
 	 *
 	 * @param string $filePath Path to the animated file (GIF/video) on disk
 	 * @param int $threshold Maximum hamming distance to consider a match
-	 * @return bool True if the file matches a banned perceptual hash
+	 * @return array|null The closest matching ban row, or null
 	 */
-	public function isPerceptuallyBannedAnimated(string $filePath, int $threshold): bool {
+	public function findMatchingBanAnimated(string $filePath, int $threshold): ?array {
 		$hashHex = $this->perceptualHasher->computeHashFromAnimated($filePath);
 		if ($hashHex === null) {
-			return false;
+			return null;
 		}
 
 		$hashInt = $this->perceptualHasher->hexToInt($hashHex);
-		$matches = $this->perceptualBanRepository->findMatchingBans($hashInt, $threshold);
-
-		return !empty($matches);
+		return $this->perceptualBanRepository->findMatchingBans($hashInt, $threshold)[0] ?? null;
 	}
 
 	/**
@@ -98,9 +94,9 @@ class perceptualBanService {
 	 * @param int $page Zero-based page number
 	 * @return array<int, array> List of ban entries
 	 */
-	public function getEntries(int $limit, int $page): array {
+	public function getEntries(int $limit, int $page, ?int $entryId = null): array {
 		$offset = $limit * $page;
-		return $this->perceptualBanRepository->getEntries($limit, $offset);
+		return $this->perceptualBanRepository->getEntries($limit, $offset, $entryId);
 	}
 
 	/**
@@ -108,8 +104,8 @@ class perceptualBanService {
 	 *
 	 * @return int Total count
 	 */
-	public function getTotalEntries(): int {
-		return $this->perceptualBanRepository->getTotalEntries();
+	public function getTotalEntries(?int $entryId = null): int {
+		return $this->perceptualBanRepository->getTotalEntries($entryId);
 	}
 
 	/**

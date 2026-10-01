@@ -9,6 +9,7 @@ require_once __DIR__ . '/fileBanLib.php';
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
@@ -22,6 +23,7 @@ use function Puchiko\request\redirect;
 use function Kokonotsuba\Modules\fileBan\getFileBanService;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use AuditableTrait;
 	use PostControlHooksTrait;
 
 	private fileBanService $fileBanService;
@@ -53,6 +55,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->listenProtected('ModerateAttachmentWidget', function(array &$widgets, array &$fileData) {
 			$this->onAttachmentWidget($widgets, $fileData);
 		});
+		// makes an enforced file ban clickable in the action log
+		$this->registerActionReference('fileban', fn(string $id): string => $this->getModulePageURL(['id' => (int) $id], false));
+
 		$this->registerLinksAboveBarHook(_T('admin_nav_file_ban_title'), $this->moduleUrl, _T('admin_nav_file_ban'), 'files');
 
 		$this->listenProtected('ModuleAdminHeader', function(string &$moduleHeader) {
@@ -276,8 +281,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		$entriesPerPage = $this->getConfig('ACTIONLOG_MAX_PER_PAGE', 50);
 		$page = (int) ($_GET['page'] ?? 0);
 
-		$entries = $this->fileBanService->getEntries($entriesPerPage, $page);
-		$totalEntries = $this->fileBanService->getTotalEntries();
+		$entryId = isset($_GET['id']) ? (int) $_GET['id'] : null;
+
+		$entries = $this->fileBanService->getEntries($entriesPerPage, $page, $entryId);
+		$totalEntries = $this->fileBanService->getTotalEntries($entryId);
 
 		$templateRows = [];
 		foreach ($entries as $entry) {

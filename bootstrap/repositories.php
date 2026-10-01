@@ -43,6 +43,7 @@ use Kokonotsuba\quote_link\quoteLinkRepository;
 use Kokonotsuba\quote_link\quoteLinkService;
 use Kokonotsuba\quote_link\textQuoteRepository;
 use Kokonotsuba\quote_link\textQuoteResolver;
+use Kokonotsuba\thread\threadExtrasService;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
 
@@ -96,7 +97,8 @@ $deletedPostsRepository = new deletedPostsRepository($databaseConnection, $table
 $deletedPostsService = new deletedPostsService($transactionManager, $deletedPostsRepository, $fileService, $actionLoggerService, $postRepository, $threadRepository);
 $postDeletionService = new postDeletionService($postRepository, $transactionManager, $threadRepository, $deletedPostsService, $request);
 $postService = new postService($postRepository, $transactionManager, $threadRepository, $deletedPostsService, $request, $postDeletionService);
-$threadService = new threadService($threadRepository, $postRepository, $postService, $transactionManager, $deletedPostsService, $fileService);
+$threadExtrasService = new threadExtrasService($databaseConnection, $tableNames['SOUDANE_TABLE'], $tableNames['COUNTRY_FLAG_TABLE'], $tableNames['DISPLAY_IP_TABLE'], $tableNames['NOTE_TABLE'], $tableNames['THREAD_THEMES_TABLE']);
+$threadService = new threadService($threadRepository, $postRepository, $postService, $transactionManager, $deletedPostsService, $fileService, $threadExtrasService);
 $quoteLinkRepository = new quoteLinkRepository($databaseConnection, $tableNames['QUOTE_LINK_TABLE'], $tableNames['POST_TABLE'], $tableNames['THREAD_TABLE'], $tableNames['DELETED_POSTS_TABLE']);
 $quoteLinkService = new quoteLinkService($quoteLinkRepository, $postRepository);
 $textQuoteResolver = new textQuoteResolver(new textQuoteRepository($databaseConnection, $tableNames['POST_TABLE'], $tableNames['THREAD_TABLE'], $tableNames['DELETED_POSTS_TABLE'], $tableNames['FILE_TABLE']));
