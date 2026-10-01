@@ -192,12 +192,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		redirect($board->getBoardURL());
 	}
 
-	/** The image comes from static/image/ban/ at random, same as a ban's own notice. */
+	/** Stamped with hammer.gif, same as a ban's own notice. */
 	private function getPublicWarnMessageHtml(string $reason = ''): string {
 		$image = (new banImagePicker(
 			(string) $this->getConfig('STATIC_PATH'),
 			(string) $this->getConfig('STATIC_URL')
-		))->random();
+		))->hammer();
 
 		$url = $image->url;
 		$dimensions = $image->dimensionAttributes();

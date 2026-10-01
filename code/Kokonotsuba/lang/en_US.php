@@ -1448,7 +1448,7 @@ $language['config_label_modules.adminBan.PostMenu.ban'] = 'Post menu: Ban';
 $language['config_label_modules.janitor.PostMenu.warn'] = 'Post menu: Warn';
 
 // module/edit/config.php
-$language['config_label_modules.edit.PostMenu.editPost'] = 'Post menu: Edit post';
+$language['config_label_modules.edit.PostMenu.editPost'] = 'Post menu: Edit';
 
 // module/notes/config.php
 $language['config_label_modules.notes.PostMenu.leaveNote'] = 'Post menu: Leave note';
@@ -1730,7 +1730,7 @@ $language['ban_log_appeal_denied'] = 'Denied %1$s ban appeal(s)';
 
 // module/adminBan/config.php
 $language['config_label_modules.adminBan.DEFAULT_BAN_MESSAGE'] = 'Default public ban message';
-$language['config_desc_modules.adminBan.DEFAULT_BAN_MESSAGE'] = 'HTML appended to a post when a ban is filed as public. Leave blank for the built-in banhammer notice. Images dropped into static/image/ban/ are used at random; write {$BAN_IMAGE} where the chosen one should go.';
+$language['config_desc_modules.adminBan.DEFAULT_BAN_MESSAGE'] = 'HTML appended to a post when a ban is filed as public. Leave blank for the built-in banhammer notice. Write {$BAN_IMAGE} where the hammer image should go.';
 $language['config_label_modules.adminBan.SHOW_BANNED_POST'] = 'Show the post on the ban page';
 $language['config_desc_modules.adminBan.SHOW_BANNED_POST'] = 'Show a banned user the post their ban was filed on, files and all, even once it has been deleted.';
 $language['config_label_modules.adminBan.ENABLE_APPEALS'] = 'Accept ban appeals';

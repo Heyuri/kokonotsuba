@@ -3,12 +3,11 @@
 namespace Kokonotsuba\ban;
 
 /**
- * The banhammer image a ban notice is stamped with.
+ * The images ban pages and ban notices are drawn with.
  *
- * A drop-in directory, the way the banner module takes banners: whatever sits in
- * static/image/ban/ is drawn from at random, so a notice is not always the same picture. One
- * file in there is a rotation of one, which is still the rotation. An install with no such
- * directory keeps the single hammer.gif it has always used.
+ * The ban page takes a picture at random from a drop-in directory, the way the banner module
+ * takes banners: whatever sits in static/image/ban/, or hammer.gif when there is nothing there.
+ * The notice stamped under a banned post is always hammer.gif; see {@see hammer()}.
  *
  * Each image is measured off disk so the tag can carry width and height; see {@see banImage}.
  */
@@ -25,7 +24,12 @@ class banImagePicker {
 		private string $staticUrl
 	) {}
 
-	/** One ban image, drawn again on every call. */
+	/** The banhammer stamped on a post's public ban or warning notice. */
+	public function hammer(): banImage {
+		return $this->imageFor(self::FALLBACK);
+	}
+
+	/** One ban page image, drawn again on every call. */
 	public function random(): banImage {
 		$files = $this->listImages();
 

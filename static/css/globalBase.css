@@ -2531,24 +2531,29 @@ caption h3 {
 
 /************************ Ban screen **********************************/
 
+/* Holds the summary row, then each ban's post and appeal form underneath it. */
 #banScreen {
-	display: flex;
-	gap: 0.5em;
-  justify-content: space-between;
-  align-items: center;
-  background-color: var(--color-bg-reply);
+	background-color: var(--color-bg-reply);
 	max-width: 800px;
 	margin: 0 auto;
 	padding: 0.5em;
 }
 
+/* The text on the left, the picture pushed to the right. */
+#banScreenSummary {
+	display: flex;
+	gap: 0.5em;
+	justify-content: space-between;
+	align-items: center;
+}
+
 #banScreenText {
 	flex: 1;
-	vertical-align: top;
 	text-align: left;
 }
 
 #banimg {
+	margin-left: auto;
 	border: 1px solid;
 	max-width: 100%;
 	width: 300px;
@@ -2560,13 +2565,14 @@ caption h3 {
 }
 
 @media screen and (max-width: 640px) {
-	#banScreen {
-    flex-direction: column;
+	#banScreenSummary {
+		flex-direction: column;
 	}
 
 	#banimg {
-    width: 100%; /* Makes the image container fill the width */
-  }
+		margin-left: 0;
+		width: 100%; /* Makes the image container fill the width */
+	}
 }
 
 /************************ Overboard ***********************************/
