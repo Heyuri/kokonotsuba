@@ -270,6 +270,26 @@ final class BanEntryTest extends TestCase {
 		$this->assertSame(129600, banDuration::toSeconds('1.5d'));
 	}
 
+	/** A ban's own page writes its length back as it was typed, not as a pile of hours. */
+	public function testDurationsFormatTheWayTheyWereTyped(): void {
+		foreach (['1h', '12h', '1d', '3d', '10d', '1w', '2w', '1m', '1y', '1y2m', '1d12h', '2w3d5h'] as $typed) {
+			$this->assertSame($typed, banDuration::format(banDuration::toSeconds($typed)), $typed);
+		}
+	}
+
+	/** Whatever format() writes reads back to the same length, so saving the page changes nothing. */
+	public function testFormattedDurationsRoundTrip(): void {
+		foreach ([3600, 90000, 129600, 864000, 1209600, 2597120, 31536000, 31536000 + 2597120 + 7200] as $seconds) {
+			$this->assertSame($seconds, banDuration::toSeconds(banDuration::format($seconds)), (string) $seconds);
+		}
+	}
+
+	/** Less than an hour, or a few seconds of drift, comes out as whole hours. */
+	public function testFormattedDurationsRoundToTheHour(): void {
+		$this->assertSame('1h', banDuration::format(60));
+		$this->assertSame('1d', banDuration::format(86400 + 5));
+	}
+
 	/** Unparseable input is worth nothing, which the ban form turns into "no duration given". */
 	public function testUnparseableDurationsAreZero(): void {
 		$this->assertSame(0, banDuration::toSeconds(''));
