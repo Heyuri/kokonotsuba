@@ -90,7 +90,7 @@ class banRepository extends baseRepository {
 				AND (
 					b.expires_at IS NULL
 					OR b.expires_at > ?
-					OR (b.expiry_seen_at IS NULL AND b.is_warning = 0 AND b.is_mute = 0)
+					OR (b.seen_at IS NULL AND b.expiry_seen_at IS NULL AND b.is_warning = 0 AND b.is_mute = 0)
 				)
 				AND b.board_uid IN ' . pdoPlaceholdersForIn($boardUids) . '
 				AND (' . implode(' OR ', $matchClauses) . ')
@@ -375,9 +375,8 @@ class banRepository extends baseRepository {
 	 * Public ban notices for a batch of posts, keyed by post UID.
 	 *
 	 * The notice is rendered under the post from here rather than written into its comment, so
-	 * editing a ban's public reason changes what every reader sees. A revoked ban's notice
-	 * disappears with it - the ban was undone, so the post should stop saying otherwise - but an
-	 * expired one keeps its notice, because they were still banned for that post.
+	 * editing a ban's public reason changes what every reader sees. The notice outlives the ban,
+	 * whether it expires or is revoked.
 	 *
 	 * @param list<int> $postUids
 	 * @return array<int, string>
@@ -389,8 +388,7 @@ class banRepository extends baseRepository {
 
 		$rows = $this->queryAll(
 			"SELECT post_uid, public_reason FROM {$this->table}
-			WHERE revoked_at IS NULL
-				AND public_reason IS NOT NULL AND public_reason <> ''
+			WHERE public_reason IS NOT NULL AND public_reason <> ''
 				AND post_uid IN " . pdoPlaceholdersForIn($postUids) . '
 			ORDER BY filed_at ASC',
 			$postUids

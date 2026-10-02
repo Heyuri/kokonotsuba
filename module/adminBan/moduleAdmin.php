@@ -26,7 +26,6 @@ use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
-use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\generateBoardListCheckBoxHTML;
@@ -408,27 +407,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->logAction(_T('ban_log_revoked', $ban->ipPattern, $ban->id), $ban->boardUid, actionType::BAN_REVOKE);
 		}
 
-		$this->rebuildBoardsForLiftedBans($revoked);
 		$this->redirectBack();
-	}
-
-	/**
-	 * Revoking withdraws the public notice under the post, so the post has to be redrawn: its
-	 * thread's cached markup dropped and its board regenerated. One rebuild per board reached.
-	 *
-	 * @param list<banEntry> $bans
-	 */
-	private function rebuildBoardsForLiftedBans(array $bans): void {
-		$postUids = [];
-		foreach ($bans as $ban) {
-			if ($ban->postUid !== null && (string) $ban->publicReason !== '') {
-				$postUids[] = $ban->postUid;
-			}
-		}
-
-		if ($postUids !== []) {
-			rebuildBoardsFromPosts(array_values(array_unique($postUids)), $this->moduleContext->postService);
-		}
 	}
 
 	private function handleAppealDecision(bool $approve): void {
@@ -453,13 +432,12 @@ class moduleAdmin extends abstractModuleAdmin {
 			$reduceSeconds = $reduceTo === '' ? 0 : banDuration::toSeconds($reduceTo);
 			$newExpiresAt = $reduceSeconds > 0 ? $request->getRequestTime() + $reduceSeconds : null;
 
-			['count' => $count, 'revoked' => $revoked] = $this->getBanService()->approveAppeals(
+			['count' => $count] = $this->getBanService()->approveAppeals(
 				$appealIds,
 				$this->currentAccountId > 0 ? $this->currentAccountId : null,
 				$staffNote,
 				$newExpiresAt
 			);
-			$this->rebuildBoardsForLiftedBans($revoked);
 
 			$this->logAction(
 				$newExpiresAt === null
@@ -1192,7 +1170,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $ban->isMute ? _T('ban_type_mute') : _T('ban_type_ban');
 	}
 
-	/** "Permanent", "7d", "Mute (20min)", or the warning marker. */
+	/** "Permanent", "7d", "Mute (1200s)", or the warning marker. */
 	private function describeDuration(banEntry $ban): string {
 		if ($ban->isWarning) {
 			return _T('ban_type_warning');
@@ -1202,7 +1180,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			return _T('ban_duration_permanent');
 		}
 
-		$length = banDuration::humanize((int) $ban->expiresAt - $ban->filedAt);
+		$length = banDuration::format((int) $ban->expiresAt - $ban->filedAt);
 
 		return $ban->isMute ? _T('ban_duration_mute', $length) : $length;
 	}

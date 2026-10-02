@@ -260,18 +260,22 @@ class banService {
 
 		$this->logTrigger($ban, $checkpoint, $lapsed);
 
-		$this->markSeen($ban);
-
-		// Showing it is the notice, so the ban has now been let go of. The row in hand still
-		// reads as owing one, which is what the page below renders from.
-		if ($lapsed) {
-			$this->markExpiryNoticeSeen($ban);
-		}
-
+		// A one-line AJAX reply is not the ban being read, so nothing is marked and the next
+		// action is stopped again until the page itself is opened.
 		if ($this->request->isAjax()) {
-			$message = $lapsed ? _T('ban_expired_notice') : $this->buildBlockedMessage($checkpoint);
+			$message = $lapsed
+				? $this->withBanPageLink(_T('ban_expired_unread_notice'))
+				: $this->buildBlockedMessage($checkpoint);
 
 			renderJsonErrorPage($message, 403);
+		}
+
+		$this->markSeen($ban);
+
+		// Reading it is what lets a lapsed ban go. The row in hand still reads as owing the
+		// notice, which is what the page below renders from.
+		if ($lapsed) {
+			$this->markExpiryNoticeSeen($ban);
 		}
 
 		if ($this->banPageRenderer !== null) {
@@ -316,7 +320,10 @@ class banService {
 			? $checkpoint
 			: ($checkpoint === null ? null : banCheckpoint::tryFrom((string) $checkpoint));
 
-		$message = $case !== null ? $case->blockedMessage() : _T('ban_blocked_generic');
+		return $this->withBanPageLink($case !== null ? $case->blockedMessage() : _T('ban_blocked_generic'));
+	}
+
+	private function withBanPageLink(string $message): string {
 		$url = $this->getBanPageUrl();
 
 		return $url === '' ? $message : $message . ' [url=' . $url . ']' . _T('ban_view_details') . '[/url]';

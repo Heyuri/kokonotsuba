@@ -17,3 +17,11 @@ function utcDay(string $day): DateTimeImmutable {
 
 	return new DateTimeImmutable($day, $utc);
 }
+
+/**
+ * Days elapsed across $wholeDays completed days and the part of today that has passed.
+ * Floored at an hour so a rate over a span that has only just begun stays sensible.
+ */
+function elapsedDays(int $wholeDays, int $secondsToday): float {
+	return max(1 / 24, $wholeDays + $secondsToday / 86400);
+}

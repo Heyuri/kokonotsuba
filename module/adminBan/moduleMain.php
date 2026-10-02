@@ -101,7 +101,7 @@ class moduleMain extends abstractModuleMain {
 	 */
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		$moduleHeader .= '<link rel="stylesheet" href="'
-			. sanitizeStr($this->getConfig('STATIC_URL') . 'css/module/ban.css') . '">';
+			. sanitizeStr($this->getConfig('STATIC_URL') . 'css/module/ban.css?v=2') . '">';
 
 		$moduleHeader .= '<meta name="prefsKey" content="'
 			. sanitizeStr($this->getBanService()->getTokenCookieName()) . '">';
@@ -216,9 +216,8 @@ class moduleMain extends abstractModuleMain {
 			fn(banEntry $ban): bool => $ban->isWarning && !$ban->hasBeenSeen()
 		));
 
-		// A ban that has run out is not finished with until whoever it held has been told so.
-		// With nothing else against them, this page is that telling - it says they are free
-		// again, and saying it is what lets go of the ban.
+		// A ban that ran out before it was ever read is not finished with until it has been.
+		// With nothing else against them, this page is that reading, and it lets go of the ban.
 		$lapsed = array_values(array_filter(
 			$bans,
 			fn(banEntry $ban): bool => $ban->awaitsExpiryNotice($now)
@@ -226,6 +225,7 @@ class moduleMain extends abstractModuleMain {
 
 		if ($live === [] && $unreadWarning === [] && $lapsed !== []) {
 			foreach ($lapsed as $ban) {
+				$this->getBanService()->markSeen($ban);
 				$this->getBanService()->markExpiryNoticeSeen($ban);
 			}
 
@@ -293,8 +293,7 @@ class moduleMain extends abstractModuleMain {
 	 * from wherever the checkpoint was, so it cannot come back as a return value.
 	 */
 	private function drawBanPage(banEntry $ban, banCheckpoint|string|null $checkpoint): string {
-		// A lapsed ban stops nothing: it was shown to say it is over, so the page reads as the
-		// all-clear rather than as something still holding them.
+		// A lapsed ban stops nothing: it is shown so it gets read, marked as over.
 		if ($ban->awaitsExpiryNotice($this->moduleContext->request->getRequestTime())) {
 			return $this->renderBanPage([$ban], null, null, true);
 		}
@@ -305,7 +304,7 @@ class moduleMain extends abstractModuleMain {
 	/**
 	 * @param list<banEntry> $bans     The bans this page is showing.
 	 * @param banEntry|null  $primary  The one that stopped them, if any.
-	 * @param bool           $expiredNotice Whether this is the "your ban is over" page.
+	 * @param bool           $expiredNotice Whether this shows bans that lapsed unread.
 	 */
 	private function renderBanPage(
 		array $bans,
@@ -316,7 +315,7 @@ class moduleMain extends abstractModuleMain {
 		$now = $this->moduleContext->request->getRequestTime();
 		$isBanned = $primary !== null;
 
-		$image = $isBanned
+		$image = ($isBanned || $expiredNotice)
 			? $this->banImagePicker->random()
 			: $this->banImagePicker->imageFor('image/notbanned.png');
 
@@ -324,13 +323,13 @@ class moduleMain extends abstractModuleMain {
 			'{$IS_BANNED}' => $isBanned ? '1' : '',
 			'{$BAN_HEADING}' => $isBanned
 				? ($primary->isWarning ? _T('ban_page_warned_heading') : _T('ban_page_banned_heading'))
-				: _T($expiredNotice ? 'ban_page_expired_heading' : 'ban_page_clear_heading'),
+				: _T($expiredNotice ? 'ban_page_lapsed_heading' : 'ban_page_clear_heading'),
 			'{$BAN_IMAGE}' => sanitizeStr($image->url),
 			// Measured off the file, so the text beside it is not laid out twice while it loads.
 			'{$BAN_IMAGE_DIMENSIONS}' => $image->dimensionAttributes(),
 			'{$HAS_ENTRIES}' => $bans === [] ? '' : '1',
-			'{$BAN_IMAGE_ALT}' => sanitizeStr($isBanned ? _T('ban_page_image_alt_banned') : _T('ban_page_image_alt_clear')),
-			'{$CLEAR_TEXT}' => sanitizeStr(_T($expiredNotice ? 'ban_page_expired_text' : 'ban_page_clear_text')),
+			'{$BAN_IMAGE_ALT}' => sanitizeStr(($isBanned || $expiredNotice) ? _T('ban_page_image_alt_banned') : _T('ban_page_image_alt_clear')),
+			'{$CLEAR_TEXT}' => sanitizeStr(_T($expiredNotice ? 'ban_page_lapsed_text' : 'ban_page_clear_text')),
 			'{$BLOCKED_TEXT}' => $checkpoint === null ? '' : sanitizeStr($this->describeCheckpoint($checkpoint)),
 			// The appeal form goes on the ban that is actually stopping them and nowhere else:
 			// every visible ban used to carry one, so anybody holding more than one row - a

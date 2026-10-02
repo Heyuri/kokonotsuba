@@ -127,21 +127,22 @@ final class PostStatsRendererTest extends TestCase {
 		$this->assertStringContains('poststats_empty', $renderer->renderChart([], 'Test'));
 	}
 
-	/** Nine completed days of 10 posts each, plus a partial today. */
+	/** Nine completed days of 10 posts each, plus 5 by noon today. */
 	private function tenADayStats(): array {
 		$days = [];
 		for ($i = 1; $i <= 9; $i++) {
 			$days[date('Y-m-d', strtotime('2026-08-10 -' . $i . ' days'))] = 10;
 		}
-		$days['2026-08-10'] = 3;
+		$days['2026-08-10'] = 5;
 
 		return [
 			'days' => $days,
 			'firstDay' => '2026-08-01',
 			'today' => '2026-08-10',
-			'todayCount' => 3,
-			'total' => 93,
-			'lastNo' => 93,
+			'todayCount' => 5,
+			'total' => 95,
+			'lastNo' => 95,
+			'secondsToday' => 43200,
 		];
 	}
 
@@ -152,7 +153,7 @@ final class PostStatsRendererTest extends TestCase {
 		$series = $renderer->buildSeries($stats['days'], $stats['firstDay'], $stats['today'], 0);
 		$html = $renderer->renderTiles($stats, $series, 'poststats_range_all', false);
 
-		// Nine completed days of ten. Today is still running, so it is not in the average.
+		// 95 posts over nine and a half days.
 		$this->assertStringContains('<dd>10.00</dd>', $html);
 		$this->assertStringContains('<dd>0.42</dd>', $html);
 	}
@@ -167,19 +168,19 @@ final class PostStatsRendererTest extends TestCase {
 		}
 		$days['2026-08-08'] = 40;
 		$days['2026-08-09'] = 40;
-		$days['2026-08-10'] = 3;
+		$days['2026-08-10'] = 5;
 
 		$stats = [
 			'days' => $days, 'firstDay' => '2026-08-01', 'today' => '2026-08-10',
-			'todayCount' => 3, 'total' => 153, 'lastNo' => 153,
+			'todayCount' => 5, 'total' => 155, 'lastNo' => 155, 'secondsToday' => 43200,
 		];
 
 		$whole = $renderer->buildSeries($days, '2026-08-01', '2026-08-10', 0);
 		$recent = $renderer->buildSeries($days, '2026-08-01', '2026-08-10', 3);
 
-		// Nine completed days averaging 16.67, against the last two completed averaging 40.
-		$this->assertStringContains('<dd>16.67</dd>', $renderer->renderTiles($stats, $whole, 'x', false));
-		$this->assertStringContains('<dd>40.00</dd>', $renderer->renderTiles($stats, $recent, 'x', false));
+		// 155 over nine and a half days, against 85 over the last two and a half.
+		$this->assertStringContains('<dd>16.32</dd>', $renderer->renderTiles($stats, $whole, 'x', false));
+		$this->assertStringContains('<dd>34.00</dd>', $renderer->renderTiles($stats, $recent, 'x', false));
 	}
 
 	public function testEachRateAppearsOnceForTheSelectedSpan(): void {

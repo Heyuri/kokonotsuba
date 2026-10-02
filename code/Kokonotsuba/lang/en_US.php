@@ -659,7 +659,7 @@ $language['config_desc_modules.anonIp.AUTO_ANONYMIZE_DAYS'] = 'How often the ano
 // postStats module
 $language['poststats_link']             = 'Stats';
 $language['poststats_title']            = 'Statistics';
-$language['poststats_note']             = 'Counted using post numbers, deleted posts are included.';
+$language['poststats_note']             = 'Counted using post numbers, so deleted posts are included. Purged posts whose day cannot be proven are counted as undated rather than guessed.';
 $language['poststats_sitewide']         = 'Site-wide';
 $language['poststats_generating']       = 'Being worked out in the background. Reload in a moment.';
 $language['poststats_empty']            = 'No posts yet.';
@@ -677,6 +677,7 @@ $language['poststats_tile_per_hour']    = 'Posts per hour (%s)';
 $language['poststats_tile_total']       = 'Posts made';
 $language['poststats_tile_first_post']  = 'First post';
 $language['poststats_tile_latest_no']   = 'Latest No.';
+$language['poststats_tile_undated']     = 'Undated (purged)';
 // Zoom links. postStatsRenderer::RANGES names these keys rather than the text itself.
 $language['poststats_range_30d']        = '30 days';
 $language['poststats_range_90d']        = '90 days';
@@ -1496,6 +1497,7 @@ $language['ban_blocked_soudane'] = 'You are banned and cannot vote on posts.';
 $language['ban_blocked_pm'] = 'You are banned and cannot use private messages.';
 $language['ban_view_details'] = 'View ban details';
 $language['ban_expired_notice'] = 'Your ban has expired. You can post again now - try that again.';
+$language['ban_expired_unread_notice'] = 'You were banned, and the ban has expired, but you need to read it before you can post again.';
 
 // Durations.
 $language['ban_duration_none'] = 'none';
@@ -1513,8 +1515,8 @@ $language['ban_page_banned_heading'] = 'You have been banned! ヽ(ー_ー )ノ';
 $language['ban_page_warned_heading'] = 'You have been warned! ヽ(ー_ー )ノ';
 $language['ban_page_clear_heading'] = 'You are not banned! <span class="ascii">ヽ(´∇`)ノ</span>';
 $language['ban_page_clear_text'] = 'You can post!';
-$language['ban_page_expired_heading'] = 'Your ban has expired! <span class="ascii">ヽ(´∇`)ノ</span>';
-$language['ban_page_expired_text'] = 'Now that your ban has expired, you can post again!';
+$language['ban_page_lapsed_heading'] = 'You were banned!';
+$language['ban_page_lapsed_text'] = 'This ban has expired, but it had to be read first. Now that you have seen it, you can post again.';
 $language['ban_page_image_alt_banned'] = 'BANNED!';
 $language['ban_page_image_alt_clear'] = 'NOT BANNED!';
 $language['ban_page_type_ban'] = 'Ban';
@@ -1555,7 +1557,7 @@ $language['ban_form_heading'] = 'Add a ban';
 $language['ban_form_label_ip'] = 'IP address';
 $language['ban_form_desc_ip'] = "The IP to be banned. You can use '*' for range bans - '127.0.*' bans any IP starting with '127.0.'";
 $language['ban_form_label_duration'] = 'Ban duration';
-$language['ban_form_desc_duration'] = "Legend: '1y' = 1 year, '1m' = 1 month, '1w' = 1 week, '1d' = 1 day, '1h' = 1 hour. Decimals work ('1.5y'), and units combine ('1y2m'). '0' files a warning.";
+$language['ban_form_desc_duration'] = "Legend: '1y' = 1 year, '1m' = 1 month, '1w' = 1 week, '1d' = 1 day, '1h' = 1 hour, '1s' = 1 second. Decimals work ('1.5y'), and units combine ('1y2m'). '0' files a warning.";
 $language['ban_form_label_permanent'] = 'Permanent';
 $language['ban_form_desc_permanent'] = 'A permanent ban never expires and can only be lifted by hand.';
 $language['ban_form_label_checkpoints'] = 'This ban stops';

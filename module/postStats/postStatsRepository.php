@@ -15,10 +15,8 @@ use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
  * A number is handed out once per post and never reused, so the distance between two points in
  * the sequence is the number of posts *made* between them, including the ones deleted since.
  *
- * A warm page view costs one round trip: today's date and every board's current counter come
- * back together. A rebuild adds the surviving posts' per-day high and low, and the recorded
- * counter readings. What those add up to per day is worked out in PHP, since it has to fill in
- * the days the rows no longer cover.
+ * The surviving posts come back as runs of consecutive numbers on one day, which together with
+ * the recorded counter readings is all the evidence there is of when a number was handed out.
  *
  * Day bucketing happens in the database (DATE(root), CURDATE()) so that the boundaries match
  * the timestamps as they are stored and read back everywhere else.
@@ -137,7 +135,7 @@ class postStatsRepository extends baseRepository {
 	 * of a board being deleted — which is the case the page exists to report honestly. The date
 	 * rides along on the same round trip because every caller needs both.
 	 *
-	 * @return array{today: string, numbers: array<int, int>}
+	 * @return array{today: string, secondsToday: int, numbers: array<int, int>}
 	 */
 	public function getSnapshot(array $boardUids): array {
 		$boardUids = array_values($boardUids);
@@ -147,7 +145,7 @@ class postStatsRepository extends baseRepository {
 		$inClause = $boardUids ? pdoPlaceholdersForIn($boardUids) : '(NULL)';
 
 		$rows = $this->queryAll(
-			"SELECT CURDATE() AS today, counter.board_uid, counter.post_number
+			"SELECT CURDATE() AS today, TIME_TO_SEC(CURTIME()) AS seconds_today, counter.board_uid, counter.post_number
 			 FROM (SELECT 1) AS present
 			 LEFT JOIN {$this->postNumberTable} AS counter ON counter.board_uid IN {$inClause}",
 			$boardUids
@@ -160,65 +158,43 @@ class postStatsRepository extends baseRepository {
 			}
 		}
 
-		return ['today' => (string)($rows[0]['today'] ?? ''), 'numbers' => $numbers];
+		return [
+			'today' => (string)($rows[0]['today'] ?? ''),
+			'secondsToday' => (int)($rows[0]['seconds_today'] ?? 0),
+			'numbers' => $numbers,
+		];
 	}
 
 	/**
-	 * What each completed day's surviving posts say about where the sequence had got to.
+	 * Surviving posts past each board's cut, as runs of consecutive numbers made on one day.
 	 *
-	 * The lowest and highest number left on each day, which is all the evidence the rows can
-	 * give. Turning that into per-day counts is the caller's job: it also has the board's
-	 * creation date and the recorded readings to weigh in, and the days with nothing left on
-	 * them have to be filled from the gaps between.
-	 *
-	 * @param int    $boardUid Board to report on.
-	 * @param string $fromDay  Earliest day to include (Y-m-d), or '' for the whole history.
-	 * @return array Rows of ['day', 'min_no', 'max_no'], oldest first.
+	 * @param array $cuts [board uid => highest number already accounted for].
+	 * @return array Rows of ['board_uid', 'day', 'first_no', 'last_no'], by board then number.
 	 */
-	public function getDailySeries(int $boardUid, string $fromDay = ''): array {
-		$params = [':board' => $boardUid];
-		$fromCondition = '';
-
-		if ($fromDay !== '') {
-			$fromCondition = ' AND root >= :fromDay';
-			$params[':fromDay'] = $fromDay;
-		}
-
-		return $this->queryAll(
-			"SELECT DATE(root) AS day, MIN(`no`) AS min_no, MAX(`no`) AS max_no
-			 FROM {$this->table}
-			 WHERE boardUID = :board AND root < CURDATE(){$fromCondition}
-			 GROUP BY day
-			 ORDER BY day",
-			$params
-		);
-	}
-
-	/**
-	 * The same evidence for several boards at once, in one statement whatever the board count.
-	 *
-	 * @return array Rows of ['board_uid', 'day', 'min_no', 'max_no'], grouped by board.
-	 */
-	public function getDailySeriesForBoards(array $boardUids, string $fromDay = ''): array {
-		if (!$boardUids) {
+	public function getRuns(array $cuts): array {
+		if (!$cuts) {
 			return [];
 		}
 
-		$params = array_values($boardUids);
-		$inClause = pdoPlaceholdersForIn($params);
-		$fromCondition = '';
-
-		if ($fromDay !== '') {
-			$fromCondition = ' AND root >= ?';
-			$params[] = $fromDay;
+		$conditions = [];
+		$params = [];
+		foreach ($cuts as $uid => $cutNo) {
+			$conditions[] = '(boardUID = ? AND `no` > ?)';
+			$params[] = (int)$uid;
+			$params[] = (int)$cutNo;
 		}
 
+		// Consecutive numbers on the same day share no - ROW_NUMBER() within that day.
 		return $this->queryAll(
-			"SELECT boardUID AS board_uid, DATE(root) AS day, MIN(`no`) AS min_no, MAX(`no`) AS max_no
-			 FROM {$this->table}
-			 WHERE boardUID IN {$inClause} AND root < CURDATE(){$fromCondition}
-			 GROUP BY board_uid, day
-			 ORDER BY board_uid, day",
+			"SELECT boardUID AS board_uid, day, MIN(`no`) AS first_no, MAX(`no`) AS last_no
+			 FROM (
+				SELECT boardUID, `no`, DATE(root) AS day,
+					`no` - ROW_NUMBER() OVER (PARTITION BY boardUID, DATE(root) ORDER BY `no`) AS island
+				FROM {$this->table}
+				WHERE " . implode(' OR ', $conditions) . "
+			 ) numbered
+			 GROUP BY boardUID, day, island
+			 ORDER BY board_uid, first_no",
 			$params
 		);
 	}

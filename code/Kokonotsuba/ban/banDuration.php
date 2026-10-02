@@ -12,6 +12,7 @@ class banDuration {
 		'w' => 604800,
 		'd' => 86400,
 		'h' => 3600,
+		's' => 1,
 	];
 
 	/**
@@ -19,50 +20,52 @@ class banDuration {
 	 * ban form treats as a warning.
 	 */
 	public static function toSeconds(string $duration): int {
-		preg_match_all('/(\d+(\.\d+)?)([ymwdh])/', strtolower($duration), $matches, PREG_SET_ORDER);
+		preg_match_all('/(\d+(\.\d+)?)([ymwdhs])/', strtolower($duration), $matches, PREG_SET_ORDER);
 
-		$seconds = 0;
+		$seconds = 0.0;
 
 		foreach ($matches as $match) {
 			$seconds += (float) $match[1] * self::UNITS[$match[3]];
 		}
 
-		return (int) $seconds;
+		// Rounded rather than truncated: 0.29h is 1043.9999... in floating point.
+		return (int) round($seconds);
 	}
 
 	/**
-	 * A length written back the way the form takes it, so a ban's own page shows "3d" rather
-	 * than "72h". Only the expiry is stored, not what was typed, so this is the plainest string
-	 * that reads back to the same length: one unit when one divides it ("10d", "2w"), otherwise
-	 * the largest units first ("1y2m", "1d12h"). What is left under a day is rounded to the hour,
-	 * the form's smallest unit; a month is not a whole number of hours, so nothing is rounded
-	 * before the larger units are taken out.
+	 * A length written back the way the form takes it, exactly: whichever is shorter of one unit
+	 * with up to two decimals ("10d", "0.1h", "1.5d") and the largest units first ("1d3h20s").
+	 * A second or so of drift between filing and expiry is snapped away.
 	 */
 	public static function format(int $seconds): string {
 		$seconds = max(0, $seconds);
 
-		foreach (['y', 'm', 'w', 'd'] as $unit) {
-			if ($seconds > 0 && $seconds % self::UNITS[$unit] === 0) {
-				return ($seconds / self::UNITS[$unit]) . $unit;
+		if ($seconds === 0) {
+			return '0s';
+		}
+
+		$drift = min(5, intdiv($seconds, 1000));
+
+		$single = '';
+		foreach (self::UNITS as $unit => $size) {
+			$value = round($seconds / $size, 2);
+
+			if ($value >= 0.1 && abs((int) round($value * $size) - $seconds) <= $drift) {
+				$single = rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.') . $unit;
+				break;
 			}
 		}
 
 		$parts = '';
-
-		foreach (['y', 'm', 'w', 'd'] as $unit) {
-			if ($seconds >= self::UNITS[$unit]) {
-				$parts .= intdiv($seconds, self::UNITS[$unit]) . $unit;
-				$seconds %= self::UNITS[$unit];
+		$left = $seconds;
+		foreach (self::UNITS as $unit => $size) {
+			if ($left >= $size) {
+				$parts .= intdiv($left, $size) . $unit;
+				$left %= $size;
 			}
 		}
 
-		$hours = (int) round($seconds / self::UNITS['h']);
-
-		if ($hours > 0 || $parts === '') {
-			$parts .= max(1, $hours) . 'h';
-		}
-
-		return $parts;
+		return strlen($single) <= strlen($parts) ? $single : $parts;
 	}
 
 	/**
@@ -74,7 +77,7 @@ class banDuration {
 	public static function isExplicitZero(string $duration): bool {
 		$duration = trim(strtolower($duration));
 
-		return $duration !== '' && preg_match('/^0+(\\.0+)?[ymwdh]?$/', $duration) === 1;
+		return $duration !== '' && preg_match('/^0+(\\.0+)?[ymwdhs]?$/', $duration) === 1;
 	}
 
 	/**
