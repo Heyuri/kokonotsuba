@@ -455,6 +455,10 @@ class postStatsRenderer {
 			'poststats_tile_first_post' => [null, $stats['firstDay'] === '' ? _T('poststats_none') : $stats['firstDay']],
 		];
 
+		if (($stats['undated'] ?? 0) > 0) {
+			$values['poststats_tile_undated'] = [null, number_format($stats['undated'])];
+		}
+
 		if ($showLastNumber) {
 			$values['poststats_tile_latest_no'] = [null, number_format($stats['lastNo'])];
 		}
@@ -471,24 +475,16 @@ class postStatsRenderer {
 	}
 
 	/**
-	 * Posts per day across the span being shown.
-	 *
-	 * Today is left out of the average because it is still running and would drag it down; if the
-	 * span is only today, today is all there is to report.
+	 * Dated posts per day across the span being shown, over the time it has actually covered:
+	 * whole days before today plus the part of today that has passed. Floored at an hour so a
+	 * span that began moments ago does not read as a flood.
 	 */
 	private function rangeRate(array $stats, array $series): float {
 		if (!$series) {
 			return 0.0;
 		}
 
-		$completed = $series;
-		unset($completed[$stats['today']]);
-
-		if (!$completed) {
-			return (float)$stats['todayCount'];
-		}
-
-		return array_sum($completed) / count($completed);
+		return array_sum($series) / elapsedDays(count($series) - 1, $stats['secondsToday'] ?? 0);
 	}
 
 	/** Per-board breakdown under the site-wide chart. */
@@ -513,7 +509,7 @@ class postStatsRenderer {
 			$rows[] = [
 				// Recent activity, not a lifetime average — which is also what the table is
 				// ordered by, so it ranks the boards that are busy now.
-				'rate' => $recent['posts'] / max(1, $recent['days']),
+				'rate' => $recent['posts'] / $recent['days'],
 				'name' => $board->getBoardTitle(),
 				'url' => (string)$board->getBoardURL(),
 				'todayCount' => $stats['todayCount'],

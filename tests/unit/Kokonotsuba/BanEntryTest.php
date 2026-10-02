@@ -134,13 +134,7 @@ final class BanEntryTest extends TestCase {
 
 	// ---- the expiry notice --------------------------------------------------
 
-	/**
-	 * A lapsed ban is not finished with until the person it stopped has been told so.
-	 *
-	 * It stops nothing any more, but it is owed one interruption saying they are free again -
-	 * which is what the old flat-file system did, and what makes an expiry something somebody is
-	 * told about rather than something they discover by trying.
-	 */
+	/** A ban that lapsed before it was ever read still has to be read once. */
 	public function testALapsedBanStillOwesItsNotice(): void {
 		$ban = $this->makeBan(['expires_at' => date('Y-m-d H:i:s', self::NOW - 60)]);
 
@@ -156,6 +150,16 @@ final class BanEntryTest extends TestCase {
 
 		$this->assertTrue($ban->hasSeenExpiryNotice(), 'the telling was not read back off the row');
 		$this->assertFalse($ban->awaitsExpiryNotice(self::NOW), 'the notice was owed a second time');
+	}
+
+	/** A ban that was read while it ran just lapses. */
+	public function testALapsedBanThatWasReadOwesNothing(): void {
+		$ban = $this->makeBan([
+			'expires_at' => date('Y-m-d H:i:s', self::NOW - 60),
+			'seen_at' => date('Y-m-d H:i:s', self::NOW - 3600),
+		]);
+
+		$this->assertFalse($ban->awaitsExpiryNotice(self::NOW), 'a ban already read interrupted again');
 	}
 
 	/** A ban still running has nothing to announce, and neither has a lifted one. */
@@ -268,11 +272,13 @@ final class BanEntryTest extends TestCase {
 		$this->assertSame(31536000, banDuration::toSeconds('1y'));
 		$this->assertSame(129600, banDuration::toSeconds('1d12h'));
 		$this->assertSame(129600, banDuration::toSeconds('1.5d'));
+		$this->assertSame(90, banDuration::toSeconds('90s'));
+		$this->assertSame(1044, banDuration::toSeconds('0.29h'));
 	}
 
 	/** A ban's own page writes its length back as it was typed, not as a pile of hours. */
 	public function testDurationsFormatTheWayTheyWereTyped(): void {
-		foreach (['1h', '12h', '1d', '3d', '10d', '1w', '2w', '1m', '1y', '1y2m', '1d12h', '2w3d5h'] as $typed) {
+		foreach (['1h', '12h', '1d', '3d', '10d', '1w', '2w', '1m', '1y', '1y2m', '1.5d', '0.1h', '0.29h', '90s'] as $typed) {
 			$this->assertSame($typed, banDuration::format(banDuration::toSeconds($typed)), $typed);
 		}
 	}
@@ -284,10 +290,12 @@ final class BanEntryTest extends TestCase {
 		}
 	}
 
-	/** Less than an hour, or a few seconds of drift, comes out as whole hours. */
-	public function testFormattedDurationsRoundToTheHour(): void {
-		$this->assertSame('1h', banDuration::format(60));
+	/** Short lengths stay exact; a few seconds of drift on a long one is snapped away. */
+	public function testFormattedDurationsAreExactButIgnoreDrift(): void {
+		$this->assertSame('60s', banDuration::format(60));
 		$this->assertSame('1d', banDuration::format(86400 + 5));
+		$this->assertSame('1d', banDuration::format(86400 - 1));
+		$this->assertSame('362s', banDuration::format(362));
 	}
 
 	/** Unparseable input is worth nothing, which the ban form turns into "no duration given". */

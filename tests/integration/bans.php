@@ -352,6 +352,18 @@ testCase('a lapsed ban is still owed one last notice', function () use ($makeSer
 	);
 });
 
+testCase('a lapsed ban that was already read lets go quietly', function () use ($makeService, $clearBans, $bans): void {
+	$clearBans();
+
+	$service = $makeService('192.0.2.17');
+	$banId = $service->fileBan('192.0.2.17', GLOBAL_BOARD_UID, ['post'], time() - 60, 'test', null);
+
+	$service->markSeen($bans->findById($banId));
+
+	assertSameValue(null, $service->findLapsedAwaitingNotice(banCheckpoint::POST), 'a ban already read interrupted again');
+	assertSameValue(null, $service->findBlockingBan(banCheckpoint::POST), 'a read, lapsed ban still blocked');
+});
+
 testCase('the notice is owed only to what the ban actually blocked', function () use ($makeService, $clearBans): void {
 	$clearBans();
 
@@ -1117,7 +1129,7 @@ testCase('a public reason is looked up by the post it was filed over', function 
 	assertSameValue([], $service->getPublicReasonsForPosts([]), 'an empty batch queried anything at all');
 });
 
-testCase('a revoked ban stops publishing its notice', function () use ($makeService, $clearBans, $bans, $pdo, $tableNames): void {
+testCase('a revoked ban keeps publishing its notice', function () use ($makeService, $clearBans, $bans, $pdo, $tableNames): void {
 	$clearBans();
 
 	$service = $makeService('198.51.100.71');
@@ -1127,14 +1139,13 @@ testCase('a revoked ban stops publishing its notice', function () use ($makeServ
 	);
 
 	// Attach it to a notional post id directly; the posts table is empty in this fixture.
-	$pdo->prepare("UPDATE `{$tableNames['BAN_TABLE']}` SET post_uid = NULL WHERE ban_id = ?")->execute([$banId]);
+	$pdo->prepare("UPDATE `{$tableNames['BAN_TABLE']}` SET post_uid = 1 WHERE ban_id = ?")->execute([$banId]);
 
-	// An expired ban keeps its notice - they were still banned for that post.
-	assertTrueValue($bans->findById($banId)->publicReason !== '', 'the public reason was lost');
+	assertSameValue([1 => '<p>banned for this</p>'], $service->getPublicReasonsForPosts([1]), 'an expired ban lost its notice');
 
 	$service->revokeBans([$banId], null);
 
-	assertSameValue([], $service->getPublicReasonsForPosts([1]), 'a revoked ban still published its notice');
+	assertSameValue([1 => '<p>banned for this</p>'], $service->getPublicReasonsForPosts([1]), 'a revoked ban lost its notice');
 });
 
 // ---------------------------------------------------------------------------

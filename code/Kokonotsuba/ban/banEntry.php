@@ -110,18 +110,19 @@ class banEntry {
 	}
 
 	/**
-	 * Whether this ban has lapsed but still owes its notice.
+	 * Whether this ban has lapsed without ever being read.
 	 *
-	 * A ban is not over until whoever it stopped has been told it is: the next thing they try is
-	 * interrupted once more to say so, and only then does the row stop holding anything. Mutes
-	 * and warnings are excluded - a mute is thrown away once it lapses, and a warning never had
-	 * an expiry to announce.
+	 * A ban has to be read before whoever it stopped may carry on: if it lapses unseen, the next
+	 * thing it would have blocked shows the ban page once, and only then does the row stop
+	 * holding anything. A ban already read just lapses. Mutes and warnings are excluded - a mute
+	 * is thrown away once it lapses, and a warning never had an expiry.
 	 */
 	public function awaitsExpiryNotice(int $now): bool {
 		return !$this->isRevoked()
 			&& !$this->isWarning
 			&& !$this->isMute
 			&& $this->isExpired($now)
+			&& !$this->hasBeenSeen()
 			&& !$this->hasSeenExpiryNotice();
 	}
 

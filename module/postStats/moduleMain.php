@@ -233,24 +233,18 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	/**
-	 * Each board's posts over the last completed days, and how many of those days it was around
-	 * for.
+	 * Each board's dated posts over the last TABLE_WINDOW_DAYS days, today included, and the time
+	 * that covers. A board younger than the window is measured from its start.
 	 *
-	 * The table reports recent activity rather than a lifetime average, so a board that was busy
-	 * years ago does not sit at the top of it forever. A board younger than the window is measured
-	 * against the days it has existed, not the full thirty, so it is not averaged against days it
-	 * did not have.
-	 *
-	 * @return array [uid => ['posts' => int, 'days' => int]]
+	 * @return array [uid => ['posts' => int, 'days' => float]]
 	 */
 	private function recentWindow(array $siteStats, array $startDays): array {
 		$today = $siteStats['today'];
-		$windowStart = utcDay($today)->modify('-' . self::TABLE_WINDOW_DAYS . ' days')->format('Y-m-d');
+		$windowStart = utcDay($today)->modify('-' . (self::TABLE_WINDOW_DAYS - 1) . ' days')->format('Y-m-d');
 
-		// The window is the completed days only — today is still running.
 		$positions = [];
 		foreach ($siteStats['dayList'] as $position => $day) {
-			if ($day >= $windowStart && $day < $today) {
+			if ($day >= $windowStart) {
 				$positions[] = $position;
 			}
 		}
@@ -267,7 +261,7 @@ class moduleMain extends abstractModuleMain {
 
 			$window[$uid] = [
 				'posts' => $posts,
-				'days' => max(1, (int)utcDay($from)->diff(utcDay($today))->days),
+				'days' => elapsedDays((int)utcDay($from)->diff(utcDay($today))->days, $siteStats['secondsToday'] ?? 0),
 			];
 		}
 
