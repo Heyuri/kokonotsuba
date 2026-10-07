@@ -1,4 +1,4 @@
-<div class="configArrayEditor" data-mode="{$ARRAY_MODE}">
+<div class="configArrayEditor" id="{$FIELD_ID}-entries" data-mode="{$ARRAY_MODE}">
 	<ul class="configArrayList">{$ARRAY_ROWS}</ul>
 	<div class="configArrayAddRow">
 		{$ARRAY_NEW_KEY_INPUT}

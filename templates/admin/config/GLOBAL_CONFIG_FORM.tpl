@@ -6,6 +6,8 @@
 
 	<input type="hidden" name="saveGlobalConfig" value="1">
 	{$CSRF_INPUT}
+	<!-- Enter in a field submits the form's first button, which must be a save rather than an entry's move arrow. -->
+	<button type="submit" class="configDefaultSubmit" tabindex="-1" aria-hidden="true">Save configuration</button>
 
 	{$CONFIG_NOTICE}
 

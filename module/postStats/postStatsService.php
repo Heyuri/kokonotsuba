@@ -24,7 +24,7 @@ use function Puchiko\createDirectory;
  */
 class postStatsService {
 	/** Bump whenever the meaning of a cached figure changes; older caches are rebuilt. */
-	private const CACHE_VERSION = 7;
+	private const CACHE_VERSION = 8;
 
 	private string $today = '';
 	private int $secondsToday = 0;

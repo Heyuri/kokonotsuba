@@ -700,7 +700,7 @@ $language['poststats_bar_span']         = '%1$s to %2$s';
 // Wraps a tooltip for the bucket that is still filling up.
 $language['poststats_bar_partial']      = '%s - in progress';
 // One segment of a site-wide bar: %1$s the day or span, %2$s the board, %3$s the count.
-$language['poststats_segment']          = '%1$s - %2$s: %3$s posts';
+$language['poststats_segment']          = '%1$s: %2$s posts';
 
 // ── Board / global config editor field descriptions ──────────────────────────────
 // One entry per schema field (see configs/*.php and module/{name}/config.php).

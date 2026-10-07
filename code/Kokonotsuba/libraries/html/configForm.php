@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\libraries\html;
 
+use Kokonotsuba\config\configArrayMove;
 use Kokonotsuba\config\configSchema;
 use Kokonotsuba\config\configService;
 use Kokonotsuba\template\templateEngine;
@@ -309,7 +310,7 @@ function renderConfigInput(templateEngine $tpl, array $meta, string $inputKey, m
 				]);
 			}
 
-			return renderArrayListEditor($tpl, $values, $arr, $shape);
+			return renderArrayListEditor($tpl, $values, $inputKey, $arr, $shape);
 
 		case configSchema::TYPE_TEXT:
 			return $tpl->ParseBlock('CONFIG_INPUT_TEXT', $values + [
@@ -391,24 +392,30 @@ function configArrayShape(array $value): string {
 /**
  * Render the interactive list editor for a flat array config field.
  *
- * Existing entries are editable rows (a value input, plus a key input for maps) with a delete (x)
- * button; a trailing "add" row appends new entries. boardConfigForm.js keeps a hidden JSON input
+ * Existing entries are editable rows (a value input, plus a key input for maps) with up/down and
+ * delete (x) buttons; a trailing "add" row appends new entries. The arrows are submit buttons so
+ * they still reorder without JS, see configArrayMove. boardConfigForm.js keeps a hidden JSON input
  * (the one that actually submits, under the field name) in sync as rows are edited, added, or
  * removed, so entries are persisted by the form's own save button rather than per-row. The server
  * side is unchanged (it still receives and decodes a JSON string).
  *
  * @param templateEngine $tpl    Admin template engine.
- * @param array          $values Field id/name placeholder values shared with the other inputs.
+ * @param array          $values   Field id/name placeholder values shared with the other inputs.
+ * @param string         $inputKey The field's form key, named by the move buttons.
  * @param array          $arr    Current array value.
  * @param string         $shape  'list' or 'map'.
  * @return string Editor HTML.
  */
-function renderArrayListEditor(templateEngine $tpl, array $values, array $arr, string $shape): string {
+function renderArrayListEditor(templateEngine $tpl, array $values, string $inputKey, array $arr, string $shape): string {
 	$isMap = $shape === 'map';
 
 	$rows = '';
+	$index = 0;
 	foreach ($arr as $key => $value) {
 		$rows .= $tpl->ParseBlock('CONFIG_ARRAY_ROW', [
+			'{$MOVE_PARAMETER}' => configArrayMove::PARAMETER,
+			'{$MOVE_UP_VALUE}'   => sanitizeStr(configArrayMove::buttonValue($inputKey, $index, configArrayMove::UP)),
+			'{$MOVE_DOWN_VALUE}' => sanitizeStr(configArrayMove::buttonValue($inputKey, $index++, configArrayMove::DOWN)),
 			'{$ARRAY_KEY_INPUT}' => $isMap
 				? $tpl->ParseBlock('CONFIG_ARRAY_KEY_INPUT', ['{$ARRAY_KEY}' => sanitizeStr((string)$key)])
 				: '',

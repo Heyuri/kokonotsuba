@@ -67,7 +67,7 @@
 	border: 1px solid var(--color-lo-contrast-border, #d9bfb7);
 
 	/*
-	 * Series colours for the site-wide stack. Every listed board gets its own identity.
+	 * Series colours for the site-wide stacked areas. Every listed board gets its own identity.
 	 *
 	 * There are eight hues, and that is the whole supply — they are validated as an adjacent set
 	 * (which is what a stack needs) against both the lightest and darkest board themes, and
@@ -135,62 +135,67 @@
 	margin: -0.5em 0;
 }
 
-.postStatsBars {
-	display: flex;
-	align-items: flex-end;
-	/* The bars divide the whole width, so the first and last sit on the plot's edges, under the
-	   first and last date on the axis below. Anything that leaves the row narrower than the plot
-	   puts those labels next to empty space, which reads as missing data. */
-	justify-content: space-between;
+.postStatsSvg {
 	flex: 1 1 auto;
-	gap: 2px;
+	min-width: 0;
+	width: 100%;
 	height: 100%;
+	/* Strokes on the top and edges would be half-clipped otherwise. */
+	overflow: visible;
 	border-left: 1px solid var(--color-hi-contrast-border, #d9bfb7);
 	border-bottom: 1px solid var(--color-hi-contrast-border, #d9bfb7);
-	padding: 0 1px;
-	overflow: hidden;
 }
 
-/* One slot per bucket. Equal shares of the width, and a minimum so a long history stays visible
-   rather than collapsing to nothing. */
-.postStatsSlot {
-	/* Equal shares of the full width, with no cap: a short span gets wide bars rather than thin
-	   ones marooned in whitespace. */
-	flex: 1 1 0;
-	min-width: 1px;
-	height: 100%;
-	display: flex;
-	align-items: flex-end;
+/* The plot is stretched to fit, so every stroke keeps its own width. */
+.postStatsSvg path,
+.postStatsSvg rect {
+	vector-effect: non-scaling-stroke;
 }
 
-.postStatsBar {
-	width: 100%;
-	/* A day with posts should never be indistinguishable from a day without. */
-	min-height: 1px;
-	background: var(--color-bg-theading, #e04000);
+.postStatsLine {
+	fill: none;
+	stroke: var(--color-bg-theading, #e04000);
+	stroke-width: 2px;
+	stroke-linejoin: round;
 }
 
-.postStatsSlot:hover .postStatsBar {
-	background: var(--color-bg-theading2, #0040e0);
+.postStatsArea {
+	fill: var(--color-bg-theading, #e04000);
+	fill-opacity: 0.15;
 }
 
-/* Stacked column: segments sit bottom-up in a fixed slot order, so a colour holds its place
-   in every column and matches the legend's order. */
-.postStatsStack {
-	flex-direction: column-reverse;
-	align-items: stretch;
-	/* The surface separating touching segments — a gap, never a border drawn round each one.
-	   The gaps eat into the column's height, so the tallest stack would overflow; the segments
-	   are left shrinkable, which takes it out of all of them in proportion rather than
-	   clipping the top one. The chart narrows it when a stack is deep enough that the gaps
-	   would otherwise take more of the column than the data. */
-	gap: var(--poststats-gap, 2px);
+/* Today, or whichever bucket runs up to today: still filling, so it is drawn as unfinished. */
+.postStatsLinePartial {
+	stroke-dasharray: 4 3;
 }
 
-.postStatsSegment {
-	width: 100%;
-	/* A board that posted at all should never render as nothing. */
-	min-height: 1px;
+/* No stroke between bands: on thin bands a separator outweighs the data it separates. */
+.postStatsBand {
+	fill: var(--poststats-fill);
+}
+
+.postStatsHatch {
+	pointer-events: none;
+}
+
+.postStatsHatchStroke {
+	fill: rgba(0, 0, 0, 0.32);
+}
+
+.postStatsPartialShade {
+	fill: var(--color-bg-reply, #f0e0d6);
+	fill-opacity: 0.45;
+	pointer-events: none;
+}
+
+/* One strip per bucket, there for its tooltip. */
+.postStatsHits rect {
+	fill: transparent;
+}
+
+.postStatsHits rect:hover {
+	fill: var(--color-bg-theading2, #0040e0);
+	fill-opacity: 0.12;
 }
 
 /* The hue picks the fill; the tier decides whether it is laid down solid or hatched. */
@@ -258,19 +263,6 @@
 .postStatsLegendValue {
 	color: var(--color-fg-omitted, #707070);
 	font-variant-numeric: tabular-nums;
-}
-
-/* Today, or whichever bucket runs up to today: still filling, so it is drawn as unfinished. */
-.postStatsBarPartial {
-	background: repeating-linear-gradient(
-		135deg,
-		var(--color-bg-theading, #e04000),
-		var(--color-bg-theading, #e04000) 3px,
-		transparent 3px,
-		transparent 6px
-	);
-	border: 1px solid var(--color-bg-theading, #e04000);
-	box-sizing: border-box;
 }
 
 .postStatsXAxis {

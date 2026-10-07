@@ -240,6 +240,11 @@ $config = [
 	// Name of the token cookie
 	'VISITOR_TOKEN_COOKIE' => 'koko',
 
+	// Domain the token cookie is scoped to, so every board subdomain shares one token. Blank
+	// derives it from WEBSITE_URL ('boards.example.net' -> 'example.net'); set it by hand when
+	// that guess is a public suffix such as 'co.uk'.
+	'VISITOR_TOKEN_DOMAIN' => '',
+
 	// How long that cookie lives, in days.
 	'VISITOR_TOKEN_DAYS' => 730,
 

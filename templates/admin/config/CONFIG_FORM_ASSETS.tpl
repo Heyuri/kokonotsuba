@@ -1,1 +1,1 @@
-<script src="{$STATIC_URL}js/boardConfigForm.js?v=16" defer></script>
+<script src="{$STATIC_URL}js/boardConfigForm.js?v=17" defer></script>

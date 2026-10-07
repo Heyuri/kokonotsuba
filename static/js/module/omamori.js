@@ -3,6 +3,8 @@
 	if (!meta || !meta.content) return;
 
 	const name = meta.content;
+	const scopeMeta = document.querySelector('meta[name="prefsScope"]');
+	const domain = scopeMeta ? scopeMeta.content : '';
 	const storageKey = 'koko.' + name;
 
 	const valid = /^[a-f0-9]{32}\.[a-f0-9]{16}$/;
@@ -16,11 +18,23 @@
 		return match ? decodeURIComponent(match[1]) : '';
 	}
 
-	function writeCookie(value) {
-		const expires = new Date(Date.now() + 730 * 86400000).toUTCString();
+	function setCookie(value, days, scope) {
+		const expires = new Date(Date.now() + days * 86400000).toUTCString();
 		document.cookie = name + '=' + encodeURIComponent(value) +
-			'; expires=' + expires + '; path=/; SameSite=Lax' +
-			(location.protocol === 'https:' ? '; Secure' : '');
+			'; expires=' + expires + '; path=/' + (scope ? '; domain=' + scope : '') +
+			'; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+	}
+
+	function writeCookie(value) {
+		setCookie(value, 730, domain);
+	}
+
+	// A host-only copy from before the cookie was shared would shadow the shared one on this
+	// host, so it goes. Whatever it held is put back on the shared domain below.
+	let hostOnly = '';
+	if (domain) {
+		hostOnly = clean(readCookie());
+		setCookie('', -1, '');
 	}
 
 	function readLocal() {
@@ -94,7 +108,7 @@
 		const local = clean(readLocal());
 		const db = clean(fromDb);
 
-		const token = [local, db, cookie].filter(Boolean)[0] || '';
+		const token = [local, db, cookie, hostOnly].filter(Boolean)[0] || '';
 
 		if (!token) return '';
 

@@ -24,6 +24,7 @@ final class siteSettings {
 		'TRIPSALT',
 		'IDSEED',
 		'VISITOR_TOKEN_SECRET',
+		'VISITOR_TOKEN_DOMAIN',
 		'USE_CDN',
 		'CDN_DIR',
 		'CDN_URL',

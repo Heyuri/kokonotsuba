@@ -76,6 +76,7 @@ class databaseConnection {
 
 		if ($dbSettings['DATABASE_DRIVER'] === 'mysql') {
 			self::disableSnapshotIsolation($pdo);
+			self::enableExplicitTimestampDefaults($pdo);
 		}
 
 		return $pdo;
@@ -92,6 +93,18 @@ class databaseConnection {
 			$pdo->exec('SET SESSION innodb_snapshot_isolation = OFF');
 		} catch (PDOException) {
 			// unknown variable: nothing to switch off
+		}
+	}
+
+	/**
+	 * Before MariaDB 10.10 the first TIMESTAMP column of a table silently gets ON UPDATE
+	 * CURRENT_TIMESTAMP, which made every write to a post move its time. Declare defaults instead.
+	 */
+	private static function enableExplicitTimestampDefaults(PDO $pdo): void {
+		try {
+			$pdo->exec('SET SESSION explicit_defaults_for_timestamp = ON');
+		} catch (PDOException) {
+			// read-only on this server: its default applies
 		}
 	}
 

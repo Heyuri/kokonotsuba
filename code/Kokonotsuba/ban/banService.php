@@ -60,6 +60,8 @@ class banService {
 		private readonly ?actionLoggerService $actionLoggerService = null,
 		/** Optional: lets a ban hit inside a transaction still leave its log line and seen mark. */
 		private readonly ?transactionManager $transactionManager = null,
+		/** Domain the token cookie is scoped to, '' for this host only. */
+		private readonly string $tokenCookieDomain = '',
 	) {
 		$this->checkpoints = new banCheckpointRegistry();
 	}
@@ -458,7 +460,7 @@ class banService {
 			$signedValue,
 			$this->request->getRequestTime() + ($this->tokenCookieLifetimeDays * 86400),
 			'/',
-			'',
+			$this->tokenCookieDomain,
 			$this->request->isHttps(),
 			false // readable by the mirror script, which is the point of it
 		);
@@ -466,6 +468,10 @@ class banService {
 
 	public function getTokenCookieName(): string {
 		return $this->tokenCookieName;
+	}
+
+	public function getTokenCookieDomain(): string {
+		return $this->tokenCookieDomain;
 	}
 
 	/**
