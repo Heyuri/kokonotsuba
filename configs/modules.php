@@ -39,6 +39,7 @@ return [
 	'ModuleList.perceptualBan'=> boolField('config_label_ModuleList.perceptualBan', true),
 	'ModuleList.excimerViewer'=> boolField('config_label_ModuleList.excimerViewer', true),
 	'ModuleList.anonIp'       => boolField('config_label_ModuleList.anonIp', true),
+	'ModuleList.threadCache'  => boolField('config_label_ModuleList.threadCache', true),
 	'ModuleList.report'       => boolField('config_label_ModuleList.report', true),
 	'ModuleList.staffAlerts'  => boolField('config_label_ModuleList.staffAlerts', true),
 	'ModuleList.staffNav'     => boolField('config_label_ModuleList.staffNav', true),

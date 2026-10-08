@@ -129,15 +129,15 @@ final class PostStatsRendererTest extends TestCase {
 		$this->assertStringContains('postStatsLinePartial" d="M500 0 L1000 80"', $html);
 	}
 
-	public function testEveryBucketGetsAHoverStrip(): void {
+	public function testEveryBucketGetsAPointToHover(): void {
 		$renderer = $this->renderer(120);
 		$series = $renderer->buildSeries(['2026-08-01' => 1], '2026-08-01', '2026-08-03', 0);
 
 		$html = $renderer->renderChart($renderer->bucketSeries($series, '2026-08-04'), 'Test');
 
-		$this->assertSame(3, substr_count($html, '<title>'));
-		$this->assertStringContains('<rect x="0" y="0" width="250"', $html);
-		$this->assertStringContains('<rect x="750" y="0" width="250"', $html);
+		$this->assertSame(3, substr_count($html, 'class="postStatsPoint'));
+		$this->assertStringContains('style="left:0%;top:0%"', $html);
+		$this->assertStringContains('style="left:100%;top:100%"', $html);
 	}
 
 	public function testStackedBandsSitOnTheOnesBelow(): void {

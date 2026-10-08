@@ -5,14 +5,6 @@ namespace Kokonotsuba\background;
 use Kokonotsuba\cache\thread_fragment\threadFragments;
 
 use Puchiko\background\BackgroundTaskInterface;
-use Kokonotsuba\account\staffAccountFromSession;
-use Kokonotsuba\containers\appContainer;
-use Kokonotsuba\cookie\cookieService;
-use Kokonotsuba\database\databaseConnection;
-use Kokonotsuba\database\transactionManager;
-use Kokonotsuba\policy\postPolicy;
-use Kokonotsuba\policy\postRenderingPolicy;
-use Kokonotsuba\request\request;
 
 use function Kokonotsuba\libraries\rebuildBoardsByArray;
 
@@ -23,7 +15,7 @@ use function Kokonotsuba\libraries\rebuildBoardsByArray;
  * that changes rendered output - the rebuild module, a board config save, a global config save -
  * dispatches the same task rather than rebuilding inside the request.
  *
- * Runs with no HTTP session, so it rebuilds the boards from scratch off its own bootstrap.
+ * Runs with no HTTP session, so it rebuilds the boards from scratch off backgroundBoardContext.
  */
 class rebuildBoardsTask implements BackgroundTaskInterface {
 	public function handle(array $args): void {
@@ -32,54 +24,7 @@ class rebuildBoardsTask implements BackgroundTaskInterface {
 			return;
 		}
 
-		// ── Database ─────────────────────────────────────────────────────
-		$databaseConnection = databaseConnection::getInstance();
-		$dbSettings         = getDatabaseSettings();
-		$tableNames         = getTableNames();
-		$transactionManager = new transactionManager($databaseConnection);
-
-		// ── Request and auth stubs (no HTTP session in CLI) ───────────────
-		$request                 = new request();
-		$cookieService           = new cookieService([]);
-		$staffAccountFromSession = new staffAccountFromSession();
-		$currentUserId           = $staffAccountFromSession->getUID();
-		$globalConfig            = getGlobalConfig();
-
-		$postPolicy = new postPolicy(
-			$globalConfig['AuthLevels'],
-			$staffAccountFromSession->getRoleLevel(),
-			$currentUserId
-		);
-		$postRenderingPolicy = new postRenderingPolicy(
-			$globalConfig['AuthLevels'],
-			$staffAccountFromSession->getRoleLevel(),
-			$currentUserId,
-			$cookieService
-		);
-
-		// ── Container ─────────────────────────────────────────────────────
-		$container = new appContainer();
-		$container->set('request',                 $request);
-		$container->set('cookieService',           $cookieService);
-		$container->set('staffAccountFromSession', $staffAccountFromSession);
-		$container->set('currentUserId',           $currentUserId);
-		$container->set('postPolicy',              $postPolicy);
-		$container->set('postRenderingPolicy',     $postRenderingPolicy);
-		$container->set('globalConfig',            $globalConfig);
-		$container->set('databaseConnection',      $databaseConnection);
-		$container->set('transactionManager',      $transactionManager);
-		$container->set('dbSettings',              $dbSettings);
-		$container->set('tableNames',              $tableNames);
-
-		// ── Repositories (also registers services in $container) ──────────
-		// Variables created here become local vars: $actionLoggerService,
-		// $threadRepository, $threadService, $quoteLinkService, etc.
-		require getBackendDir() . 'bootstrap/repositories.php';
-
-		// ── Board layer ───────────────────────────────────────────────────
-		// Creates $boardService, defines GLOBAL_BOARD_ARRAY, registers
-		// boardPostNumbers, boardPathService, boardRepository in $container.
-		require getBackendDir() . 'bootstrap/board.php';
+		$boardService = backgroundBoardContext::boot()->get('boardService');
 
 		// ── Rebuild ───────────────────────────────────────────────────────
 		$boards = $boardService->getBoardsFromUIDs($boardUIDs);

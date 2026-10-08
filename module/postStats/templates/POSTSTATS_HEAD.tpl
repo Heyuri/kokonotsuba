@@ -1,1 +1,1 @@
-<link rel="stylesheet" href="{$CSS_URL}">
+<link rel="stylesheet" href="{$CSS_URL}?v=2">

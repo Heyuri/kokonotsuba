@@ -27,6 +27,7 @@ use Kokonotsuba\cache\path_cache\boardPathService;
 use Kokonotsuba\interfaces\IBoard;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\template\templateEngine;
+use Kokonotsuba\thread\Thread;
 use function Kokonotsuba\libraries\html\generateHeadHtml;
 use function Kokonotsuba\libraries\html\generatePostFormHTML;
 use function Kokonotsuba\libraries\html\generateFooterHtml;
@@ -295,6 +296,19 @@ class board implements IBoard {
 
 	public function drawPage(int $pageNumber): void {
 		$this->rebuilder()->drawPage($pageNumber);
+	}
+
+	/**
+	 * @param int[]|null $onlyPages Just these pages; null for all of them.
+	 * @return int Thread pages drawn into the fragment cache.
+	 */
+	public function warmThreadFragments(Thread $thread, ?array $onlyPages = null): int {
+		return $this->rebuilder()->warmThreadFragments($thread, $onlyPages);
+	}
+
+	/** @param Thread[] $threads */
+	public function warmIndexFragments(array $threads): void {
+		$this->rebuilder()->warmIndexFragments($threads);
 	}
 
 	public function rebuildBoard(bool $logRebuild = false): void {

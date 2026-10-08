@@ -322,7 +322,7 @@ class postStatsRenderer {
 			// An unfinished last bucket is drawn dashed, so its dip does not read as a collapse.
 			'{$LINE}' => $this->linePath($partial ? array_slice($top, 0, -1) : $top),
 			'{$PARTIAL_LINE}' => $partial ? $this->linePath(array_slice($top, -2)) : '',
-			'{$HITS}' => $this->hitAreas($buckets, array_map(fn($bucket) => $this->describeBucket($bucket), $buckets)),
+			'{$POINTS}' => $this->markers($top, $buckets, array_map(fn($bucket) => $this->describeBucket($bucket), $buckets)),
 			'{$AXIS}' => $this->axisLabels($buckets),
 		]);
 	}
@@ -395,7 +395,7 @@ class postStatsRenderer {
 			'{$PARTIAL}' => $shade !== null,
 			'{$PARTIAL_X}' => $shade['x'] ?? '',
 			'{$PARTIAL_WIDTH}' => $shade['width'] ?? '',
-			'{$HITS}' => $this->hitAreas($buckets, $titles),
+			'{$POINTS}' => $this->markers($this->plotPoints($floor, $peak), $buckets, $titles),
 			'{$AXIS}' => $this->axisLabels($buckets),
 			'{$LEGEND}' => $this->renderLegend($series, $totals),
 		]);
@@ -444,29 +444,28 @@ class postStatsRenderer {
 	}
 
 	/**
-	 * One hover strip per bucket, centred on its point, carrying the bucket's description.
+	 * A marker on each bucket's point, carrying its description. Placed in percent over the plot
+	 * rather than drawn in it, since the stretched plot would squash a circle.
 	 *
+	 * @param array    $points From plotPoints(), one per bucket.
 	 * @param string[] $titles One per bucket.
 	 */
-	private function hitAreas(array $buckets, array $titles): array {
-		$count = count($buckets);
-		$step = $count > 1 ? self::PLOT_WIDTH / ($count - 1) : self::PLOT_WIDTH;
-		$hits = [];
+	private function markers(array $points, array $buckets, array $titles): array {
+		$single = count($buckets) === 1;
+		$markers = [];
 
 		foreach (array_values($titles) as $index => $title) {
-			$centre = $count > 1 ? $index * $step : self::PLOT_WIDTH / 2;
-			$left = max(0, $centre - $step / 2);
-			$right = min(self::PLOT_WIDTH, $centre + $step / 2);
+			[$x, $y] = $points[$index];
 
-			$hits[] = [
-				'{$X}' => $this->coordinate($left),
-				'{$WIDTH}' => $this->coordinate($right - $left),
-				'{$HEIGHT}' => self::PLOT_HEIGHT,
+			$markers[] = [
+				'{$LEFT}' => $this->coordinate($single ? 50 : $x / self::PLOT_WIDTH * 100),
+				'{$TOP}' => $this->coordinate($y / self::PLOT_HEIGHT * 100),
+				'{$PARTIAL}' => !empty($buckets[$index]['partial']),
 				'{$TITLE}' => htmlspecialchars($title),
 			];
 		}
 
-		return $hits;
+		return $markers;
 	}
 
 	/** The stretch between the last two points, where the unfinished bucket is drawn. */

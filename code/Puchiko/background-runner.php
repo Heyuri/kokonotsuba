@@ -121,6 +121,10 @@ try {
 		require_once $realFile;
 	}
 
+	if (class_exists(\Puchiko\background\BackgroundTaskDispatcher::class)) {
+		\Puchiko\background\BackgroundTaskDispatcher::setRunningStatusFile($statusFile);
+	}
+
 	// ─── Validate task class ───
 	if (!class_exists($class)) {
 		$writeStatus(['status' => 'failed', 'error' => "Task class not found: $class"]);
