@@ -4,7 +4,8 @@
  * Two jobs:
  *  - Array settings are edited as rows of inputs. This keeps the hidden JSON input (the one that
  *    actually submits) in sync as rows are typed into, added, or removed, so entries are persisted
- *    by the form's own save button rather than per-row.
+ *    by the form's own save button rather than per-row. The up/down arrows move rows in place;
+ *    they are submit buttons only so that they still work, as a save, without JS.
  *  - Once anything in the form has been edited, the save button is pinned to the viewport so it
  *    stays reachable without scrolling to the end of a long form.
  */
@@ -51,6 +52,12 @@
 		var vi = document.createElement('input');
 		vi.type = 'text'; vi.className = 'configArrayValue'; vi.value = value;
 		li.appendChild(vi);
+
+		[['configArrayMoveUp', '\u2191', 'Move up'], ['configArrayMoveDown', '\u2193', 'Move down']].forEach(function(spec){
+			var mv = document.createElement('button');
+			mv.type = 'button'; mv.className = spec[0]; mv.textContent = spec[1]; mv.title = spec[2];
+			li.appendChild(mv);
+		});
 
 		var rm = document.createElement('button');
 		rm.type = 'button'; rm.className = 'configArrayRemove'; rm.textContent = 'x'; rm.title = 'Delete entry';
@@ -117,6 +124,16 @@
 		} else if (btn.classList.contains('configArrayRemove')){
 			e.preventDefault();
 			btn.closest('.configArrayRow').remove();
+			serialize(editor);
+			markDirty();
+		} else if (btn.classList.contains('configArrayMoveUp') || btn.classList.contains('configArrayMoveDown')){
+			e.preventDefault();
+			var row = btn.closest('.configArrayRow');
+			var up = btn.classList.contains('configArrayMoveUp');
+			var other = up ? row.previousElementSibling : row.nextElementSibling;
+			if (!other) return;
+			row.parentNode.insertBefore(up ? row : other, up ? other : row);
+			btn.focus();
 			serialize(editor);
 			markDirty();
 		}
@@ -244,6 +261,15 @@
 				var b = (k in toValue) ? String(toValue[k]) : null;
 				if (a !== b) edited.add(k);
 			});
+
+			// Same entries in a new order: the ones that changed place are the edit.
+			var fromKeys = Object.keys(fromValue);
+			var toKeys = Object.keys(toValue);
+			if (edited.size === 0 && fromKeys.length === toKeys.length){
+				fromKeys.forEach(function(k, i){
+					if (toKeys[i] !== k) edited.add(k);
+				});
+			}
 		}
 
 		return edited;
@@ -892,6 +918,12 @@
 		// Reset is a different action entirely: let it post normally and reload the page with the
 		// restored values. Same for any browser that gives us no submitter to inspect.
 		var submitter = e.submitter;
+
+		// Enter in a field submits through the hidden default button, which is a save too.
+		if (submitter && submitter.classList.contains('configDefaultSubmit')){
+			submitter = document.getElementById('boardConfigSaveButton') || submitter;
+		}
+
 		if (!submitter || submitter.id !== 'boardConfigSaveButton') return;
 
 		// No fetch() means no AJAX: fall through to the plain POST + redirect, which still works.

@@ -101,6 +101,30 @@ class BackgroundTaskRegistry {
 class BackgroundTaskDispatcher {
 	private static ?string $contextFile = null;
 	private static ?string $appRoot = null;
+	private static ?string $runningStatusFile = null;
+
+	/** Set by the runner: the status file of the task running in this process, for reportProgress(). */
+	public static function setRunningStatusFile(?string $statusFile): void {
+		self::$runningStatusFile = $statusFile;
+	}
+
+	/**
+	 * Let pollers see how far the running task has got; pollStatus() returns it as 'progress'.
+	 * Swapped in whole, so a poll never reads half of it. Does nothing outside the runner.
+	 *
+	 * @param array<string, mixed> $progress JSON-serializable.
+	 */
+	public static function reportProgress(array $progress): void {
+		if (self::$runningStatusFile === null) {
+			return;
+		}
+
+		$temp = self::$runningStatusFile . '.' . bin2hex(random_bytes(4)) . '.tmp';
+		if (@file_put_contents($temp, json_encode(['status' => 'running', 'progress' => $progress])) === false
+			|| !@rename($temp, self::$runningStatusFile)) {
+			@unlink($temp);
+		}
+	}
 
 	/**
 	 * Provide an application bootstrap file that the runner loads before executing

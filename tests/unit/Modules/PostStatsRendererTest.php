@@ -109,14 +109,56 @@ final class PostStatsRendererTest extends TestCase {
 		$this->assertFalse(!empty($buckets[0]['partial']));
 	}
 
-	public function testChartScalesBarsAgainstThePeak(): void {
+	public function testChartScalesTheLineAgainstThePeak(): void {
 		$renderer = $this->renderer(120);
 		$series = $renderer->buildSeries(['2026-08-01' => 10, '2026-08-02' => 5], '2026-08-01', '2026-08-02', 0);
 
 		$html = $renderer->renderChart($renderer->bucketSeries($series, '2026-08-03'), 'Test');
 
-		$this->assertStringContains('height:100.00%', $html);
-		$this->assertStringContains('height:50.00%', $html);
+		$this->assertStringContains('class="postStatsLine" d="M0 0 L1000 50"', $html);
+		$this->assertStringNotContains('postStatsLinePartial', $html);
+	}
+
+	public function testTheUnfinishedBucketIsDrawnDashed(): void {
+		$renderer = $this->renderer(120);
+		$series = $renderer->buildSeries(['2026-08-01' => 10, '2026-08-02' => 10, '2026-08-03' => 2], '2026-08-01', '2026-08-03', 0);
+
+		$html = $renderer->renderChart($renderer->bucketSeries($series, '2026-08-03'), 'Test');
+
+		$this->assertStringContains('class="postStatsLine" d="M0 0 L500 0"', $html);
+		$this->assertStringContains('postStatsLinePartial" d="M500 0 L1000 80"', $html);
+	}
+
+	public function testEveryBucketGetsAPointToHover(): void {
+		$renderer = $this->renderer(120);
+		$series = $renderer->buildSeries(['2026-08-01' => 1], '2026-08-01', '2026-08-03', 0);
+
+		$html = $renderer->renderChart($renderer->bucketSeries($series, '2026-08-04'), 'Test');
+
+		$this->assertSame(3, substr_count($html, 'class="postStatsPoint'));
+		$this->assertStringContains('style="left:0%;top:0%"', $html);
+		$this->assertStringContains('style="left:100%;top:100%"', $html);
+	}
+
+	public function testStackedBandsSitOnTheOnesBelow(): void {
+		$renderer = $this->renderer(120);
+		$buckets = [
+			['label' => '2026-08-01', 'start' => '2026-08-01', 'end' => '2026-08-01', 'value' => 10, 'dayCount' => 1, 'segments' => [1 => 6, 2 => 4]],
+			['label' => '2026-08-02', 'start' => '2026-08-02', 'end' => '2026-08-02', 'value' => 5, 'dayCount' => 1, 'segments' => [1 => 5]],
+		];
+		$series = [
+			2 => ['hue' => '2', 'tier' => '0', 'order' => 1, 'label' => 'B', 'url' => ''],
+			1 => ['hue' => '1', 'tier' => '1', 'order' => 0, 'label' => 'A', 'url' => ''],
+		];
+
+		$html = $renderer->renderStackedChart($buckets, $series, 'Test');
+
+		// The first-ranked board is the bottom band, and only it is hatched.
+		$this->assertStringContains('postStatsHue1" d="M0 40 L1000 50 L1000 100 L0 100 Z"', $html);
+		$this->assertStringContains('postStatsHue2" d="M0 0 L1000 50 L1000 50 L0 40 Z"', $html);
+		$this->assertSame(1, substr_count($html, 'class="postStatsHatch"'));
+		// One line per board that posted in each bucket; the i18n stub echoes the key.
+		$this->assertSame(3, substr_count($html, "\npoststats_segment"));
 	}
 
 	public function testEmptyChartSaysSoInsteadOfDividingByZero(): void {

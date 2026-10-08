@@ -1,0 +1,29 @@
+/* ── Thread cache admin page ─────────────────────────────────────────────── */
+
+.threadCacheScroll {
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.threadCacheTable td,
+.threadCacheTable th {
+	white-space: nowrap;
+}
+
+.threadCacheTable tfoot td {
+	font-weight: bold;
+}
+
+.threadCacheRate,
+.threadCacheOff {
+	opacity: 0.7;
+	font-size: smaller;
+}
+
+#threadCacheForm .buttonSection button {
+	margin-right: 4px;
+}
+
+.threadCacheStatus:empty {
+	display: none;
+}

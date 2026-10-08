@@ -6,6 +6,7 @@ namespace Kokonotsuba\routers\routes;
 
 use Exception;
 use Throwable;
+use Kokonotsuba\config\configArrayMove;
 use Kokonotsuba\config\configService;
 use Kokonotsuba\board\boardService;
 use Kokonotsuba\error\softErrorHandler;
@@ -87,6 +88,11 @@ class globalConfigRoute {
 			$submitted = [];
 		}
 
+		// An entry's up/down arrow, clicked without JS: the save carries the entry moved.
+		$move = $this->request->getParameter(configArrayMove::PARAMETER, 'POST');
+		$submitted = configArrayMove::apply($submitted, $move);
+		$movedField = configArrayMove::fieldOf($move);
+
 		$isAjax = $this->request->isAjax();
 
 		try {
@@ -114,7 +120,7 @@ class globalConfigRoute {
 			]);
 		}
 
-		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=globalConfig&rebuild=queued');
+		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=globalConfig&rebuild=queued' . ($movedField !== null ? '#' . $movedField . '-entries' : ''));
 	}
 
 	private function resetGlobalConfigFromRequest(): void {

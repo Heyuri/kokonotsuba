@@ -1408,6 +1408,8 @@ a.linkjs {
 .configArrayKey, .configArrayNewKey { flex: 0 0 32%; }
 .configArrayEditor button { flex: 0 0 auto; cursor: pointer; padding: 0 8px; line-height: 1.6; }
 .configArrayAddRow { margin-top: 4px; }
+.configArrayRow:first-child .configArrayMoveUp, .configArrayRow:last-child .configArrayMoveDown { visibility: hidden; }
+.configDefaultSubmit { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
 /* ── The section navigator ───────────────────────────────────────────────────────────
    Rendered hidden with the form; boardConfigForm.js lifts it into an ordinary koko window,

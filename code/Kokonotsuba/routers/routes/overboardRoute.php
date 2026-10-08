@@ -28,6 +28,8 @@ class overboardRoute {
 	public function drawOverboard(): void {
 		$this->handleOverboardFilterForm();
 
+		$this->overboard->useOverboardTemplate();
+
 		$allowedBoards = $this->readFilter()->allowedBoards();
 
 		$filters = [

@@ -23,6 +23,7 @@ use Kokonotsuba\ban\banAppealRepository;
 use Kokonotsuba\ban\banRepository;
 use Kokonotsuba\ban\banService;
 use Kokonotsuba\ban\visitorTokenSigner;
+use Kokonotsuba\cookie\cookieDomain;
 use Kokonotsuba\action_log\actionLoggerRepository;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\capcode_backend\capcodeRepository;
@@ -79,7 +80,12 @@ $banService = new banService(
 	(int) ($globalConfig['VISITOR_TOKEN_DAYS'] ?? 730),
 	new visitorTokenSigner($visitorTokenSecret),
 	$actionLoggerService,
-	$transactionManager
+	$transactionManager,
+	cookieDomain::shared(
+		(string) ($globalConfig['VISITOR_TOKEN_DOMAIN'] ?? ''),
+		(string) ($globalConfig['WEBSITE_URL'] ?? ''),
+		$request->getHttpHost()
+	)
 );
 
 // Hand every visitor a token if they haven't got one. Costs a cookie header and nothing else:

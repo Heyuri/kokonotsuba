@@ -11,7 +11,7 @@ use function Kokonotsuba\libraries\_T;
 /**
  * Turns a daily post series into the values the templates under templates/ are filled with.
  *
- * The series is always held per day; anything wider than the bar budget is bucketed into weeks
+ * The series is always held per day; anything wider than the point budget (MAX_BARS) is bucketed into weeks
  * or months here, so the zoom links only change how the same cached numbers are drawn.
  *
  * Nothing in this class writes markup — it prepares values and hands them to a block. Anything
@@ -40,6 +40,13 @@ class postStatsRenderer {
 
 	/** Mean Gregorian month, so a monthly figure does not swing with the length of the month. */
 	private const DAYS_PER_MONTH = 365.25 / 12;
+
+	/** The plot's own coordinate space; it is stretched to fit, with strokes kept a fixed width. */
+	private const PLOT_WIDTH = 1000;
+	private const PLOT_HEIGHT = 100;
+
+	/** Gives each stacked chart on a page its own pattern ids. */
+	private static int $chartCount = 0;
 
 	/** Most dates the x axis will carry before it starts skipping buckets. */
 	private const AXIS_LABELS = 6;
@@ -88,7 +95,7 @@ class postStatsRenderer {
 	}
 
 	/**
-	 * Group a daily series down to something that fits the bar budget.
+	 * Group a daily series down to something that fits the point budget.
 	 *
 	 * @return array Buckets of ['label', 'start', 'end', 'value', 'dayCount'].
 	 */
@@ -123,7 +130,7 @@ class postStatsRenderer {
 		return $buckets;
 	}
 
-	/** How wide a bucket has to be for the series to fit the bar budget. */
+	/** How wide a bucket has to be for the series to fit the point budget. */
 	private function bucketUnit(int $dayCount): string {
 		if ($dayCount <= $this->maxBars) {
 			return 'day';
@@ -255,8 +262,8 @@ class postStatsRenderer {
 	/**
 	 * Dates for the x axis, evenly spaced across the buckets.
 	 *
-	 * The labels are laid out with the same spacing as the bars, so taking evenly spaced buckets
-	 * keeps each date under the bar it belongs to. Short series get a label per bucket.
+	 * The labels are spread edge to edge as the points are, so taking evenly spaced buckets
+	 * keeps each date under the point it belongs to. Short series get a label per bucket.
 	 */
 	private function axisLabels(array $buckets): array {
 		$count = count($buckets);
@@ -294,36 +301,34 @@ class postStatsRenderer {
 		]);
 	}
 
-	/** The bar chart itself, scaled against its own peak. */
+	/** The line chart itself, scaled against its own peak. */
 	public function renderChart(array $buckets, string $caption): string {
 		if (!$buckets) {
 			return $this->renderNotice('postStatsEmpty', _T('poststats_empty'));
 		}
 
-		$peak = max(array_column($buckets, 'value'));
-
-		$bars = [];
-		foreach ($buckets as $bucket) {
-			$height = $peak > 0 ? ($bucket['value'] / $peak) * 100 : 0;
-
-			$bars[] = [
-				'{$TITLE}' => htmlspecialchars($this->describeBucket($bucket)),
-				'{$HEIGHT}' => number_format($height, 2, '.', ''),
-				'{$PARTIAL}' => !empty($bucket['partial']),
-			];
-		}
+		$values = array_column($buckets, 'value');
+		$peak = max($values);
+		$top = $this->plotPoints($values, $peak);
+		$partial = $this->isPartial($buckets);
 
 		return $this->templateEngine->ParseBlock('POSTSTATS_CHART', [
 			'{$CAPTION}' => htmlspecialchars($caption),
 			'{$PEAK}' => number_format($peak),
 			'{$MIDPOINT}' => number_format(intdiv($peak, 2)),
-			'{$BARS}' => $bars,
+			'{$WIDTH}' => self::PLOT_WIDTH,
+			'{$HEIGHT}' => self::PLOT_HEIGHT,
+			'{$AREA}' => $this->areaPath($top, $this->plotPoints(array_fill(0, count($values), 0), $peak)),
+			// An unfinished last bucket is drawn dashed, so its dip does not read as a collapse.
+			'{$LINE}' => $this->linePath($partial ? array_slice($top, 0, -1) : $top),
+			'{$PARTIAL_LINE}' => $partial ? $this->linePath(array_slice($top, -2)) : '',
+			'{$POINTS}' => $this->markers($top, $buckets, array_map(fn($bucket) => $this->describeBucket($bucket), $buckets)),
 			'{$AXIS}' => $this->axisLabels($buckets),
 		]);
 	}
 
 	/**
-	 * The site-wide chart: the same columns, split into a segment per board, with a legend.
+	 * The site-wide chart: one band per board stacked into the total, with a legend.
 	 *
 	 * @param array $buckets From bucketStack().
 	 * @param array $series  From assignSeries().
@@ -334,75 +339,144 @@ class postStatsRenderer {
 		}
 
 		$peak = max(array_column($buckets, 'value'));
+		$count = count($buckets);
+		$chartId = 'postStatsChart' . ++self::$chartCount;
+
+		// Bottom-up in rank order, so a band holds its place and matches the legend.
+		uasort($series, fn($a, $b) => $a['order'] <=> $b['order']);
+
 		$totals = [];
-		$columns = [];
-		$deepest = 0;
+		$bands = [];
+		$lines = array_fill(0, $count, []);
+		$floor = array_fill(0, $count, 0);
 
-		foreach ($buckets as $bucket) {
-			$span = $this->describeSpan($bucket);
-			$segments = [];
-
-			foreach ($bucket['segments'] as $uid => $value) {
-				if (!isset($series[$uid])) {
-					continue;
+		foreach ($series as $uid => $entry) {
+			$values = [];
+			foreach ($buckets as $index => $bucket) {
+				$value = $bucket['segments'][$uid] ?? 0;
+				$values[] = $value;
+				if ($value > 0) {
+					$lines[$index][] = _T('poststats_segment', $entry['label'], number_format($value));
 				}
-
-				// Keyed by the board's rank, so the stack reads the same way in every column and
-				// in the legend whichever boards happen to be busy that day.
-				$segments[$series[$uid]['order']] = [
-					'hue' => $series[$uid]['hue'],
-					'tier' => $series[$uid]['tier'],
-					'label' => $series[$uid]['label'],
-					'value' => $value,
-				];
-
-				$totals[$uid] = ($totals[$uid] ?? 0) + $value;
 			}
 
-			ksort($segments, SORT_NUMERIC);
-			$deepest = max($deepest, count($segments));
+			$total = array_sum($values);
+			if ($total === 0) {
+				continue;
+			}
+			$totals[$uid] = $total;
 
-			$columns[] = [
-				'{$TITLE}' => htmlspecialchars($this->describeBucket($bucket)),
-				'{$SEGMENTS}' => $this->buildSegments($segments, $peak, $span),
+			$ceiling = array_map(fn($low, $value) => $low + $value, $floor, $values);
+			$bands[] = [
+				'{$CHART_ID}' => $chartId,
+				'{$HUE}' => htmlspecialchars($entry['hue']),
+				'{$TIER}' => htmlspecialchars($entry['tier']),
+				'{$HATCHED}' => $entry['tier'] !== '0',
+				'{$PATH}' => $this->areaPath($this->plotPoints($ceiling, $peak), $this->plotPoints($floor, $peak)),
 			];
+			$floor = $ceiling;
 		}
+
+		$titles = [];
+		foreach ($buckets as $index => $bucket) {
+			$titles[] = implode("\n", [$this->describeBucket($bucket), ...$lines[$index]]);
+		}
+
+		$shade = $this->isPartial($buckets) ? $this->partialSpan($count) : null;
 
 		return $this->templateEngine->ParseBlock('POSTSTATS_STACK', [
 			'{$CAPTION}' => htmlspecialchars($caption),
+			'{$CHART_ID}' => $chartId,
 			'{$PEAK}' => number_format($peak),
 			'{$MIDPOINT}' => number_format(intdiv($peak, 2)),
-			'{$COLUMNS}' => $columns,
-			// The gaps between segments come out of the column's height, so a deep stack gets a
-			// finer one - otherwise a site with twenty boards spends more of the plot on gaps
-			// than on data.
-			'{$GAP}' => $deepest > 8 ? '1px' : '2px',
+			'{$WIDTH}' => self::PLOT_WIDTH,
+			'{$HEIGHT}' => self::PLOT_HEIGHT,
+			'{$BANDS}' => $bands,
+			'{$PARTIAL}' => $shade !== null,
+			'{$PARTIAL_X}' => $shade['x'] ?? '',
+			'{$PARTIAL_WIDTH}' => $shade['width'] ?? '',
+			'{$POINTS}' => $this->markers($this->plotPoints($floor, $peak), $buckets, $titles),
 			'{$AXIS}' => $this->axisLabels($buckets),
 			'{$LEGEND}' => $this->renderLegend($series, $totals),
 		]);
 	}
 
-	/** One column's worth of stacked segments, in the boards' fixed order. */
-	private function buildSegments(array $segments, int $peak, string $span): array {
-		$values = [];
+	/** Whether the last of several buckets is still filling. */
+	private function isPartial(array $buckets): bool {
+		return count($buckets) > 1 && !empty($buckets[count($buckets) - 1]['partial']);
+	}
 
-		foreach ($segments as $segment) {
-			$height = $peak > 0 ? ($segment['value'] / $peak) * 100 : 0;
+	/**
+	 * Plot coordinates for a run of values, first and last on the plot's edges.
+	 * A single value is drawn flat across the whole width.
+	 *
+	 * @return array<array{0: float, 1: float}>
+	 */
+	private function plotPoints(array $values, int $peak): array {
+		$values = array_values($values);
+		$count = count($values);
+		$points = [];
 
-			$values[] = [
-				'{$HUE}' => htmlspecialchars($segment['hue']),
-				'{$TIER}' => htmlspecialchars($segment['tier']),
-				'{$HEIGHT}' => number_format($height, 3, '.', ''),
-				'{$TITLE}' => htmlspecialchars(_T(
-					'poststats_segment',
-					$span,
-					$segment['label'],
-					number_format($segment['value'])
-				)),
+		foreach ($values as $index => $value) {
+			$y = self::PLOT_HEIGHT - ($peak > 0 ? $value / $peak * self::PLOT_HEIGHT : 0);
+			$points[] = [$count > 1 ? $index * self::PLOT_WIDTH / ($count - 1) : 0, $y];
+		}
+
+		if ($count === 1) {
+			$points[] = [self::PLOT_WIDTH, $points[0][1]];
+		}
+
+		return $points;
+	}
+
+	private function linePath(array $points): string {
+		$commands = [];
+		foreach ($points as $index => [$x, $y]) {
+			$commands[] = ($index === 0 ? 'M' : 'L') . $this->coordinate($x) . ' ' . $this->coordinate($y);
+		}
+
+		return implode(' ', $commands);
+	}
+
+	/** A band between two lines: along the top, then back along the bottom. */
+	private function areaPath(array $top, array $bottom): string {
+		return $this->linePath(array_merge($top, array_reverse($bottom))) . ' Z';
+	}
+
+	/**
+	 * A marker on each bucket's point, carrying its description. Placed in percent over the plot
+	 * rather than drawn in it, since the stretched plot would squash a circle.
+	 *
+	 * @param array    $points From plotPoints(), one per bucket.
+	 * @param string[] $titles One per bucket.
+	 */
+	private function markers(array $points, array $buckets, array $titles): array {
+		$single = count($buckets) === 1;
+		$markers = [];
+
+		foreach (array_values($titles) as $index => $title) {
+			[$x, $y] = $points[$index];
+
+			$markers[] = [
+				'{$LEFT}' => $this->coordinate($single ? 50 : $x / self::PLOT_WIDTH * 100),
+				'{$TOP}' => $this->coordinate($y / self::PLOT_HEIGHT * 100),
+				'{$PARTIAL}' => !empty($buckets[$index]['partial']),
+				'{$TITLE}' => htmlspecialchars($title),
 			];
 		}
 
-		return $values;
+		return $markers;
+	}
+
+	/** The stretch between the last two points, where the unfinished bucket is drawn. */
+	private function partialSpan(int $count): array {
+		$step = self::PLOT_WIDTH / ($count - 1);
+
+		return ['x' => $this->coordinate(self::PLOT_WIDTH - $step), 'width' => $this->coordinate($step)];
+	}
+
+	private function coordinate(float $value): string {
+		return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
 	}
 
 	/**

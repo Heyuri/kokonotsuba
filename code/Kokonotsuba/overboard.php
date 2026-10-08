@@ -55,10 +55,27 @@ class overboard {
 		$this->canViewDeleted = $postRenderingPolicy->viewDeleted();
 	}
 	
+	/** The template every board's overboard is drawn with, whatever the viewing board uses. */
+	public static function templateName(array $config): string {
+		$template = basename((string)($config['OVERBOARD_TEMPLATE'] ?? ''));
+
+		return $template !== '' && is_dir(getBackendDir() . 'templates/' . $template) ? $template : 'kokoimg';
+	}
+
+	/**
+	 * Switch the request's template engine to the overboard's. The engine is the one the board's
+	 * modules hold too, so the head, footer and every module block follow.
+	 */
+	public function useOverboardTemplate(): void {
+		$this->templateEngine->setTemplateFile(self::templateName($this->config));
+	}
+
 	/** The board head, titled and sub-headed as the overboard rather than as the board it is served from. */
 	public function drawOverboardHead(&$dat, $resno = 0) {
+		// the stylesheets follow the template the page is drawn with
+		$template = self::templateName($this->config);
 		$html = generateHeadHtml(
-			$this->config,
+			['TEMPLATE_FILE' => $template, 'REPLY_TEMPLATE_FILE' => $template] + $this->config,
 			$this->templateEngine,
 			$this->moduleEngine,
 			strip_tags($this->config['OVERBOARD_TITLE']),
@@ -109,7 +126,7 @@ class overboard {
 			$threadList,
 			threadPageRenderer::boardsForThreads($threadList),
 			$previewCount,
-			threadFragmentCache::overboardVariant($previewCount, $this->board->getBoardUID()),
+			threadFragmentCache::overboardVariant(self::templateName($this->config), $previewCount),
 			$templateValues
 		);
 

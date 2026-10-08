@@ -5,6 +5,7 @@ namespace Kokonotsuba\board;
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\cache\thread_fragment\threadFragmentCache;
+use Kokonotsuba\cache\thread_fragment\threadFragmentHitCounter;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\renderers\boardRendererFactory;
 use Kokonotsuba\renderers\commentFormatter;
@@ -151,20 +152,13 @@ class boardRebuilder {
 			: ($page ?? 1);
 
 		if ($cachedBlock !== null) {
-			$threadRenderer = $this->getThreadRenderer();
-			$threadRenderer->notifyCachedThread($thread, true);
+			$this->getThreadRenderer()->notifyCachedThread($thread, true);
 			$block = $cachedBlock;
 		} else {
-			$posts = $threadData->getPosts();
-			$quoteLinks = $this->quoteLinkService->getQuoteLinksByPostUids($threadData->getPostUids(), $this->canViewDeleted);
-			$threadRenderer = $this->getThreadRenderer($quoteLinks);
-			$this->moduleEngine->dispatch('PostsPrefetch', [&$posts]);
-
-			$block = $threadRenderer->renderThreadBlock(true, $thread, $posts, 0, false, $this->adminMode,
-				'', '', $pte_vals, $currentPage, $totalThreadPages, $amountOfRepliesToRender, '');
+			$block = $this->renderThreadPageBlock($threadData, $pte_vals, $currentPage, $totalThreadPages, $amountOfRepliesToRender);
 			$cache?->put($uid, $variant, threadFragmentCache::stampFor($thread), $block);
 		}
-		$pte_vals['{$THREADS}'] .= $block . $threadRenderer->renderThreadSeparator(0);
+		$pte_vals['{$THREADS}'] .= $block . $this->getThreadRenderer()->renderThreadSeparator(0);
 
 		// if a non-null page value is set - then draw the pager
 		if(!is_null($page)) {
@@ -186,6 +180,70 @@ class boardRebuilder {
 
 		$pageData = $this->buildFullPage($pte_vals, $pageTitle, $threadNumber, true, $this->adminMode);
 		echo $this->finalizePageData($pageData);
+	}
+
+	/** The thread's own markup on a thread page, without the separator. */
+	private function renderThreadPageBlock(ThreadData $threadData, array $pte_vals, int $currentPage, int $totalThreadPages, ?int $amountOfRepliesToRender): string {
+		$posts = $threadData->getPosts();
+		$quoteLinks = $this->quoteLinkService->getQuoteLinksByPostUids($threadData->getPostUids(), $this->canViewDeleted);
+		$threadRenderer = $this->getThreadRenderer($quoteLinks);
+		$this->moduleEngine->dispatch('PostsPrefetch', [&$posts]);
+
+		return $threadRenderer->renderThreadBlock(true, $threadData->getThread(), $posts, 0, false, $this->adminMode,
+			'', '', $pte_vals, $currentPage, $totalThreadPages, $amountOfRepliesToRender, '');
+	}
+
+	/**
+	 * Store every page of a thread as an anonymous reader gets it, drawing only the pages not stored.
+	 *
+	 * @param int[]|null $onlyPages Draw just these pages; null for all of them.
+	 * @return int Pages drawn.
+	 */
+	public function warmThreadFragments(Thread $thread, ?array $onlyPages = null): int {
+		$cache = $this->fragmentCache(true);
+		if ($cache === null) {
+			return 0;
+		}
+
+		$uid = $thread->getUid();
+		$stamp = threadFragmentCache::stampFor($thread);
+		$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
+		$totalThreadPages = getPageForPostPosition(max(0, $thread->getPostCount() - 1), $repliesPerPage);
+		$pte_vals = null;
+		$drawn = 0;
+
+		for ($page = 1; $page <= $totalThreadPages; $page++) {
+			if ($onlyPages !== null && !in_array($page, $onlyPages, true)) {
+				continue;
+			}
+			$variant = threadFragmentCache::threadVariant($page);
+			if ($cache->get($uid, $variant, $stamp) !== null) {
+				continue;
+			}
+
+			$threadData = $this->getThreadForRendering($uid, $this->board->getConfigValue('RE_DEF', 5), $repliesPerPage, $page, null, false, $thread);
+			if ($threadData === false || $threadData->getPosts() === []) {
+				continue;
+			}
+
+			$pte_vals ??= $this->buildPteVals(true);
+			$cache->put($uid, $variant, $stamp, $this->renderThreadPageBlock($threadData, $pte_vals, $page, $totalThreadPages, null));
+			$drawn++;
+		}
+
+		return $drawn;
+	}
+
+	/**
+	 * Store the index previews of these threads as an anonymous reader gets them, drawing only
+	 * the ones not stored.
+	 *
+	 * @param Thread[] $threads
+	 */
+	public function warmIndexFragments(array $threads): void {
+		if ($threads !== [] && $this->fragmentCache(true) !== null) {
+			$this->renderThreadsToPteVals($threads, $this->buildPteVals(false), false, false, true);
+		}
 	}
 
 	private function getThreadForRendering(
@@ -384,7 +442,8 @@ class boardRebuilder {
 	private function renderStaticPage(int $page, array $threadsInPage, int $totalThreadCountForBoard, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals): void {
 		self::$renderingStaticHtml = true;
 		try {
-			$this->renderStaticPageHtml($page, $threadsInPage, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals);
+			// a rebuild is not a reader, so what it reuses is not counted as a hit
+			threadFragmentHitCounter::paused(fn() => $this->renderStaticPageHtml($page, $threadsInPage, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals));
 		} finally {
 			self::$renderingStaticHtml = false;
 		}

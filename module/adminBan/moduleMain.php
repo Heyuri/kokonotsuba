@@ -105,6 +105,8 @@ class moduleMain extends abstractModuleMain {
 
 		$moduleHeader .= '<meta name="prefsKey" content="'
 			. sanitizeStr($this->getBanService()->getTokenCookieName()) . '">';
+		$moduleHeader .= '<meta name="prefsScope" content="'
+			. sanitizeStr($this->getBanService()->getTokenCookieDomain()) . '">';
 
 		$this->includeScript('omamori.js', $moduleHeader, false);
 

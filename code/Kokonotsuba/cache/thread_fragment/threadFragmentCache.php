@@ -42,10 +42,11 @@ final class threadFragmentCache {
 	/** @var array<string,string> The epoch each missed fragment has to be stored under. */
 	private array $notedEpochs = [];
 
-	public function __construct(private readonly string $directory) {}
+	/** @param int $boardUid Counted against in threadFragmentHitCounter; 0 counts nothing. */
+	public function __construct(private readonly string $directory, private readonly int $boardUid = 0) {}
 
 	public static function forBoard(IBoard $board): self {
-		return new self($board->getBoardStoragePath() . self::SUBDIR);
+		return new self($board->getBoardStoragePath() . self::SUBDIR, (int)$board->getBoardUID());
 	}
 
 	/** The store for a board known only by its storage directory name, as a database row gives it. */
@@ -65,10 +66,10 @@ final class threadFragmentCache {
 
 	/**
 	 * Overboard preview: carries the board title line and cross-board links, and is drawn with
-	 * the viewing board's template, so each board's overboard keeps its own.
+	 * the overboard's template, so boards sharing one share the fragment.
 	 */
-	public static function overboardVariant(int $previewCount, int $viewingBoardUid): string {
-		return 'overboard-' . $viewingBoardUid . '-' . $previewCount;
+	public static function overboardVariant(string $template, int $previewCount): string {
+		return 'overboard-' . $template . '-' . $previewCount;
 	}
 
 	/** A thread page; null is the whole thread on one page. */
@@ -76,10 +77,26 @@ final class threadFragmentCache {
 		return 'thread-' . ($page ?? 'all');
 	}
 
+	/**
+	 * What a variant built by the methods above names, or null for anything else (a hashed token, or
+	 * a page of 'thread-all').
+	 *
+	 * @return array{kind: 'index'|'thread'|'overboard', previewCount?: int, page?: int, template?: string}|null
+	 */
+	public static function parseVariant(string $variant): ?array {
+		return match (true) {
+			(bool)preg_match('/^index-(\d+)$/', $variant, $m) => ['kind' => 'index', 'previewCount' => (int)$m[1]],
+			(bool)preg_match('/^thread-(\d+)$/', $variant, $m) => ['kind' => 'thread', 'page' => (int)$m[1]],
+			(bool)preg_match('/^overboard-([A-Za-z0-9_]+)-(\d+)$/', $variant, $m) => ['kind' => 'overboard', 'template' => $m[1], 'previewCount' => (int)$m[2]],
+			default => null,
+		};
+	}
+
 	/** The stored markup, or null when there is none. Call it before fetching what a miss is drawn from. */
 	public function get(string $threadUid, string $variant, string $stamp): ?string {
 		$path = $this->path($threadUid, $variant, $stamp);
 		$html = is_file($path) ? @file_get_contents($path) : false;
+		threadFragmentHitCounter::note($this->boardUid, $threadUid, $variant, $html !== false);
 		if ($html !== false) {
 			return $html;
 		}
@@ -160,6 +177,29 @@ final class threadFragmentCache {
 				@unlink($this->directory . $entry);
 			}
 		}
+	}
+
+	/**
+	 * Every stored fragment of the current format. The thread and variant are the file-name tokens,
+	 * so a value that had to be hashed into one comes back as its hash.
+	 *
+	 * @return list<array{threadUid: string, variant: string, size: int, mtime: int}>
+	 */
+	public function entries(): array {
+		$entries = [];
+		foreach (glob($this->directory . '*.v' . self::FORMAT . '.html') ?: [] as $file) {
+			$parts = explode('.', basename($file));
+			if (count($parts) !== 5) {
+				continue;
+			}
+			$stat = @stat($file);
+			if ($stat === false) {
+				continue;
+			}
+			$entries[] = ['threadUid' => $parts[0], 'variant' => $parts[1], 'size' => $stat['size'], 'mtime' => $stat['mtime']];
+		}
+
+		return $entries;
 	}
 
 	/** What has to be unchanged between a miss and its store. */

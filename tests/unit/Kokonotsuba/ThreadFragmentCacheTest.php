@@ -4,6 +4,7 @@ namespace Koko\Tests\Unit\Kokonotsuba;
 
 use Koko\Tests\Framework\TestCase;
 use Kokonotsuba\cache\thread_fragment\threadFragmentCache;
+use Kokonotsuba\cache\thread_fragment\threadFragmentHitCounter;
 use Kokonotsuba\thread\Thread;
 
 /**
@@ -18,6 +19,7 @@ final class ThreadFragmentCacheTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
+		threadFragmentHitCounter::reset();
 		foreach (array_merge(glob($this->dir . 'epochs/*') ?: [], glob($this->dir . '*') ?: []) as $file) {
 			is_dir($file) ? @rmdir($file) : @unlink($file);
 		}
@@ -191,5 +193,47 @@ final class ThreadFragmentCacheTest extends TestCase {
 		$this->assertFalse($cache->put('t1', 'a', 's1', 'x'));
 		$this->assertNull($cache->get('t1', 'a', 's1'));
 		@unlink(rtrim($this->dir, '/'));
+	}
+
+	public function testEntriesListStoredFragmentsByThreadAndVariant(): void {
+		$cache = new threadFragmentCache($this->dir);
+		$this->assertSame([], $cache->entries());
+
+		$cache->put('t1', 'index-5', '5-1', 'abc');
+		$cache->put('t1', 'thread-2', '5-1', 'defg');
+		file_put_contents($this->dir . 'leftover.tmp', '');
+
+		$entries = $cache->entries();
+		usort($entries, fn($a, $b) => strcmp($a['variant'], $b['variant']));
+
+		$this->assertCount(2, $entries);
+		$this->assertSame(['t1', 'index-5', 3], [$entries[0]['threadUid'], $entries[0]['variant'], $entries[0]['size']]);
+		$this->assertSame(['t1', 'thread-2', 4], [$entries[1]['threadUid'], $entries[1]['variant'], $entries[1]['size']]);
+	}
+
+	public function testVariantsParseBackToWhatBuiltThem(): void {
+		$this->assertSame(['kind' => 'index', 'previewCount' => 5], threadFragmentCache::parseVariant(threadFragmentCache::indexVariant(5)));
+		$this->assertSame(['kind' => 'thread', 'page' => 3], threadFragmentCache::parseVariant(threadFragmentCache::threadVariant(3)));
+		$this->assertSame(
+			['kind' => 'overboard', 'template' => 'kokoimg', 'previewCount' => 2],
+			threadFragmentCache::parseVariant(threadFragmentCache::overboardVariant('kokoimg', 2))
+		);
+		$this->assertNull(threadFragmentCache::parseVariant(threadFragmentCache::threadVariant(null)));
+		$this->assertNull(threadFragmentCache::parseVariant(sha1('x/y')));
+	}
+
+	public function testGetCountsHitsAndMissesAgainstItsBoard(): void {
+		$rows = [];
+		threadFragmentHitCounter::start(function (array $r) use (&$rows): void { $rows = $r; }, false);
+
+		$cache = new threadFragmentCache($this->dir, 7);
+		$cache->get('t1', 'index-5', 's1');
+		$cache->put('t1', 'index-5', 's1', 'x');
+		$cache->get('t1', 'index-5', 's1');
+		$cache->get('t1', 'index-5', 's1');
+		(new threadFragmentCache($this->dir))->get('t1', 'index-5', 's1');
+		threadFragmentHitCounter::flush();
+
+		$this->assertSame([['boardUid' => 7, 'threadUid' => 't1', 'variant' => 'index-5', 'hits' => 2, 'misses' => 1]], $rows);
 	}
 }

@@ -48,6 +48,7 @@ return [
 	'PERCEPTUAL_BAN_TABLE' => 'perceptual_bans',
 
 	'ANON_IP_RUN_TABLE' => 'anon_ip_runs',
+	'THREAD_FRAGMENT_HIT_TABLE' => 'thread_fragment_hits',
 
 	'SOUDANE_TABLE' => 'soudane_votes',
 	'COUNTRY_FLAG_TABLE' => 'country_flags',

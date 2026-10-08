@@ -17,6 +17,7 @@ use Kokonotsuba\post\attachment\fileService;
 use Kokonotsuba\quote_link\quoteLinkRepository;
 use Kokonotsuba\userRole;
 use Kokonotsuba\board\boardCreator;
+use Kokonotsuba\config\configArrayMove;
 use Kokonotsuba\config\configService;
 use Kokonotsuba\request\request;
 use Puchiko\background\BackgroundTaskDispatcher;
@@ -159,6 +160,11 @@ class handleBoardRequestsRoute {
 			$submitted = [];
 		}
 
+		// An entry's up/down arrow, clicked without JS: the save carries the entry moved.
+		$move = $this->request->getParameter(configArrayMove::PARAMETER, 'POST');
+		$submitted = configArrayMove::apply($submitted, $move);
+		$movedField = configArrayMove::fieldOf($move);
+
 		$isAjax = $this->request->isAjax();
 
 		try {
@@ -187,7 +193,7 @@ class handleBoardRequestsRoute {
 			]);
 		}
 
-		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=boards&view=' . $boardUid . '&rebuild=queued');
+		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=boards&view=' . $boardUid . '&rebuild=queued' . ($movedField !== null ? '#' . $movedField . '-entries' : ''));
 	}
 
 	// handle resetting a board's configuration - deletes its stored overrides so every setting
