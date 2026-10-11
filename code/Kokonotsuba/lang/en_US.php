@@ -213,6 +213,7 @@ $language['form_showpostform']			= 'Post';
 $language['form_hidepostform']			= 'Hide form';
 $language['form_name']					= 'Name';
 $language['form_email']					= 'E-mail';
+$language['form_email_placeholder']		= 'optional, public';
 $language['form_topic']					= 'Subject';
 $language['form_tag']				    = 'Tag';
 $language['form_submit_btn']			= 'Submit';
