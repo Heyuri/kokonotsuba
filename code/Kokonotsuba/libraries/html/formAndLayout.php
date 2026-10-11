@@ -358,7 +358,7 @@ function preparePostFormTemplateValues(int $resno, ?string $liveIndexFile, ?stri
 		'{$FORM_HIDDEN}' => $hidinput,
 		'{$MAX_FILE_SIZE}' => strval($config['TEXTBOARD_ONLY'] ? 0 : $config['MAX_KB'] * 1024),
 		'{$FORM_NAME_FIELD}' => '<input maxlength="' . $config['INPUT_MAX'] . '" type="text" name="name" id="name" value="' . $name . '" class="inputtext">',
-		'{$FORM_EMAIL_FIELD}' => '<input maxlength="' . $config['INPUT_MAX'] . '" type="text" name="email" id="email" value="' . $email . '" class="inputtext">',
+		'{$FORM_EMAIL_FIELD}' => '<input maxlength="' . $config['INPUT_MAX'] . '" type="text" placeholder="' . _T('form_email_placeholder') . '" name="email" id="email" value="' . $email . '" class="inputtext">',
 		'{$FORM_TOPIC_FIELD}' => '<input maxlength="' . $config['INPUT_MAX'] . '"  type="text" name="sub" id="sub" value="' . $subject . '" class="inputtext">',
 		'{$FORM_SUBMIT}' => '<button id="buttonPostFormSubmit" type="submit" name="mode" value="regist">' . ($resno ? _T('form_submit_reply') : _T('form_submit_new_thread')) . '</button>',
 		'{$FORM_COMMENT_FIELD}' => '<textarea maxlength="' . $config['COMM_MAX'] . '" name="com" id="com" class="inputtext">' . $comment . '</textarea>',
