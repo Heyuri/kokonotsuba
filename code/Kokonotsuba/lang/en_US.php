@@ -1616,7 +1616,7 @@ $language['ban_form_label_public'] = 'Public ban';
 $language['ban_form_label_global'] = 'Global ban';
 $language['ban_form_desc_global'] = 'Applies on every board rather than just this one.';
 $language['ban_form_label_token'] = 'Also ban this browser';
-$language['ban_form_desc_token'] = 'Ties the ban to the browser that made the post, so it follows them to a new address. Be cautious applying it to long-term range bans.';
+$language['ban_form_desc_token'] = 'Ties the ban to the browser that made the post, so it follows them to a new address.';
 $language['ban_form_desc_token_no_post'] = 'Only available when banning a post: the browser is read off the post itself.';
 $language['ban_form_submit'] = 'BAN!';
 
