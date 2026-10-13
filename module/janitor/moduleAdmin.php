@@ -119,7 +119,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// return shared warn template values
 		return [
 			'{$REASON_DEFAULT}'	=> sanitizeStr(_T('ban_no_reason')),
-			'{$FORM_ACTION}'	=> sanitizeStr($this->getModulePageURL()),
+			'{$FORM_ACTION}'	=> $this->getModulePageURL(),
 			'{$FORM_HEADING}'	=> sanitizeStr(_T('warn_form_heading')),
 			'{$LABEL_POST}'		=> sanitizeStr(_T('warn_form_label_post')),
 			'{$LABEL_REASON}'	=> sanitizeStr(_T('warn_form_label_reason')),
