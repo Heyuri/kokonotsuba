@@ -37,9 +37,15 @@ class hookDispatcher {
 		// Dispatch the event to all listeners, sorted by priority
 		if (!isset($this->listeners[$event])) return;
 
+		// Every slot is handed over as a reference
+		$arguments = [];
+		foreach ($parameters as $key => $_) {
+			$arguments[$key] = &$parameters[$key];
+		}
+
 		foreach ($this->listeners[$event] as $listenerGroup) {
 			foreach ($listenerGroup as $listener) {
-				call_user_func_array($listener, $parameters);
+				call_user_func_array($listener, $arguments);
 			}
 		}
 	}
