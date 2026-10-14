@@ -391,12 +391,12 @@ function generatePostHash(
  * Validates post input for existence and correct format.
  * Throws BoardException if validation fails.
  * 
- * @param null|false|int|Post $postInput The input to validate (e.g., post UID).
+ * @param null|false|int|string|Post $postInput The input to validate (a post UID, as taken from the request).
  * @param bool $isUid Indicates if the input is expected to be a UID (numeric).
  *
  * @return void
  */
-function validatePostInput(null|false|int|Post $postInput, bool $isUid = true, int $statusCode = 400): void {
+function validatePostInput(null|false|int|string|Post $postInput, bool $isUid = true, int $statusCode = 400): void {
 	// Validate post input
 	if (
 		$postInput === null 
