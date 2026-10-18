@@ -23,6 +23,7 @@
 					</div>
 					<div class="comment">{$COM}</div>
 					<div class="belowComment comment">{$BELOW_COMMENT}</div>
+					<!--&IF($MODULE_POST_FOOTER,'{$MODULE_POST_FOOTER}','')-->
 					<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
 					{$WARN_BEKILL}
 				</div>
