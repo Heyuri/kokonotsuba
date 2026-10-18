@@ -1,0 +1,6 @@
+/* displayIp module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+.ipWarning {
+	color: var(--color-fg-warning-ip);
+	font-weight: var(--font-weight-bold);
+}

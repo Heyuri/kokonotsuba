@@ -23,6 +23,7 @@ use Kokonotsuba\module_classes\traits\listeners\BelowThreadsGlobalListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\listeners\PageTopListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\serveMedia;
@@ -32,6 +33,7 @@ use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\getPageFromRequest;
 
 class moduleMain extends abstractModuleMain {
+	use ModuleHeaderListenerTrait;
 	use AboveThreadsGlobalListenerTrait;
 	use BanCheckpointTrait;
 	use BelowThreadsGlobalListenerTrait;
@@ -84,6 +86,12 @@ class moduleMain extends abstractModuleMain {
 
 		// How a reader reaches the banner listing and, where a preset takes them, its submit form.
 		$this->addTopLink($this->modulePageUrl, _T('banner_toplink'));
+		$this->listenModuleHeader('onModuleHeaderStylesheet');
+	}
+
+	/** The module's own stylesheet. */
+	private function onModuleHeaderStylesheet(string &$moduleHeader): void {
+		$this->includeStylesheet('banner.css', $moduleHeader);
 	}
 
 	/**

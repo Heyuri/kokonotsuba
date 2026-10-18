@@ -1,0 +1,26 @@
+/* emoji module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+/* The emoji picker under the post form */
+#emojiContainer {
+	max-width: 300px;
+}
+
+#emojiContainer .row-end {
+	margin-bottom: 1.5em;
+}
+
+.emojiButton {
+	border-color: var(--color-border-button);
+	border-width: 1px;
+	border-radius: 0;
+	padding: 1px;
+	margin: 1px;
+	vertical-align: top;
+}
+
+.emojiImage {
+	display: block;
+	margin: 0 auto;
+}
+
+

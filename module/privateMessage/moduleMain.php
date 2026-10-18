@@ -156,6 +156,7 @@ class moduleMain extends abstractModuleMain {
 
 		$this->moduleContext->moduleEngine->addListener('ModuleHeader',
 			function (string &$moduleHeader) use ($apiUrl) {
+				$this->includeStylesheet('privateMessage.css', $moduleHeader);
 				$moduleHeader .= '<meta name="pmNotifyApi" content="' . sanitizeStr($apiUrl) . '">';
 			}
 		);

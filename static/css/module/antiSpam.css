@@ -1,0 +1,13 @@
+/* antiSpam module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+/* The anti-spam rule form, opened from a post's menu. A kkwm window sizes itself to its contents
+   and clips whatever overflows, so the form is bounded against the viewport and scrolls inside
+   the window instead. Only applies in a window; the admin page shows the same form full height. */
+
+.window .newEntryForm {
+	width: min(520px, calc(100vw - 60px));
+	max-height: calc(100vh - 120px);
+	overflow-y: auto;
+	box-sizing: border-box;
+	padding: 8px;
+}

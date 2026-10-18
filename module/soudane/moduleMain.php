@@ -155,6 +155,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		$this->includeStylesheet('soudane.css', $moduleHeader);
 		// generate the soudane js <script> include
 		// Not deferred: the "Enable soudane" toggle runs in <head> and hides the
 		// vote HTML before posts paint, so toggling is seamless.

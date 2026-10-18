@@ -1,0 +1,5 @@
+/* recentPosts module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+/* The admin page centres its content; a post list reads like a board, so it is left-aligned. */
+
+#recentPosts { text-align: left; }

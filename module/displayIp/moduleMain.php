@@ -8,11 +8,13 @@ use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\OpeningPostListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\RegistPostInsertedListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\_T;
 
 class moduleMain extends abstractModuleMain {
+	use ModuleHeaderListenerTrait;
 	use PostListenerTrait;
 	use OpeningPostListenerTrait;
 	use RegistPostInsertedListenerTrait;
@@ -39,6 +41,12 @@ class moduleMain extends abstractModuleMain {
 		$this->listenPost('onRenderPost');
 		$this->listenOpeningPost('onRenderOpeningPost');
 		$this->listenRegistPostInserted('onPostInserted');
+		$this->listenModuleHeader('onModuleHeaderStylesheet');
+	}
+
+	/** The module's own stylesheet. */
+	private function onModuleHeaderStylesheet(string &$moduleHeader): void {
+		$this->includeStylesheet('displayIp.css', $moduleHeader);
 	}
 
 	private function _isgTLD(string $last,string|array $add='') {

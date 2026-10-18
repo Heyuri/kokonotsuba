@@ -100,8 +100,7 @@ class moduleMain extends abstractModuleMain {
 	 * browser agreed to hold on to.
 	 */
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		$moduleHeader .= '<link rel="stylesheet" href="'
-			. sanitizeStr($this->getConfig('STATIC_URL') . 'css/module/ban.css?v=2') . '">';
+		$this->includeStylesheet('ban.css?v=3', $moduleHeader);
 
 		$moduleHeader .= '<meta name="prefsKey" content="'
 			. sanitizeStr($this->getBanService()->getTokenCookieName()) . '">';

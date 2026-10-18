@@ -4,6 +4,7 @@ namespace Kokonotsuba\libraries\html;
 
 use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\module_classes\moduleStylesheets;
 use Kokonotsuba\template\templateEngine;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfMetaTag;
@@ -62,6 +63,9 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 	
 	// dispatch module header hook point for static html
 	$moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
+
+	// module stylesheets registered by those hooks, drawn right after globalBase.css
+	$pte_vals['{$MODULE_STYLESHEETS_HTML}'] = moduleStylesheets::html();
 
 	$pte_vals['{$PAGE_TITLE}'] = $pageTitle;
 	$pte_vals['{$ATTACHMENT_LIMIT}'] = htmlspecialchars($config['ATTACHMENT_UPLOAD_LIMIT'] ?? 1);
@@ -237,7 +241,8 @@ function prepareBaseTemplateValues(int $resno, bool $isStaff) {
 		'{$RESTO}' => $resno ? $resno : '',
 		'{$IS_THREAD}' => boolval($resno),
 		'{$IS_STAFF}' => $isStaff,
-		'{$MODULE_HEADER_HTML}' => ''
+		'{$MODULE_HEADER_HTML}' => '',
+		'{$MODULE_STYLESHEETS_HTML}' => ''
 	);
 }
 

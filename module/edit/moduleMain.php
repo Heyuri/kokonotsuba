@@ -158,6 +158,7 @@ class moduleMain extends abstractModuleMain {
 	 * fields response hands the window a fresh one when it opens.
 	 */
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		$this->includeStylesheet('edit.css', $moduleHeader);
 		$this->includeScript('postEdit.js', $moduleHeader);
 
 		$formHtml = $this->moduleContext->adminPageRenderer->ParseBlock(

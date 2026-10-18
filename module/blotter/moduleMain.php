@@ -9,10 +9,12 @@ require_once __DIR__ . '/blotterService.php';
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\PlaceHolderInterceptListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
+	use ModuleHeaderListenerTrait;
 	use PlaceHolderInterceptListenerTrait;
 
 	private string $modulePage;
@@ -39,6 +41,12 @@ class moduleMain extends abstractModuleMain {
 		$this->modulePage = $this->getModulePageURL([], false);
 
 		$this->listenPlaceHolderIntercept('onRenderBlotterPreview');
+		$this->listenModuleHeader('onModuleHeaderStylesheet');
+	}
+
+	/** The module's own stylesheet. */
+	private function onModuleHeaderStylesheet(string &$moduleHeader): void {
+		$this->includeStylesheet('blotter.css', $moduleHeader);
 	}
 
 	public function onRenderBlotterPreview(array &$placeHolderArray) {

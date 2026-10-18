@@ -130,6 +130,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		// bulk restore for anyone who may see deleted posts, purge only for the higher role
 		$this->listenMassModerateTools('onMassModerateRestoreTool', 80);
 		$this->listenMassModerateTools('onMassModeratePurgeTool', 70, $this->requiredRoleActionForModAll);
+		$this->moduleContext->moduleEngine->addRoleProtectedListener($this->getRequiredRole(), 'ModuleHeader', function (string &$moduleHeader): void {
+			$this->includeStylesheet('deletedPosts.css', $moduleHeader);
+		});
 	}
 
 	private function onMassModerateRestoreTool(array &$tools): void {

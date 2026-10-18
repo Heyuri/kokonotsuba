@@ -109,6 +109,7 @@ class moduleMain extends abstractModuleMain {
 	 * Static html is built once and read by everybody, so it never carries the staff mark.
 	 */
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		$this->includeStylesheet('postApi.css', $moduleHeader);
 		$apiUrl = $this->getModulePageURL();
 		$fetchingText = sanitizeStr(_T('post_api_fetching'));
 

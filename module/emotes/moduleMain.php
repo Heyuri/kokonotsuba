@@ -7,6 +7,7 @@ use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\CommentExtrasListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\Post;
 
 use function Puchiko\strings\sanitizeStr;
@@ -14,6 +15,7 @@ use function Puchiko\strings\sanitizeStr;
 require_once __DIR__ . '/emoteReplacer.php';
 
 class moduleMain extends abstractModuleMain {
+	use ModuleHeaderListenerTrait;
 	use PostCommentListenerTrait;
 	use CommentExtrasListenerTrait;
 	use IncludeScriptTrait;
@@ -52,6 +54,12 @@ class moduleMain extends abstractModuleMain {
 		$this->listenCommentExtras('onRenderCommentExtras');
 
 		$this->registerScript('addemotes.js');
+		$this->listenModuleHeader('onModuleHeaderStylesheet');
+	}
+
+	/** The module's own stylesheet. */
+	private function onModuleHeaderStylesheet(string &$moduleHeader): void {
+		$this->includeStylesheet('emotes.css', $moduleHeader);
 	}
 
 	private function onRenderCommentExtras(string &$html): void {

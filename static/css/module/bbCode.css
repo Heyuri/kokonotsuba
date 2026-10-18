@@ -1,0 +1,89 @@
+/* bbCode module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+/* The BBCode reference under the post form */
+#bbcodeContainer {
+	max-width: 390px;
+}
+
+/************************ BBcode **************************************/
+
+.neon {
+    color: #ff1414;
+    text-shadow: 0 0 5px #ff1414, 0 0 10px #ff1414, 0 0 20px #ff1414;
+}
+
+.echoText {
+    text-shadow:
+        2px 2px 0 rgba(0,0,0,0.45),
+        4px 4px 0 rgba(0,0,0,0.35),
+        6px 6px 0 rgba(0,0,0,0.25),
+        8px 8px 0 rgba(0,0,0,0.15),
+        10px 10px 0 rgba(0,0,0,0.08);
+}
+
+.scrollText {
+	height: 300px;
+	overflow: auto;
+	resize: vertical;
+}
+
+.code {
+	background-color: var(--color-bg-code);
+	color: var(--color-fg-code);
+	margin: 0;
+	padding: 4px;
+	max-width: 100%;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	word-wrap: anywhere;
+	overflow: auto;
+}
+
+.codeComment {
+	color: #6a9955;
+	font-style: italic;
+}
+
+.codeKeyword {
+	color: #569cd6;
+	font-weight: var(--font-weight-bold);
+}
+
+.copyButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: absolute;
+	z-index: 1;
+	bottom: 8px;
+	right: 8px;
+	font-size: var(--font-size-regular);
+}
+
+@media screen and (max-width: 600px) {
+	.bbcodeButton {
+		font-size: var(--font-size-regular);
+	}
+
+}
+#bbcodeButtonContainer {
+	display: flex;
+	gap: 2px;
+	flex-wrap: wrap;
+}
+
+#bbcodeContainer .code,
+#bbcodeContainer pre {
+	padding: 0;
+	font-size: var(--font-size-regular);
+}
+
+#bbcodeContainer label {
+	display: inline-block;
+}
+
+.bbcodeButton {
+	min-width: 1.25em;
+  min-height: 1.25em;
+  padding: 0.0625em;
+}

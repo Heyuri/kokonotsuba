@@ -56,6 +56,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// set antispam service instance
 		$this->antiSpamService = getAntiSpamService();
+		$this->moduleContext->moduleEngine->addRoleProtectedListener($this->getRequiredRole(), 'ModuleHeader', function (string &$moduleHeader): void {
+			$this->includeStylesheet('antiSpam.css', $moduleHeader);
+		});
 	}
 	
 	public function renderFilterPostButton(string &$modfunc, Post $post, bool $noScript): void {

@@ -1,0 +1,116 @@
+/* threadWatcher module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+.threadWatcherContent {
+	padding: 0.75em;
+	max-height: 60vh;
+	overflow-y: auto;
+	font-size: var(--font-size-x-small);
+}
+
+/* Fixed (non-scrolling) header bar above the scrollable watch list. */
+
+.threadWatcherHeader {
+	padding: 0.25em 0.5em;
+	border-bottom: 1px solid var(--color-border, rgba(128, 128, 128, 0.4));
+}
+
+.threadWatcherRefresh,
+.threadWatcherMarkAllRead,
+.threadWatcherClearAll {
+	display: inline-block;
+	cursor: pointer;
+	text-decoration: none;
+	color: inherit;
+	line-height: 1;
+	padding: 0.1em 0.25em;
+}
+
+/* Mark-all-read (☑) and clear-all (🗑): a touch smaller so they read as secondary
+   to the refresh icon. */
+
+.threadWatcherMarkAllRead,
+.threadWatcherClearAll {
+	font-size: var(--font-size-small);
+}
+
+.threadWatcherRefresh.twSpinning {
+	animation: twSpin 0.6s linear infinite;
+}
+
+/* Locked: during a poll or the post-refresh cooldown — not clickable, dimmed. */
+
+.threadWatcherRefresh.twLocked {
+	pointer-events: none;
+	opacity: 0.5;
+}
+
+@keyframes twSpin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+/* "Updated: <time>" text after the refresh button. */
+
+.threadWatcherUpdatedLabel {
+	margin-left: 0.5em;
+	font-size: var(--font-size-small);
+	opacity: 0.7;
+}
+
+.threadWatcherUpdated {
+	margin-left: 0.25em;
+	font-size: var(--font-size-small);
+	opacity: 0.7;
+}
+
+/* Watcher status colors: green = unread replies, red = an unread reply quotes you.
+   Applies to both the admin-bar top-link and the watched-thread list entries. */
+
+.threadWatcherToplink.twUnread,
+.threadWatcherList .threadWatcherLink.twUnread {
+	color: #2e7d32;
+	font-weight: var(--font-weight-bold);
+}
+
+.threadWatcherToplink.twQuoted,
+.threadWatcherList .threadWatcherLink.twQuoted {
+	color: var(--color-fg-warning);
+	font-weight: var(--font-weight-bold);
+}
+
+.threadWatchStar {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	vertical-align: middle;
+	line-height: 0;
+	cursor: pointer;
+}
+
+.threadWatchStar,
+.threadWatchStar:link,
+.threadWatchStar:visited,
+.threadWatchStar:hover,
+.threadWatchStar:focus,
+.threadWatchStar:active {
+	color: var(--color-thread-watch-star) !important;
+}
+
+.threadWatchStar .threadWatchStarIcon {
+	width: 16px;
+	height: 16px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.6;
+	stroke-linejoin: round;
+}
+
+.threadWatchStar.twStarWatched .threadWatchStarIcon {
+	fill: currentColor;
+}
+
+.threadWatchStar:hover .threadWatchStarIcon {
+	opacity: 0.8;
+}

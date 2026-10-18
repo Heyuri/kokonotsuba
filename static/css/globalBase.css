@@ -1,6 +1,3 @@
-/* The admin page centres its content; a post list reads like a board, so it is left-aligned. */
-#recentPosts { text-align: left; }
-
 /************************ Dropdown Menus ******************************/
 
 .postMenuContainer {
@@ -8,6 +5,7 @@
 }
 
 /* Bracketed [Link] row shown in place of a dropdown when JS is off */
+
 .noscriptMenu {
 	font-size: var(--font-size-small);
 }
@@ -17,6 +15,7 @@
 }
 
 /* Shared toggle arrow (▶) for all dropdown menus */
+
 .menuToggle {
 	cursor: pointer;
 	display: inline-block;
@@ -31,6 +30,7 @@
 }
 
 /* Shared dropdown menu base */
+
 .dropdownMenu {
 	position: absolute;
 	background: var(--color-bg-reply);
@@ -55,12 +55,14 @@
 }
 
 /* Attachment menu toggle — extra spacing in file bar */
+
 .attachmentMenuToggle {
 	margin-left: 4px;
 	font-size: var(--font-size-x-small);
 }
 
 /* Attachment dropdown — slightly smaller than post menu */
+
 .attachmentMenuDropdown {
 	min-width: 100px;
 	font-size: var(--font-size-small);
@@ -122,15 +124,9 @@
 /************************ Reader-facing module pages *******************/
 
 /* Return link pageRenderer puts above every non-staff page. */
+
 .userNavBar {
 	margin-bottom: 0.5em;
-}
-
-/* Prose-and-tables documentation pages (currently only the postApi reference). Long-form
-   reading, so the column is capped and centred rather than spanning the window. */
-.documentationPage {
-	max-width: 640px;
-	margin: 0 auto;
 }
 
 /************************ Collapsible Details Boxes ********************/
@@ -168,6 +164,7 @@
 /************************ JS Alert/Messages *******************************/
 
 /* Container that holds all messages */
+
 .messageStackContainer {
 	position: fixed;
 	top: 0;
@@ -179,6 +176,7 @@
 }
 
 /* Each message */
+
 .messageContainer {
 	margin: 10px auto;
 	padding: 10px;
@@ -195,6 +193,7 @@
 }
 
 /* Appearance for success / failure */
+
 .messageSuccess {
 	background-color: var(--color-bg-theading3);
 	color: var(--color-fg-theading);
@@ -226,6 +225,7 @@
 }
 
 /* Show & hide animation states */
+
 .messageContainer.show {
 	opacity: 1;
 	transform: translateY(0);
@@ -237,55 +237,17 @@
 }
 
 /* Text inside the message */
+
 .messageText {
 	flex: 1;
 }
 
 /* Close button */
+
 .messageClose {
 	cursor: pointer;
 	margin-left: 10px;
 	font-weight: bold;
-}
-
-/************************ Deleted Posts (Mod) **************************/
-
-.deletedPostEntry {
-	text-align: left;
-}
-
-.deletedPost, .deletedFile {
-	opacity: 0.75;
-}
-
-/* The deletion entry the [View entry] widget opens in a window */
-.dpEntryWindow {
-	text-align: left;
-	padding: 4px;
-}
-
-.dpEntryWindow .deletedPostTable td {
-	padding: 1px 4px;
-	vertical-align: top;
-}
-
-.dpEntryWindow .dpEntryActions {
-	margin: 4px 0;
-}
-
-/* the post is a copy of the one on the page, so keep it from stretching the window */
-.dpEntryWindow .dpEntryPost {
-	overflow: auto;
-	max-height: 40vh;
-}
-
-.dpEntryWindow .dpEntryPost .post,
-.dpEntryWindow .dpEntryPost .thread {
-	opacity: 1;
-}
-
-.dpEntryFooter {
-	font-size: var(--font-size-small);
 }
 
 .managepostsCommentWrapper {
@@ -295,99 +257,9 @@
 	word-wrap: break-word;
 }
 
-.staffNotesContainer {
-	font-size: var(--font-size-small);
-	color: var(--color-fg-warning);
-}
-
-/* Notes on the poster's host rather than the post, so they read as a separate block under
-   their own header and in a colour post notes never use. */
-.hostNotesContainer {
-	font-size: var(--font-size-small);
-	color: var(--color-fg-link);
-}
-
-.hostNotesHeader {
-	display: block;
-	font-weight: var(--font-weight-bold);
-}
-
-.hostNotesPanel .hostNotesPanelList {
-	margin-bottom: 0.5em;
-}
-
-.hostNotesPanel .hostNoteOnPost {
-	font-size: var(--font-size-small);
-}
-
-.hostNotesPanelEmpty {
-	font-size: var(--font-size-small);
-	font-style: italic;
-}
-
-/* The host-note form picks between the post's two targets rather than asking for either, so the
-   choices sit on their own lines with the value they stand for beside them. */
-.hostNoteTargetChoice label {
-	display: block;
-}
-
-.hostNoteFormPattern,
-.hostNoteFormToken {
-	font-family: monospace;
-}
-
-/*********************** Editing a post *******************************/
-
-/* One removable file per row, thumbnail beside its name. */
-.editAttachmentList {
-	margin-bottom: 0.3em;
-}
-
-.editAttachmentEntry {
-	align-items: center;
-	display: flex;
-	gap: 0.4em;
-}
-
-.editAttachmentThumb {
-	max-height: 40px;
-	max-width: 40px;
-}
-
-.editAttachmentName {
-	font-family: monospace;
-	font-size: var(--font-size-small);
-}
-
-.editAttachmentsEmpty {
-	font-size: var(--font-size-small);
-}
-
-/* A post's edit history: one block per revision, oldest at the bottom. */
-.postRevision {
-	border: 1px solid var(--color-border, rgba(128, 128, 128, 0.4));
-	margin-bottom: 0.8em;
-	padding: 0.4em;
-}
-
-.postRevisionHeader {
-	font-weight: var(--font-weight-bold);
-}
-
-.postRevisionWho {
-	font-weight: normal;
-}
-
-.postRevisionValue {
-	word-break: break-word;
-}
-
-.postRevisionsEmpty {
-	font-style: italic;
-}
-
 /* Failed-login notice on the admin landing page. Deliberately loud: it only appears when
    somebody has been guessing at the account the reader just logged into. */
+
 .loginFailureWarning {
 	color: var(--color-fg-warning);
 	font-weight: var(--font-weight-bold);
@@ -413,20 +285,6 @@
 	margin: 0;
 	padding: 0;
 	list-style: none;
-}
-
-.mergeThreadList {
-	max-height: 220px;
-	overflow-y: auto;
-}
-
-.mergeThreadItem label {
-	cursor: pointer;
-}
-
-.mergeThreadHelp {
-	margin: 0 0 4px;
-	font-size: smaller;
 }
 
 /************************ Post Form & Dropzone ************************/
@@ -470,329 +328,6 @@
   display: none;
 }
 
-/************************ Filters *************************************/
-
-.filter .comment,
-.filter .post,
-.filter .omittedposts,
-.filter .filesize,
-.filter .postimg,
-.filter > .reply-container {
-  display: none;
-}
-
-.filter .post.op {
-  display: block;
-}
-
-.filter .postinfo,
-.filter .category {
-  opacity: 0.5;
-}
-
-/* post still being parsed, held until filter.js can match it */
-.filterPending {
-  visibility: hidden;
-}
-
-/* .filterpost {
-  text-decoration: none;
-  font-weight: var(--font-weight-bold);
-	font-size: 9pt;
-} */
-
-/* .filterpostContainer::before {
-	content: "["
-}
-
-.filterpostContainer::after {
-	content: "]"
-} */
-
-.filterpost:hover {
-  opacity: 1;
-}
-
-.filterImage .postimg {
-  opacity: 0;
-}
-
-.filterImage .attachmentAnchor {
-  position: relative;
-}
-
-/************************ Search **************************************/
-
-#searchresult {
-	margin-top: 1em;
-	text-align: left;
-}
-
-/************************ Private Messages *****************************/
-
-.pmNameLink {
-	font-size: var(--font-size-small);
-}
-
-.pmSendForm {
-	margin: 0.5em 0;
-}
-
-.pmBodyInput {
-	width: 30em;
-	height: 5em;
-}
-
-.pmRow.pmRead {
-	opacity: 0.85;
-}
-
-.pmRow.pmUnread {
-	font-weight: var(--font-weight-bold);
-}
-
-.pmUnreadIndicator {
-	color: var(--color-fg-warning);
-	font-weight: var(--font-weight-bold);
-}
-
-.pmStatusCell {
-	width: 1.5em;
-	text-align: center;
-}
-
-.pmDateCell {
-	white-space: nowrap;
-}
-
-.pmViewCell {
-	white-space: nowrap;
-}
-
-.pmEncryptionDiclaimer {
-	font-size: var(--font-size-small);
-}
-
-/* View message page */
-
-.pmViewContainer {
-	text-align: left;
-}
-
-.pmViewNav {
-	margin-bottom: 0.5em;
-}
-
-.pmViewMeta td {
-	padding: 2px 8px 2px 0;
-}
-
-.pmViewBody {
-	padding: 0.5em 0;
-	word-break: break-word;
-}
-
-/************************ Media ***************************************/
-
-.pmStickyWrap {
-	position: fixed;
-	left: 50%;
-	bottom: 0;
-	transform: translateX(-50%);
-	width: var(--pm-slot-width, 728px);
-	height: var(--pm-slot-height, 90px);
-	max-width: 100%;
-	z-index: 900;
-	background: transparent;
-}
-
-.pmStickyClose {
-	position: absolute;
-	top: -1.4em;
-	right: 0;
-	background: rgba(0, 0, 0, 0.5);
-	color: #fff;
-	border: none;
-	padding: 0 0.4em;
-	cursor: pointer;
-	font-size: 1em;
-	line-height: 1.4em;
-	z-index: 901;
-}
-
-.pmSlotMobile {
-	display: none;
-}
-
-.pmPostAd .postinfo {
-	margin-bottom: 0.25em;
-}
-
-.pmInlineRow {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-	gap: 4px;
-	margin: 0.5em auto;
-	overflow-x: auto;
-}
-
-.pmPostAdBadge {
-	font-size: var(--font-size-small);
-	font-weight: var(--font-weight-bold);
-	background: var(--color-bg-theading, #800000);
-	color: var(--color-fg-theading, #fff);
-	padding: 0 4px;
-}
-
-.pmAdImage {
-	max-width: 100%;
-	height: auto;
-	display: inline;
-}
-
-.pmPostAdSlot {
-	max-width: 100%;
-	overflow: hidden;
-}
-
-.pmPostAdFrame {
-	width: 100%;
-	height: 100%;
-	border: 0;
-	display: block;
-	background: transparent;
-}
-
-/************************ Catalog *************************************/
-
-#catalogSettings {
-	float: right;
-}
-
-#catalogSortForm {
-	float: left;
-}
-
-#catalogTable {
-	margin: 0 auto;
-	text-align: center;
-	clear: both;
-}
-
-/* Auto columns: flex wrapping, centered */
-#catalogTable.auto-cols {
-	text-align: center;
-}
-
-#catalogTable.auto-cols tr,
-#catalogTable.auto-cols tbody {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: stretch;
-	justify-content: center;
-}
-
-#catalogTable.auto-cols .thread {
-	display: inline-block;
-	margin: 0.5em;
-}
-
-/* Fixed columns: CSS grid */
-#catalogTable.fixed-cols tr,
-#catalogTable.fixed-cols tbody {
-	display: grid;
-	grid-template-columns: repeat(var(--cat-cols, 5), auto);
-	justify-content: center;
-}
-
-#catalogTable.fixed-cols .thread {
-	margin: 0.5em;
-}
-
-#catalogTable.fixed-cols .catComment {
-	max-height: 100px;
-	overflow: hidden;
-}
-
-#catalogTable.fixed-cols .catComment:hover {
-	overflow: auto;
-}
-
-/* Full width: stretch table and distribute threads across the page */
-#catalogTable.full-width {
-	display: block;
-	width: 100%;
-}
-
-#catalogTable.full-width tbody {
-	display: flex;
-	flex-wrap: wrap;
-	width: 100%;
-}
-
-#catalogTable.full-width tr {
-	display: flex;
-	flex-wrap: wrap;
-	width: 100%;
-	justify-content: space-evenly;
-}
-
-#catalogTable.full-width.fixed-cols tr {
-	display: grid;
-	grid-template-columns: repeat(var(--cat-cols, 5), 1fr);
-	justify-items: center;
-}
-
-#catalogTable .thread {
-	padding: 0 0 0.5em;
-	width: 180px;
-	max-height: 250px;
-	max-width: 170px;
-	text-align: center;
-	vertical-align: top;
-	overflow-y: hidden;
-	overflow-wrap: break-word;
-	overflow-wrap: anywhere;
-}
-
-#catalogTable .thread:hover {
-	overflow-y: auto;
-}
-
-#catalogTable .thumb {
-	display: block;
-	margin: 0 auto 0.75em;
-	width: 150px;
-	height: 150px;
-	object-fit: scale-down;
-}
-
-#catalogTable .catPostInfo {
-	font-size: var(--font-size-small);
-}
-
-#catalogTable .catPostInfo .title {
-	display: inline-block;
-	font-size: inherit;
-  max-width: 100%;
-	vertical-align: text-bottom;
-	overflow: hidden;
-	text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-#catalogTable .catPostInfo .Replies {
-	display: inline-block;
-}
-
-.catComment {
-	display: table;
-  margin: 0 auto;
-	text-align: left;
-	font-size: var(--font-size-small);
-}
-
 /************************ Utility Classes ******************************/
 
 .buttonLink {
@@ -809,6 +344,7 @@
 }
 
 /* Define the fixed position class with padding and bottom-right placement */
+
 .fixedPosition {
 	position: sticky;
 	bottom: 5px; /* Adjust the distance from the bottom */
@@ -822,6 +358,7 @@
 }
 
 /* the same control docked in the staff alerts panel, where the bar isn't used */
+
 .massModerateButton {
 	display: block;
 	width: 100%;
@@ -857,6 +394,7 @@
 }
 
 /* Each section is its own list under its own header. */
+
 .massModerateGroup + .massModerateGroup {
 	margin-top: 0.5em;
 }
@@ -907,6 +445,7 @@
 }
 
 /* Action log event filter: one column per group, wrapping when the form is narrow */
+
 .actionTypeGroups {
 	display: flex;
 	flex-wrap: wrap;
@@ -924,6 +463,7 @@
 }
 
 /* Sortable column headers on the action log table */
+
 .sortableColumn a {
 	text-decoration: none;
 	cursor: pointer;
@@ -942,9 +482,11 @@
 }
 
 /************************ Tables *******************************/
+
 /* A long table repeats its action buttons above itself as well as below, so a decision made
    at the top of the page does not mean scrolling to the bottom to submit it. The top copy
    needs the gap under it that the bottom copy gets over it. */
+
 .buttonSection + .tableViewportWrapper,
 .buttonSection + .formtable {
 	margin-top: 0.5em;
@@ -960,172 +502,8 @@
 	margin: 1em auto;
 }
 
-/************************ BBcode **************************************/
-
-.neon {
-    color: #ff1414;
-    text-shadow: 0 0 5px #ff1414, 0 0 10px #ff1414, 0 0 20px #ff1414;
-}
-
-.echoText {
-    text-shadow:
-        2px 2px 0 rgba(0,0,0,0.45),
-        4px 4px 0 rgba(0,0,0,0.35),
-        6px 6px 0 rgba(0,0,0,0.25),
-        8px 8px 0 rgba(0,0,0,0.15),
-        10px 10px 0 rgba(0,0,0,0.08);
-}
-
-/************************ Mobile **************************************/
-
-.pmMobileOnly {
-	display: none;
-}
-
 @media screen and (max-width: 650px) {
-	.pmMobileOnly {
-		display: block;
-	}
-
 	.dropdownMenu a { line-height: 2 }
-
-	.pmSlotTop {
-		display: none;
-	}
-
-	.pmSlotMobile {
-		display: block;
-	}
-
-	.pmDesktopOnly {
-		display: none;
-	}
-
-	.pmStickyWrap {
-		display: none;
-	}
-}
-
-/* Thread watcher module */
-.threadWatcherContent {
-	padding: 0.75em;
-	max-height: 60vh;
-	overflow-y: auto;
-	font-size: var(--font-size-x-small);
-}
-
-/* Fixed (non-scrolling) header bar above the scrollable watch list. */
-.threadWatcherHeader {
-	padding: 0.25em 0.5em;
-	border-bottom: 1px solid var(--color-border, rgba(128, 128, 128, 0.4));
-}
-
-.threadWatcherRefresh,
-.threadWatcherMarkAllRead,
-.threadWatcherClearAll {
-	display: inline-block;
-	cursor: pointer;
-	text-decoration: none;
-	color: inherit;
-	line-height: 1;
-	padding: 0.1em 0.25em;
-}
-
-/* Mark-all-read (☑) and clear-all (🗑): a touch smaller so they read as secondary
-   to the refresh icon. */
-.threadWatcherMarkAllRead,
-.threadWatcherClearAll {
-	font-size: var(--font-size-small);
-}
-
-.threadWatcherRefresh.twSpinning {
-	animation: twSpin 0.6s linear infinite;
-}
-
-/* Locked: during a poll or the post-refresh cooldown — not clickable, dimmed. */
-.threadWatcherRefresh.twLocked {
-	pointer-events: none;
-	opacity: 0.5;
-}
-
-@keyframes twSpin {
-	from { transform: rotate(0deg); }
-	to { transform: rotate(360deg); }
-}
-
-/* "Updated: <time>" text after the refresh button. */
-.threadWatcherUpdatedLabel {
-	margin-left: 0.5em;
-	font-size: var(--font-size-small);
-	opacity: 0.7;
-}
-
-.threadWatcherUpdated {
-	margin-left: 0.25em;
-	font-size: var(--font-size-small);
-	opacity: 0.7;
-}
-
-/* Watcher status colors: green = unread replies, red = an unread reply quotes you.
-   Applies to both the admin-bar top-link and the watched-thread list entries. */
-.threadWatcherToplink.twUnread,
-.threadWatcherList .threadWatcherLink.twUnread {
-	color: #2e7d32;
-	font-weight: var(--font-weight-bold);
-}
-
-.threadWatcherToplink.twQuoted,
-.threadWatcherList .threadWatcherLink.twQuoted {
-	color: var(--color-fg-warning);
-	font-weight: var(--font-weight-bold);
-}
-
-.threadWatchStar {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 16px;
-	height: 16px;
-	vertical-align: middle;
-	line-height: 0;
-	cursor: pointer;
-}
-
-.threadWatchStar,
-.threadWatchStar:link,
-.threadWatchStar:visited,
-.threadWatchStar:hover,
-.threadWatchStar:focus,
-.threadWatchStar:active {
-	color: var(--color-thread-watch-star) !important;
-}
-
-.threadWatchStar .threadWatchStarIcon {
-	width: 16px;
-	height: 16px;
-	fill: none;
-	stroke: currentColor;
-	stroke-width: 1.6;
-	stroke-linejoin: round;
-}
-
-.threadWatchStar.twStarWatched .threadWatchStarIcon {
-	fill: currentColor;
-}
-
-.threadWatchStar:hover .threadWatchStarIcon {
-	opacity: 0.8;
-}
-
-@media screen and (max-width: 600px) {
-	#catalogTable .thread {
-		width: 140px;
-		max-width: 140px;
-	}
-	
-	#catalogTable .thumb {
-		max-width: 135px;
-	}
 }
 
 /************************ Windows *************************************/
@@ -1141,6 +519,7 @@ a.linkjs {
 }
 
 /* Window Manager */
+
 @keyframes fade {
 	0% { filter: opacity(0); transform: scale(0.95); }
 	100% { filter: opacity(1); transform: scale(1); }
@@ -1182,6 +561,7 @@ a.linkjs {
 
 /* When minimized, hide everything in the window except its title bar.
    Generic so any window content (forms, tables, the thread watcher, etc.) collapses. */
+
 .window.minimized > *:not(.winbar) {
 	display: none;
 }
@@ -1261,6 +641,7 @@ a.linkjs {
 }
 
 /* General tab: fixed height, scroll overflow */
+
 #settarea.settarea_general {
 	height: 420px;
 	max-height: calc(100vh - 5em);
@@ -1315,46 +696,6 @@ a.linkjs {
 	padding-left: 1em;
 }
 
-#filterdie {
-  display: block;
-  font-size: var(--font-size-small);
-}
-
-/************************ Quick reply  ********************************/
-
-#qrinputs {
-	display: flex;
-	flex-direction: column;
-}
-
-#qrinputs > div {
-	display: flex;
-	flex-direction: row;
-}
-
-#qrinputs > div > .inputtext {
-	flex-basis: -moz-available;
-	width: 100%;
-}
-
-#qrinputs button {
-	white-space: nowrap;
-}
-
-#qrcaptcha {
-	padding: 0.2em;
-	margin: 0.2em 0;
-}
-
-#qrcom {
-	width: 250px;
-	height: 110px;
-	min-width: 250px;
-	min-height: 110px;
-	max-width: calc(100vw - 35px);
-	max-height: calc(100vh - 119px);
-}
-
 /******************** Windows/settings/quick reply (mobile) **********/
 
 @media screen and (max-width: 450px) {
@@ -1366,24 +707,19 @@ a.linkjs {
 		min-height: initial;
 		animation: none;
 	}
-
 	.window.minimized {
 		top: auto !important;
 		bottom: 0;
 	}
-
 	.winname {
 		font-size: 1.25em;
 	}
-
 	.winctrl {
 		font-size: 1.5em;
 	}
-
 	#settarea {
 		line-height: 1.5;
 	}
-
 	#settusercss,
 	#settuserfilter {
 		height: calc(100vh - 23em);
@@ -1391,30 +727,35 @@ a.linkjs {
 		max-width: 100% !important;
 		max-height: 100% !important;
 	}
-
-	#qrcom {
-		width: 100%;
-		max-width: initial;
-	}
 }
 
 /* ── Board / global config editor (admin > boards, admin > global config) ────────────
    The editor markup is built by code/Kokonotsuba/libraries/html/configForm.php and the
    templates/admin/config/ blocks; its behaviour lives in static/js/boardConfigForm.js. */
+
 .configModuleHeader h3 { margin: 0; }
+
 .configArrayList { list-style: none; margin: 0; padding: 0; }
+
 .configArrayRow, .configArrayAddRow { display: flex; gap: 4px; margin-bottom: 3px; align-items: center; }
+
 .configArrayRow input, .configArrayAddRow input { flex: 1 1 auto; min-width: 0; }
+
 .configArrayKey, .configArrayNewKey { flex: 0 0 32%; }
+
 .configArrayEditor button { flex: 0 0 auto; cursor: pointer; padding: 0 8px; line-height: 1.6; }
+
 .configArrayAddRow { margin-top: 4px; }
+
 .configArrayRow:first-child .configArrayMoveUp, .configArrayRow:last-child .configArrayMoveDown { visibility: hidden; }
+
 .configDefaultSubmit { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
 /* ── The section navigator ───────────────────────────────────────────────────────────
    Rendered hidden with the form; boardConfigForm.js lifts it into an ordinary koko window,
    the same way the staff alerts widget floats. The window's bar carries the title and the
    close button, so the list takes the whole body. Without the window manager it stays hidden. */
+
 .configEditorGroups { text-align: left; }
 
 .configNavWindow {
@@ -1422,12 +763,15 @@ a.linkjs {
 	width: auto;
 	font-size: var(--font-size-x-small);
 }
+
 .configNav { width: 15em; max-width: 100%; }
 
 .configNavList, .configNavSubList { list-style: none; margin: 0; padding: 0; }
+
 .configNavList { overflow-y: auto; max-height: 60vh; padding: 3px 4px; }
 
 .configNavRow { display: flex; align-items: baseline; gap: 3px; }
+
 .configNavLink {
 	flex: 1 1 auto;
 	display: block;
@@ -1439,15 +783,18 @@ a.linkjs {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+
 .configNavLink:hover { text-decoration: underline; }
 
 /* The entry for the section currently under the top of the viewport. */
+
 .configNavLink.configNavCurrent {
 	background-color: var(--color-bg-window-item-highlight);
 	font-weight: var(--font-weight-bold);
 }
 
 /* A group whose settings have been edited but not yet saved. */
+
 .configNavRow.configNavChanged::after {
 	content: "*";
 	flex: 0 0 auto;
@@ -1457,6 +804,7 @@ a.linkjs {
 
 /* Only the open group spells out its modules - a list of every module in every group would be
    longer than the form it navigates. */
+
 .configNavToggle {
 	flex: 0 0 auto;
 	cursor: pointer;
@@ -1467,14 +815,20 @@ a.linkjs {
 	color: inherit;
 	font-size: inherit;
 }
+
 .configNavToggle::before { content: "\25B8"; }
+
 .configNavItem.configNavOpen > .configNavRow > .configNavToggle::before { content: "\25BE"; }
+
 .configNavSubList { display: none; padding-left: 1.2em; }
+
 .configNavItem.configNavOpen > .configNavSubList { display: block; }
 
 /* Once anything in the form is edited, the save button follows the viewport so it stays
    reachable without scrolling to the end of a long form. */
+
 #boardConfigForm.configFormDirty .buttonSection { position: sticky; bottom: 8px; z-index: 20; }
+
 #boardConfigForm.configFormDirty #boardConfigSaveButton { box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45); }
 
 /* The save-confirmation window. The table is a .postlists table, so it inherits the admin
@@ -1484,6 +838,7 @@ a.linkjs {
    for the window's title bar and a margin) and laid out as a column: the change list takes
    whatever height is left and scrolls inside it, and the buttons stay visible however many
    settings changed. */
+
 .configChangesBody {
 	width: min(600px, calc(100vw - 60px));
 	max-height: calc(100vh - 120px);
@@ -1492,16 +847,22 @@ a.linkjs {
 	box-sizing: border-box;
 	padding: 8px;
 }
+
 /* min-height:0 is what actually lets a flex child shrink below its content and scroll. */
+
 .configChangesList { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+
 .configChangesTable { width: 100%; table-layout: fixed; }
+
 .configChangesTable th, .configChangesTable td {
 	vertical-align: top;
 	/* A value can be a long path or an unbroken string: wrap it rather than widen the window. */
 	word-break: break-word;
 	overflow-wrap: anywhere;
 }
+
 /* The key column is the narrow one - the two value columns get the remaining width evenly. */
+
 .configChangesTable .configChangeKey { width: 34%; font-family: monospace; }
 
 /* A list setting is shown one entry per line instead of as raw JSON. Only the edited elements
@@ -1509,22 +870,30 @@ a.linkjs {
 
    Entries keep a real list marker and hanging indent: an entry can wrap over several lines, and
    without the marker the entries run together into a block of text instead of reading as a list. */
+
 .configChangeEntries { list-style: disc; margin: 0; padding-left: 1.25em; }
+
 .configChangeEntries li { padding: 0; margin: 0; }
+
 .configChangeEntries li.configChangeEdited { white-space: pre-wrap; }
 
 /* The run of text that actually differs, inside an edited entry. An entry is cut around this, so
    it is always on screen; the surrounding unchanged context is plain, and a leading/trailing … marks
    where text was cut away. Removed text is struck through, added text is not. */
+
 .configChangeDelta { font-weight: bold; border-radius: 2px; padding: 0 1px; }
+
 .configChangeFrom .configChangeDelta {
 	background-color: rgba(220, 70, 70, 0.35);
 	text-decoration: line-through;
 }
+
 .configChangeTo .configChangeDelta {
 	background-color: rgba(70, 180, 90, 0.35);
 }
+
 /* The collapsed-run summaries are notes about the list, not entries in it, so they get no marker. */
+
 .configChangeEntries li.configChangeMore {
 	list-style: none;
 	margin-left: -1.25em;
@@ -1532,16 +901,21 @@ a.linkjs {
 	font-size: 0.9em;
 	font-style: italic;
 }
+
 .configChangeCount { opacity: 0.7; font-size: 0.9em; }
+
 .configChangeEmpty { opacity: 0.7; font-style: italic; }
+
 .configChangeText { white-space: pre-wrap; }
 
 .configChangesButtons { flex: 0 0 auto; display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px; }
+
 .configChangesButtons button { cursor: pointer; padding: 2px 10px; }
 
 /************************ Global **************************************/
 
 /* saitamaar_light from https://fonts.aahub.org */
+
 @font-face {
 	font-family: "saitamaar_light";
 	src:
@@ -1564,6 +938,7 @@ a.linkjs {
 }
 
 /*** Better sizing ***/
+
 html {
   box-sizing: border-box;
 }
@@ -1663,6 +1038,7 @@ caption h3 {
 /************************ Navigation/admin bar ************************/
 
 /* Clearfix hax so parents of float elements retain their height */
+
 .boardlist::after,
 .neomenu::after { 
 	content: "";
@@ -1741,11 +1117,6 @@ caption h3 {
 }
 
 /************************ Board header ********************************/
-
-#bannerContainer {
-	height: 118px;
-	width: 100%;
-}
 
 #banner {
 	display: block;
@@ -1830,121 +1201,9 @@ caption h3 {
 	text-decoration: underline !important;
 }
 
-#emotesContainer,
-#kaomojiContainer,
-#bbcodeContainer {
-	max-width: 390px;
-}
-
-#emojiContainer {
-	max-width: 300px;
-}
-
-#emojiContainer .row-end {
-  margin-bottom: 1.5em;
-}
-
-.emojiButton,
-.emoteButton,
-.kaomojiButton {
-	border-color: var(--color-border-button);
-	border-width: 1px;
-	border-radius: 0;
-	padding: 1px;
-	margin: 1px;
-	vertical-align: top;
-}
-
-.kaomojiButton {
-	padding: 2px;
-}
-
-.emoteButton {
-	width: 45px;
-	height: 35px;
-}
-
-.emoteImage,
-.emojiImage {
-	display: block;
-	margin: 0 auto;
-}
-
-.emoteImage {
-	max-height: 100%;
-	max-width: 100%;
-}
-
-#bbcodeButtonContainer {
-	display: flex;
-	gap: 2px;
-	flex-wrap: wrap;
-}
-
-#bbcodeContainer .code,
-#bbcodeContainer pre {
-	padding: 0;
-	font-size: var(--font-size-regular);
-}
-
-#bbcodeContainer label {
-	display: inline-block;
-}
-
-.bbcodeButton {
-	min-width: 1.25em;
-  min-height: 1.25em;
-  padding: 0.0625em;
-}
-
 #delPasswordInfo {
 	display: inline-block;
 	font-size: var(--font-size-small);
-}
-
-/************************ Board info **********************************/
-
-/******** Online counter ********/
-
-#counterListItemNoJS noscript {
-	display: contents;
-}
-
-#counterIframeBody {
-	margin: 0;
-	font-size: var(--font-size-x-small);
-}
-
-#counterIframeBody #usercounter {
-	font-family: var(--font-family-mspgothic);
-}
-
-#countnumber {
-	font-weight: var(--font-weight-bold);
-}
-
-/******** Blotter ********/
-
-#blotter {
-	display: table;
-	margin: 0 auto;
-	padding: 0 8px;
-	max-width: 600px;
-	font-size: var(--font-size-x-small);
-	font-size: max(var(--font-size-x-small), 8pt);
-	list-style: none;
-}
-
-#blotter ul {
-	list-style-type: none;
-}
-
-/******** Global message ********/
-
-#globalmsg {
-	color: var(--color-fg-global-message);
-	font-size: 1.125em;
-	text-align: center;
 }
 
 /************************ Posts/replies *******************************/
@@ -2030,10 +1289,6 @@ caption h3 {
 	display: contents;
 }
 
-.sod.noVotes {
-	font-family: monospace;
-}
-
 .icon {
 	vertical-align: text-bottom;
 }
@@ -2069,11 +1324,6 @@ caption h3 {
 
 .banIcon {
 	vertical-align: baseline;
-}
-
-.ipWarning {
-	color: var(--color-fg-warning-ip);
-	font-weight: var(--font-weight-bold);
 }
 
 .omittedposts {
@@ -2125,45 +1375,6 @@ caption h3 {
 	color: inherit;
 }
 
-.scrollText {
-	height: 300px;
-	overflow: auto;
-	resize: vertical;
-}
-
-.code {
-	background-color: var(--color-bg-code);
-	color: var(--color-fg-code);
-	margin: 0;
-	padding: 4px;
-	max-width: 100%;
-	white-space: pre-wrap;
-	word-wrap: break-word;
-	word-wrap: anywhere;
-	overflow: auto;
-}
-
-.codeComment {
-	color: #6a9955;
-	font-style: italic;
-}
-
-.codeKeyword {
-	color: #569cd6;
-	font-weight: var(--font-weight-bold);
-}
-
-.copyButton {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	position: absolute;
-	z-index: 1;
-	bottom: 8px;
-	right: 8px;
-	font-size: var(--font-size-regular);
-}
-
 .fontSize1 {
 	font-size: 0.625em;
 }
@@ -2190,69 +1401,6 @@ caption h3 {
 
 .fontSize7 {
 	font-size: 3em;
-}
-
-.rabienrose {
-	background-color: #ffe6f9;
-	color: #78376d;
-	font-family: serif;
-	font-weight: var(--font-weight-bold);
-}
-
-.partybus {
-	font-family: "Comic Sans MS", cursive;
-	font-size: 1.5em;
-	text-shadow: 0.0625em 0.0625em 0 #000000a8;
-}
-
-.partybusColor1 {
-	color: #ff00ff;
-}
-
-.partybusColor2 {
-	color: #ffff80;
-	position: relative;
-	bottom: 0.125em;
-}
-
-.partybusColor3 {
-	color: #00ff80;
-}
-
-.partybusColor4 {
-	color: #80ffff;
-	position: relative;
-	top: 0.125em;
-}
-
-.partybusColor5 {
-	color: #8080ff;
-}
-
-.partybusColor6 {
-	color: #ff0080;
-}
-
-.partybusColor7 {
-	color: #ff8040;
-	position: relative;
-	bottom: 0.125em;
-}
-
-.partybusColor8 {
-	color: #0080ff;
-}
-
-.boku {
-	font-weight: var(--font-weight-bold);
-}
-
-.bokuGreen {
-	color: #489b67;
-}
-
-.bokuRed {
-	color: #d30615;
 }
 
 /******** All AA ********/
@@ -2481,102 +1629,6 @@ caption h3 {
 	margin: 0;
 }
 
-#inputGlobalMessage {
-	width: 100%;
-}
-
-.pendingDeletion {
-	opacity: 0.6;
-	transition: opacity 0.3s ease;
-}
-
-/************************ Ban management*******************************/
-
-#banForm {
-	margin: 1em auto;
-	max-width: 640px;
-}
-
-#banForm #bandays {
-	width: 100%;
-	max-width: 4em;
-}
-
-#banForm #banprivmsg,
-#banForm #banmsg {
-	width: 100%;
-	height: 5em;
-}
-
-#bigredbutton {
-	background-color: #ff0000;
-	color: white;
-	border-style: outset;
-	border-width: 3px;
-	font-family: Verdana, Tahoma, Arial, sans-serif;
-	font-size: 1.2em;
-	font-weight: var(--font-weight-bold);
-	cursor: pointer;
-}
-
-#bigredbutton:active:hover {
-	border-style: inset;
-}
-
-#banTableContainer {
-	overflow: auto;
-}
-
-#banTable .colDel {
-	text-align: center;
-}
-
-/************************ Ban screen **********************************/
-
-/* Holds the summary row, then each ban's post and appeal form underneath it. */
-#banScreen {
-	background-color: var(--color-bg-reply);
-	max-width: 800px;
-	margin: 0 auto;
-	padding: 0.5em;
-}
-
-/* The text on the left, the picture pushed to the right. */
-#banScreenSummary {
-	display: flex;
-	gap: 0.5em;
-	justify-content: space-between;
-	align-items: center;
-}
-
-#banScreenText {
-	flex: 1;
-	text-align: left;
-}
-
-#banimg {
-	margin-left: auto;
-	border: 1px solid;
-	max-width: 100%;
-	width: 300px;
-	height: auto;
-}
-
-#hrBan {
-	clear: both;
-}
-
-@media screen and (max-width: 640px) {
-	#banScreenSummary {
-		flex-direction: column;
-	}
-
-	#banimg {
-		margin-left: 0;
-		width: 100%; /* Makes the image container fill the width */
-	}
-}
-
 /************************ Overboard ***********************************/
 
 .boardFilterList {
@@ -2589,37 +1641,6 @@ caption h3 {
 	text-align: left;
 }
 
-/************************ Blotter *************************************/
-
-#newBlotterFormTable {
-	margin: 0 auto;
-}
-
-#newBlotterFormTable #msg {
-	width: 20em;
-	max-width: 100%;
-	max-width: calc(100vw - 6.5em);
-}
-
-.blotterListItem {
-	text-align: left;
-}
-
-.blotterDate {
-	font-weight: var(--font-weight-bold);
-}
-
-.blotterListShowAll {
-	text-align: center;
-}
-
-/************************ EXIF ****************************************/
-
-.exifInfoList {
-	display: table;
-	margin: 1em auto;
-}
-
 /************************ Mobile **************************************/
 
 @media screen and (max-width: 600px) {
@@ -2627,33 +1648,23 @@ caption h3 {
 		width: 100%;
 		margin: 0 0 0.25em;
 	}
-
 	.neomenuTitle {
 		padding: 0;
 	}
-
 	.neomenu h1,
 	.neomenu h2,
 	#adminNavBar {
 		line-height: 2;
 	}
-
 	.neomenu h1 {
 		padding: 0 0.25em;
 	}
-
 	.neomenuList .extr {
 		padding: 0.5em 0.25em;
 	}
-
 	.formattingDetails {
 		margin: 0.5em 0;
 	}
-
-	.bbcodeButton {
-		font-size: var(--font-size-regular);
-	}
-
 	#catalogSettings,
 	#catalogSortForm {
 		float: none;
@@ -2665,33 +1676,21 @@ caption h3 {
 	#topiclist {
 		line-height: 1.5;
 	}
-
 	#adminOptionContainer {
 		display: table;
 		margin: 0 auto;
 	}
-
 	#adminOptionContainer label {
 		display: block;
 		text-align: left;
 	}
 }
 
-/* The anti-spam rule form, opened from a post's menu. A kkwm window sizes itself to its contents
-   and clips whatever overflows, so the form is bounded against the viewport and scrolls inside
-   the window instead. Only applies in a window; the admin page shows the same form full height. */
-.window .newEntryForm {
-	width: min(520px, calc(100vw - 60px));
-	max-height: calc(100vh - 120px);
-	overflow-y: auto;
-	box-sizing: border-box;
-	padding: 8px;
-}
-
 /************************ Error page ******************************/
 
 /* The blanket error's image. Width/height are on the tag so the page does not reflow when it
    loads; this keeps it inside a narrow viewport without losing that aspect ratio. */
+
 .errorImage {
 	max-width: 100%;
 	height: auto;

@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\search;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\renderers\boardRendererFactory;
 use Kokonotsuba\post\postSearchService;
@@ -23,6 +24,7 @@ use function Kokonotsuba\libraries\html\generateHeadHtml;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 
 class moduleMain extends abstractModuleMain {
+	use ModuleHeaderListenerTrait;
 	use TopLinksListenerTrait;
 
 	private readonly string $modulePageUrl;
@@ -45,6 +47,12 @@ class moduleMain extends abstractModuleMain {
 		$this->moduleTemplateEngine = $this->initModuleTemplateEngine('modules.search.SEARCH_TEMPLATE', 'kokoimg');
 
 		$this->addTopLink($this->modulePageUrl, _T('head_search'));
+		$this->listenModuleHeader('onModuleHeaderStylesheet');
+	}
+
+	/** The module's own stylesheet. */
+	private function onModuleHeaderStylesheet(string &$moduleHeader): void {
+		$this->includeStylesheet('search.css', $moduleHeader);
 	}
 
 	public function ModulePage() {

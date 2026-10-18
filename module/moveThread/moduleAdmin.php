@@ -62,6 +62,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
 		$this->registerScript('moveThread.js');
 		$this->registerScript('mergeThread.js');
+		$this->moduleContext->moduleEngine->addRoleProtectedListener($this->getRequiredRole(), 'ModuleHeader', function (string &$moduleHeader): void {
+			$this->includeStylesheet('moveThread.css', $moduleHeader);
+		});
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {

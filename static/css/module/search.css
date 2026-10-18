@@ -1,0 +1,8 @@
+/* search module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+/************************ Search **************************************/
+
+#searchresult {
+	margin-top: 1em;
+	text-align: left;
+}

@@ -131,6 +131,17 @@ abstract class abstractModule {
 		return $jsHtml;
 	}
 
+	/**
+	 * Link a module's own stylesheet, static/css/module/{file}, from the page head. A module's
+	 * rules live there rather than in globalBase.css, so a disabled module costs nothing. The
+	 * link is printed in the head's stylesheet slot right after globalBase.css, not where the
+	 * module header lands, so theme sheets keep overriding module rules; the header is taken
+	 * only so this reads like includeScript() from any header listener.
+	 */
+	public function includeStylesheet(string $cssFileName, string &$moduleHeader): void {
+		moduleStylesheets::add($this->getConfig('STATIC_URL') . 'css/module/' . $cssFileName);
+	}
+
 	public function includeScript(string $jsFileName, string &$moduleHeader, bool $defer = true): void {
 		// generate the script header html
 		$jsHtml = $this->generateScriptHeader($jsFileName, $defer);

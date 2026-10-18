@@ -1,0 +1,41 @@
+/* blotter module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+/******** Blotter ********/
+
+#blotter {
+	display: table;
+	margin: 0 auto;
+	padding: 0 8px;
+	max-width: 600px;
+	font-size: var(--font-size-x-small);
+	font-size: max(var(--font-size-x-small), 8pt);
+	list-style: none;
+}
+
+#blotter ul {
+	list-style-type: none;
+}
+
+/************************ Blotter *************************************/
+
+#newBlotterFormTable {
+	margin: 0 auto;
+}
+
+#newBlotterFormTable #msg {
+	width: 20em;
+	max-width: 100%;
+	max-width: calc(100vw - 6.5em);
+}
+
+.blotterListItem {
+	text-align: left;
+}
+
+.blotterDate {
+	font-weight: var(--font-weight-bold);
+}
+
+.blotterListShowAll {
+	text-align: center;
+}

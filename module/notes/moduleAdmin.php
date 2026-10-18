@@ -76,6 +76,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// set the note service
 		$this->notePolicy->setNoteService($this->noteService);
+		$this->moduleContext->moduleEngine->addRoleProtectedListener($this->getRequiredRole(), 'ModuleHeader', function (string &$moduleHeader): void {
+			$this->includeStylesheet('notes.css', $moduleHeader);
+		});
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {

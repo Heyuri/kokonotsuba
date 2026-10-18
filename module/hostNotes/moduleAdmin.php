@@ -111,6 +111,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 
 		$this->listenManagePostsHostPanel('onRenderManagePostsPanel');
+		$this->moduleContext->moduleEngine->addRoleProtectedListener($this->getRequiredRole(), 'ModuleHeader', function (string &$moduleHeader): void {
+			$this->includeStylesheet('hostNotes.css', $moduleHeader);
+		});
 	}
 
 	// ─── Admin UI hooks ───────────────────────────────────────────
