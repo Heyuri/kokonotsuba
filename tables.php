@@ -56,4 +56,5 @@ return [
 	'BANNER_AD_TABLE' => 'banner_ads',
 	'ADS_TABLE' => 'ads',
 	'BLOTTER_TABLE' => 'blotter',
+	'THREAD_MOD_TABLE' => 'thread_mods',
 ];

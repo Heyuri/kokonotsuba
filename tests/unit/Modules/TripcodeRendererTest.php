@@ -41,12 +41,24 @@ final class TripcodeRendererTest extends TestCase {
 		$this->assertStringContains('Bob ## Admin', $out);
 	}
 
-	public function testUnknownStaffCapcodeReturnedRaw(): void {
+	public function testUnknownStaffCapcodeDrawsNoWrapper(): void {
 		$r = new tripcodeRenderer([], []);
-		// capcode not in staffCapcodes → wrapper returns the capcode itself,
-		// which sprintf then applies to the name as a format string.
+		// A capcode nothing defines (a removed config key, a disabled module) must not become a
+		// format string that swallows the name.
 		$out = $r->renderTripcode('Bob', '', '', 'PLAIN');
-		$this->assertSame('PLAIN', $out);
+		$this->assertSame('Bob', $out);
+	}
+
+	public function testStaffCapcodesMayArriveLazily(): void {
+		$called = 0;
+		$r = new tripcodeRenderer([], function () use (&$called): array {
+			$called++;
+			return ['threadOwner' => ['capcodeHtml' => '<span class="capcode capcodeThreadOwner">%s ## OP</span>']];
+		});
+
+		$this->assertStringContains('Bob ## OP', $r->renderTripcode('Bob', '', '', 'threadOwner'));
+		$r->renderTripcode('Bob', '', '', 'threadOwner');
+		$this->assertSame(1, $called);
 	}
 
 	public function testUserCapcodeAppliedForMatchingTripcode(): void {

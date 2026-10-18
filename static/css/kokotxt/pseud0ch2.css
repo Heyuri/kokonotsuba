@@ -2,6 +2,8 @@
 @import "pseud0ch.css";
 
 :root {
+	/* OP-deleted post and its collapsed preview */
+	--color-bg-op-deleted: #f5d9d9;
 	--font-family-main: var(--font-family-serif);
 }
 

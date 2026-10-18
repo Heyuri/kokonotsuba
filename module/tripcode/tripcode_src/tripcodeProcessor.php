@@ -2,7 +2,9 @@
 
 namespace Kokonotsuba\Modules\tripcode;
 
+use Kokonotsuba\error\BoardException;
 use Kokonotsuba\userRole;
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateTripcode;
 
 class tripcodeProcessor {
@@ -11,8 +13,13 @@ class tripcodeProcessor {
 	public function __construct(
 		private readonly array $config) {}
 
-	// Main method to apply tripcode processing to a given name
-	public function apply(string &$name, string &$tripcode, string &$secure_tripcode, string &$capcode, userRole $roleLevel): void {
+	/**
+	 * Main method to apply tripcode processing to a given name.
+	 *
+	 * @param string $capcodeInput What was typed after " ## ", when anything was. A staff capcode
+	 *                             asked for this way by too low a role is refused outright.
+	 */
+	public function apply(string &$name, string &$tripcode, string &$secure_tripcode, string &$capcode, userRole $roleLevel, string $capcodeInput = ''): void {
 		// Check for fraud symbols in the name and append " (fraudster)" if found
 		if ($this->containsFraudSymbol($name)) {
 			$name .= " (fraudster)";
@@ -23,6 +30,13 @@ class tripcodeProcessor {
 			return;
 		}
 
+		// another module (thread capcodes) already decided the capcode
+		if ($capcode !== '') {
+			$this->generateTripcodeFromInput($tripcode, $secure_tripcode);
+			return;
+		}
+
+		$this->assertCapcodeAllowed($capcodeInput, $roleLevel);
 
 		// Apply role capcode if conditions are met
 		$capcode = $this->setCapcodeIfExists($roleLevel, $secure_tripcode);
@@ -59,6 +73,17 @@ class tripcodeProcessor {
 	    }
 
 	    return $text;
+	}
+
+	/** An explicit "## Mod" from someone who is not one is an error, not a tripcode. */
+	private function assertCapcodeAllowed(string $capcodeInput, userRole $roleLevel): void {
+		if ($capcodeInput === '' || !array_key_exists($capcodeInput, $this->config['staffCapcodes'])) {
+			return;
+		}
+
+		if ($roleLevel->isLessThan($this->config['staffCapcodes'][$capcodeInput]['requiredRole'])) {
+			throw new BoardException(_T('threadmod_staff_capcode_refused', $capcodeInput), 403);
+		}
 	}
 
 	// Set the capcode if it exists in the array key

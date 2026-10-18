@@ -335,7 +335,7 @@ class registRoute {
 		
 		$name = $nameOnly;
 
-		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'textFormat' => textFormat::PLAIN_TEXT, 'tripcode_input' => $tripcode, 'secure_tripcode_input' => $secure_tripcode,
+		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'textFormat' => textFormat::PLAIN_TEXT, 'tripcode_input' => $tripcode, 'secure_tripcode_input' => $secure_tripcode, 'capcode_input' => $staffCapcodeInput,
 			 'tripcode' => '', 'secure_tripcode' => '', 'capcode' => '', 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
 			 'category' => $category, 'tag' => $tag, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip,
 			 'thread_uid' => $thread_uid, 'isReply' => $isReply, 'roleLevel' => $roleLevel, 'time' => $time,
@@ -489,6 +489,8 @@ class registRoute {
 			'secure_tripcode' => &$postData['secure_tripcode'],
 			'tripcode_input' => &$postData['tripcode_input'],
 			'secure_tripcode_input' => &$postData['secure_tripcode_input'],
+			// the "## X" text on its own, so a listener can tell a capcode request from a secure tripcode
+			'capcode_input' => &$postData['capcode_input'],
 			'capcode' => &$postData['capcode'],
 			'age' => &$postData['age'],
 			'files' => $files,

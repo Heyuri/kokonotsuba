@@ -1,6 +1,8 @@
 @charset "UTF-8";
 
 :root {
+  /* OP-deleted post and its collapsed preview */
+  --color-bg-op-deleted: #d3dcee;
   /* Global */
   --font-family-main: "Trebuchet MS", Tahoma, Verdana, Arial, sans-serif, Meiryo, 'Hiragino Sans', Osaka;
   --font-size-main: 12pt;

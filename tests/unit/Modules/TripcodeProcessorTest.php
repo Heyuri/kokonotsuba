@@ -59,6 +59,35 @@ final class TripcodeProcessorTest extends TestCase {
 		$this->assertSame(10, strlen($secure));
 	}
 
+	public function testExplicitStaffCapcodeBelowRoleIsRefused(): void {
+		$proc = $this->makeProcessor();
+		$name = 'Pretender'; $trip = ''; $secure = 'ADMINKEY'; $capcode = '';
+
+		// " ## ADMINKEY" was typed: refused rather than quietly hashed into a secure tripcode
+		$this->assertThrows(function () use ($proc, &$name, &$trip, &$secure, &$capcode) {
+			$proc->apply($name, $trip, $secure, $capcode, userRole::LEV_USER, 'ADMINKEY');
+		}, \Kokonotsuba\error\BoardException::class);
+	}
+
+	public function testExplicitStaffCapcodeWithRoleIsGranted(): void {
+		$proc = $this->makeProcessor();
+		$name = 'Boss'; $trip = ''; $secure = 'ADMINKEY'; $capcode = '';
+
+		$proc->apply($name, $trip, $secure, $capcode, userRole::LEV_ADMIN, 'ADMINKEY');
+
+		$this->assertSame('ADMINKEY', $capcode);
+	}
+
+	public function testPresetCapcodeIsKeptAndTripcodesStillHashed(): void {
+		$proc = $this->makeProcessor();
+		$name = 'OP'; $trip = 'password'; $secure = ''; $capcode = 'threadOwner';
+
+		$proc->apply($name, $trip, $secure, $capcode, userRole::LEV_USER);
+
+		$this->assertSame('threadOwner', $capcode);
+		$this->assertSame(10, strlen($trip));
+	}
+
 	public function testRegularTripcodeIsHashedToTenChars(): void {
 		$proc = $this->makeProcessor();
 		$name = 'Anon'; $trip = 'password'; $secure = ''; $capcode = '';

@@ -1,0 +1,72 @@
+/* threadMod module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+/* ---- threadMod: posts hidden by the thread's OP ---- */
+
+/* A summary-only <details> follows the comment as a child of the post; while it is closed the
+   post's other children are hidden, so the post is that one line and [Show] works without script. --color-bg-op-deleted
+   comes from each style sheet. */
+
+.post.opDeleted {
+	background: var(--color-bg-op-deleted, #f8d7d7);
+}
+
+.post.opDeleted:not(:has(> .opDeletedDetails[open])) > :not(.opDeletedDetails) {
+	display: none;
+}
+
+.opDeletedSummary {
+	cursor: pointer;
+	list-style: none;
+	color: var(--color-fg-omitted, #707070);
+}
+
+.opDeletedSummary::-webkit-details-marker {
+	display: none;
+}
+
+.opDeletedSummary .opDeletedShow,
+.opDeletedSummary .opDeletedHide {
+	color: var(--color-fg-link);
+}
+
+.opDeletedSummary .opDeletedHide,
+.opDeletedDetails[open] .opDeletedShow,
+.opDeletedDetails[open] .replyPosition {
+	display: none;
+}
+
+.opDeletedDetails[open] .opDeletedHide {
+	display: inline;
+}
+
+/* the ## OP box beside the name field, shown by threadMod.js for the thread's mods */
+
+.threadModCapcodeLabel {
+	margin-left: 0.4em;
+	white-space: nowrap;
+	font-size: 0.9em;
+}
+
+.threadModStripIndicator {
+	font-size: 0.8em;
+	color: var(--color-fg-warning, #f00000);
+}
+
+.threadModForm {
+	margin: 0.5em 0;
+}
+
+.threadModNumberField {
+	width: 6em;
+}
+
+.threadModRoster th,
+.threadModRoster td {
+	padding: 2px 6px;
+}
+
+.capcodeThreadOwner,
+.capcodeThreadMod {
+	color: var(--color-fg-capcode-thread, #1a5fb4);
+	font-weight: bold;
+}

@@ -3,6 +3,8 @@
 /************************ Global **************************************/
 
 :root {
+	/* OP-deleted post and its collapsed preview */
+	--color-bg-op-deleted: #3d2a31;
 	/* Global */
 	--font-family-main: var(--font-family-serif);
 	--font-size-main: 12pt;

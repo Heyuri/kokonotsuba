@@ -31,9 +31,15 @@ class moduleMain extends abstractModuleMain {
 		
 		// init tripcode renderer
 		// disabled capcodes are left out so they render as a plain tripcode; read on first use
+		// staff capcodes plus whatever other modules add on CapcodeFormats, asked once every
+		// module is initialised rather than in whichever order the module list happens to load
 		$this->tripcodeRenderer = new tripcodeRenderer(
 			fn() => $this->moduleContext->capcodeService->listEnabledCapcodes(),
-			$this->getConfig('staffCapcodes')
+			function (): array {
+				$capcodes = (array)$this->getConfig('staffCapcodes', []);
+				$this->moduleContext->moduleEngine->dispatch('CapcodeFormats', [&$capcodes]);
+				return $capcodes;
+			}
 		);
 
 		// init tripcode processer
@@ -68,7 +74,8 @@ class moduleMain extends abstractModuleMain {
 			$registInfo['tripcode_input'], 
 			$registInfo['secure_tripcode_input'], 
 			$registInfo['capcode'], 
-			$registInfo['roleLevel']
+			$registInfo['roleLevel'],
+			(string)($registInfo['capcode_input'] ?? '')
 		);
 
 		// then assign the *_input tripcode values to the tripcode variables that'll be used in the insert.

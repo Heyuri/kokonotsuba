@@ -1,4 +1,6 @@
 :root {
+	/* OP-deleted post and its collapsed preview */
+	--color-bg-op-deleted: #cfe0ff;
 	/* Global */
 	--font-family-main: var(--font-family-serif);
 	--font-size-main: 12pt;
