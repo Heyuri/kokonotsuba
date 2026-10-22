@@ -1,7 +1,7 @@
 <?php
 /**
  * Config schema for the banner module (namespace: modules.banner.*).
- * Read via $this->getModuleConfig('KEY'). Folds into the "Overboard, ads & banners" editor group.
+ * Read via $this->getModuleConfig('KEY'). Folds into the "Ads, Counters & Banners" editor group.
  *
  * The {PRESET}_* keys are what bannerPresetRegistry reads; a preset's key prefix is fixed there.
  */
@@ -11,7 +11,7 @@ require_once __DIR__ . '/../../configs/_fieldTypes.php';
 use function Kokonotsuba\config\fields\{boolField, intField};
 
 return [
-	'_group'  => 'Overboard, ads & banners',
+	'_group'  => 'Ads, Counters & Banners',
 	'_module' => 'Banners',
 
 	'SHOW_TOP_AD' => boolField('config_label_modules.banner.SHOW_TOP_AD', true, 'config_desc_modules.banner.SHOW_TOP_AD'),
