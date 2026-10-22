@@ -334,8 +334,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	/**
-	 * POST actions. abstractModuleAdmin routes POSTs here through dispatchModuleRequest(),
-	 * which has already enforced the request method and CSRF token.
+	 * POST actions. abstractModuleAdmin routes POSTs here through dispatchModuleRequest();
+	 * moduleRoute has already enforced the request method and CSRF token.
 	 */
 	protected function handleModuleRequest(): void {
 		$request = $this->moduleContext->request;

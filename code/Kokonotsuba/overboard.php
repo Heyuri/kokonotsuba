@@ -150,7 +150,8 @@ class overboard {
 			$this->adminMode,
 			$this->canViewDeleted,
 			!$this->adminMode && !$this->canViewDeleted && !empty($this->config['THREAD_FRAGMENT_CACHE']),
-			true
+			true,
+			$this->postRenderingPolicy->stubsDeletedPosts(...)
 		);
 	}
 

@@ -5,6 +5,7 @@
 		<h4>Spam ruleset</h4>
 		<p>Anti-spam rules that every new post submission is checked against for active entries.</p>
 		<form action="{$MODULE_URL}" method="POST">
+			{$CSRF_TOKEN}
 			<input type="hidden" name="action" value="delete">
 			<div class="tableViewportWrapper">
 			<table class="spamList postlists">

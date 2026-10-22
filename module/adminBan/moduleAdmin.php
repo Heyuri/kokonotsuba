@@ -238,7 +238,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		};
 	}
 
-	/** POST actions. dispatchModuleRequest() has already enforced the method and CSRF token. */
+	/** POST actions. moduleRoute has already enforced the method and CSRF token. */
 	protected function handleModuleRequest(): void {
 		$action = (string) $this->moduleContext->request->getParameter('adminban-action', 'POST', '');
 

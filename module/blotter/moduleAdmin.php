@@ -55,7 +55,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	/**
 	 * Handles POST actions (add / edit / delete blotter entries).
 	 * CSRF token + POST method are enforced automatically by
-	 * abstractModuleAdmin::dispatchModuleRequest() before this fires.
+	 * moduleRoute before this fires.
 	 */
 	protected function handleModuleRequest(): void {
 		if (!empty($this->moduleContext->request->getParameter('new_blot_txt', 'POST'))) {

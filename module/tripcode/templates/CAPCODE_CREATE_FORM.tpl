@@ -2,6 +2,7 @@
 		<h4>Add capcode</h4>
 		<p>Create a capcode that will be added to the capcode list.</p>
 		<form method="POST" action="{$MODULE_URL}">
+			{$CSRF_TOKEN}
 			<table class="capcodeCreateForm">
 				<tr>
 					<td class="postblock">Tripcode</td>

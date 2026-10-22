@@ -4,6 +4,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Kokonotsuba\cache\thread_fragment\threadFragments;
 
 use Kokonotsuba\action_log\actionType;
@@ -50,7 +51,7 @@ use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Kokonotsuba\libraries\searchBoardArrayForBoardByReference;
 use function Puchiko\json\sendAjaxAndDetach;
 
-class registRoute {
+class registRoute implements route {
     public function __construct(private board $board, 
         private readonly array $config,
         private readonly postValidator $postValidator,
@@ -70,7 +71,7 @@ class registRoute {
 	) {}
 
     /* Write to post table */
-	public function registerPostToDatabase() {
+	public function handle(): void {
 		// Upload board cached path
 		$this->board->updateBoardPathCache();
 

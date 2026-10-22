@@ -2,6 +2,7 @@
 	[<a href="{$MODULE_URL}">Back</a>]
 	<div class="rulesetEntryContainer">
 		<form method="POST" action="{$MODULE_URL}">
+			{$CSRF_TOKEN}
 			<input name="entryId" value="{$ID}" type="hidden">
 			<input name="action" value="update" type="hidden">
 			<table class="ruleEntry">

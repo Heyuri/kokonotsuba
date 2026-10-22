@@ -12,6 +12,7 @@ use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\getAttachmentUrl;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
@@ -84,6 +85,9 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {
+		// the toggle writes and rebuilds, so it never runs off a plain link
+		requirePostWithCsrf($this->moduleContext->request);
+
 		// get post uid from request
 		$postUid = $this->moduleContext->request->getParameter('postUid', 'GET');
 		

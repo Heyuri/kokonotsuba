@@ -62,6 +62,7 @@ class Thread implements JsonSerializable {
 
 	// Counts
 	public function getPostCount(): int { return (int)$this->number_of_posts; }
+	public function setPostCount(int $count): void { $this->number_of_posts = $count; }
 
 	// Deletion state
 	public function isThreadDeleted(): bool { return (bool)$this->thread_deleted; }

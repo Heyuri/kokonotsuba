@@ -47,7 +47,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	/**
 	 * Handle the rebuild POST action.
 	 * CSRF token + POST method are enforced automatically by
-	 * abstractModuleAdmin::dispatchModuleRequest() before this fires.
+	 * moduleRoute before this fires.
 	 */
 	protected function handleModuleRequest(): void {
 		$boardUIDsToRebuild = $this->moduleContext->request->getParameter('rebuildBoardUIDs', 'POST', []);

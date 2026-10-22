@@ -301,6 +301,7 @@ class moduleMain extends abstractModuleMain {
 			'{$STATUS_MESSAGE}' => $statusMessage,
 			'{$ROWS}' => $rows,
 			'{$EMPTY}' => empty($rows) ? '1' : '',
+			'{$CSRF_TOKEN}' => '',
 		];
 
 		$pageContent = $this->moduleContext->adminPageRenderer->ParseBlock('BANNER_INDEX', $templateValues);

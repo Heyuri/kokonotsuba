@@ -4,6 +4,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Kokonotsuba\board\board;
 use Kokonotsuba\account\accountService;
 use Kokonotsuba\action_log\actionLoggerService;
@@ -11,10 +12,9 @@ use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
-use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Puchiko\request\redirect;
 
-class handleAccountActionRoute {
+class handleAccountActionRoute implements route {
 	public function __construct(
 		private readonly array $config,
 		private board $board,
@@ -25,13 +25,8 @@ class handleAccountActionRoute {
 		private readonly request $request
 	) {}
 
-	public function handleAccountRequests(): void {
+	public function handle(): void {
 		$this->softErrorHandler->handleAuthError(userRole::LEV_USER);
-
-		// All account mutations require POST + CSRF
-		if ($this->request->isPost()) {
-			requirePostWithCsrf($this->request);
-		}
 
 		if ($this->staffAccountFromSession->getRoleLevel() === userRole::LEV_ADMIN) {
 			// Bulk delete from checkboxes

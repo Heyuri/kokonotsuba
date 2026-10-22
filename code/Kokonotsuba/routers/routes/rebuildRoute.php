@@ -4,6 +4,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Kokonotsuba\cache\thread_fragment\threadFragments;
 
 use Kokonotsuba\action_log\actionType;
@@ -13,14 +14,14 @@ use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\userRole;
 use function Puchiko\request\redirect;
 
-class rebuildRoute {
+class rebuildRoute implements route {
 	public function __construct(
 		private board $board,
 		private readonly softErrorHandler $softErrorHandler,
 		private readonly actionLoggerService $actionLoggerService,
 	) {}
 
-	public function handleRebuild(): void {
+	public function handle(): void {
 		$this->softErrorHandler->handleAuthError(userRole::LEV_JANITOR);
 
 		$this->actionLoggerService->logAction("Rebuilt pages", $this->board->getBoardUID(), actionType::BOARD_REBUILD);

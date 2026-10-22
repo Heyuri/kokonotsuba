@@ -4,6 +4,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\board\board;
 use Kokonotsuba\error\BoardException;
@@ -20,7 +21,7 @@ use function Kokonotsuba\libraries\html\getPageForPostPosition;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\request\redirect;
 
-class defaultRoute {
+class defaultRoute implements route {
 	/**
 	 * Constructor to initialize required dependencies.
 	 */
@@ -40,7 +41,7 @@ class defaultRoute {
 	 * Main entry point to handle default board access.
 	 * Decides whether to show a thread, a specific page, or redirect to a cached board index.
 	 */
-	public function handleDefault(): void {
+	public function handle(): void {
 		header('Content-Type: text/html; charset=utf-8');
 
 		// Check for ?res= (thread view)
@@ -144,7 +145,7 @@ class defaultRoute {
 			// get the page of the post based on its true position within the thread
 			// (objective position among visible replies, not the drift-prone stored
 			// post_position column which is inaccurate after deletions)
-			$viewDeleted = $this->postRenderingPolicy->viewDeleted();
+			$viewDeleted = $this->postRenderingPolicy->viewDeleted() || $this->postRenderingPolicy->stubsDeletedPosts($this->board);
 			$positions = $this->threadRepository->getObjectivePositions([$post->getThreadUid()], $viewDeleted);
 			$postPosition = $positions[$post->getUid()] ?? 0;
 			$page = getPageForPostPosition($postPosition, $repliesPerPage);

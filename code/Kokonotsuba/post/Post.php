@@ -3,6 +3,7 @@
 namespace Kokonotsuba\post;
 
 use JsonSerializable;
+use Kokonotsuba\userRole;
 
 class Post implements JsonSerializable {
 	private array $data;
@@ -19,6 +20,12 @@ class Post implements JsonSerializable {
 			'attachment_is_animated', 'attachment_is_spoilered', 'attachment_is_deleted', 'attachment_timestamp_added',
 		'votes_total_count', 'votes_yeah_count', 'votes_nope_count',
 		'note_id', 'note_submitted', 'note_added_by', 'note_text', 'note_added_by_username',
+	];
+
+	/** What a stub keeps: where the post sits, never what it said. */
+	private const STUB_COLUMNS = [
+		'post_uid', 'no', 'boardUID', 'thread_uid', 'is_op', 'post_position', 'objective_position',
+		'post_op_number', 'open_flag', 'file_only_deleted',
 	];
 
 	public function __construct(array $data = []) {
@@ -80,6 +87,25 @@ class Post implements JsonSerializable {
 	public function isFileOnlyDeleted(): bool { return (bool)($this->data['file_only_deleted'] ?? false); }
 	public function isByProxy(): bool { return (bool)($this->data['by_proxy'] ?? false); }
 	public function isDeleted(): bool { return $this->getOpenFlag() === 1 && !$this->isFileOnlyDeleted(); }
+	public function getDeletedBy(): ?int {
+		$id = $this->data['deleted_by'] ?? null;
+		return $id !== null ? (int)$id : null;
+	}
+
+	public function getDeletedByRole(): ?userRole {
+		$role = $this->data['deleted_by_role'] ?? null;
+		return $role !== null ? userRole::tryFrom((int)$role) : null;
+	}
+
+	// Stub drawn in place of a deleted post
+	public function getStubKind(): ?string { return $this->data['stub_kind'] ?? null; }
+
+	/** Strip the post down to what its stub draws, so nothing else can reach the page. */
+	public function stubAs(string $kind): void {
+		$this->data = array_intersect_key($this->data, array_flip(self::STUB_COLUMNS)) + ['stub_kind' => $kind];
+		$this->attachments = $this->deletedAttachments = $this->staffNotes = [];
+		$this->votes = null;
+	}
 
 	// Thread context
 	public function getOpNumber(): int { return (int)($this->data['post_op_number'] ?? 0); }

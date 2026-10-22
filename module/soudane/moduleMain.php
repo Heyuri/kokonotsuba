@@ -14,8 +14,11 @@ use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\Post;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getOrCreateCsrfToken;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Puchiko\json\renderJsonErrorPage;
 use function Puchiko\json\renderJsonPage;
+use function Puchiko\json\renderPrivateJsonPage;
 use function Puchiko\strings\sanitizeStr;
 
 require_once __DIR__ . '/soudaneRepository.php';
@@ -249,6 +252,11 @@ class moduleMain extends abstractModuleMain {
 			$this->handleSoudaneApi();
 		}
 
+		// soudane.js asks for a token here; the vote buttons are in static HTML and can't carry one
+		if($modPage === 'token') {
+			renderPrivateJsonPage(['token' => getOrCreateCsrfToken()]);
+		}
+
 		// Retrieve the postUid from GET parameters, default to empty string if not provided
 		$postUid = $this->moduleContext->request->getParameter('postUid', 'GET', '');
 
@@ -262,6 +270,7 @@ class moduleMain extends abstractModuleMain {
 
 		// Reading a score is not voting, so only the two vote types pass the checkpoint.
 		if ($type !== 'score') {
+			requirePostWithCsrf($this->moduleContext->request);
 			$this->assertNotBanned(banCheckpoint::SOUDANE);
 		}
 

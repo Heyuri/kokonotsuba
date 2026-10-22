@@ -10,6 +10,7 @@ use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\rebuildAllBoards;
 
 class moduleAdmin extends abstractModuleAdmin {
@@ -51,7 +52,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$templateValues = [
 			'{$CURRENT_GLOBAL_MESSAGE}' => getCurrentGlobalMsg($this->globalMessageFile),
-			'{$MODULE_URL}' => $this->modulePageUrl
+			'{$MODULE_URL}' => $this->modulePageUrl,
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 		];
 
 		$globalMessagePageHtml = $this->moduleContext->adminPageRenderer->ParseBlock('GLOBALMSG_PAGE', $templateValues);

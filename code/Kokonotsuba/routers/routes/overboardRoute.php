@@ -4,6 +4,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Kokonotsuba\board\boardRepository;
 use Kokonotsuba\board\board;
 use Kokonotsuba\board\overboardBoardFilter;
@@ -14,7 +15,7 @@ use function Kokonotsuba\libraries\createAssocArrayFromBoardArray;
 use function Kokonotsuba\libraries\html\drawOverboardFilterForm;
 use function Puchiko\request\redirect;
 
-class overboardRoute {
+class overboardRoute implements route {
 	public function __construct(
 		private readonly array $config,
 		private readonly array $visibleBoards,
@@ -25,7 +26,7 @@ class overboardRoute {
 		private readonly request $request,
 	) {}
 
-	public function drawOverboard(): void {
+	public function handle(): void {
 		$this->handleOverboardFilterForm();
 
 		$this->overboard->useOverboardTemplate();

@@ -1695,3 +1695,16 @@ caption h3 {
 	max-width: 100%;
 	height: auto;
 }
+
+/* A deleted post's place in the thread: its position and who deleted it, nothing else. */
+.reply.deletedStub {
+	color: var(--color-fg-omitted, #707070);
+}
+
+.reply.deletedStub-user {
+	background: var(--color-bg-deleted-user, #d7f0d7);
+}
+
+.reply.deletedStub-staff {
+	background: var(--color-bg-deleted-staff, #d7e3f8);
+}

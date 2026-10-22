@@ -1,6 +1,7 @@
 <h3 class="centerText">{$PAGE_TITLE}</h3>
 
 <form method="POST" action="{$MODULE_URL}">
+	{$CSRF_TOKEN}
 	<div id="pmAdminTableContainer" class="tableViewportWrapper">
 		<table class="postlists" id="pmAdminTable">
 			<thead>

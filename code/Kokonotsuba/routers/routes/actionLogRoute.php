@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Kokonotsuba\action_log\actionLogPostLinks;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\action_log\actionTypeRegistry;
@@ -21,7 +22,7 @@ use function Puchiko\strings\buildSmartQuery;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
-class actionLogRoute {
+class actionLogRoute implements route {
 	/** Columns the table headers may sort on, matching the repository's allowlist. */
 	private const SORTABLE_COLUMNS = ['id', 'time_added', 'action_type', 'name', 'role', 'board_uid', 'board_title'];
 
@@ -37,7 +38,7 @@ class actionLogRoute {
 		private readonly postRepository $postRepository
 	) {}
 
-	public function drawActionLog() {
+	public function handle(): void {
 		$this->softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_VIEW_ACTION_LOG']);
 
 		$actionLogHtml = '';

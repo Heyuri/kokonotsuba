@@ -328,6 +328,20 @@ class threadService {
 	}
 
 	/**
+	 * Count deleted posts into each thread's post count, for a reader who gets them as stubs.
+	 * Call before a row is stamped for the fragment cache.
+	 *
+	 * @param Thread[] $threads
+	 */
+	public function countDeletedPostsIn(array $threads): void {
+		$counts = $this->threadRepository->getAllPostCounts(array_map(fn(Thread $thread) => $thread->getUid(), $threads));
+
+		foreach ($threads as $thread) {
+			$thread->setPostCount($counts[$thread->getUid()] ?? $thread->getPostCount());
+		}
+	}
+
+	/**
 	 * Attach preview posts to threads already fetched, one ThreadData per thread in the same order.
 	 *
 	 * @param Thread[] $threads

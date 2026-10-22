@@ -1,1 +1,1 @@
-	<div class="toggleLink">[<a title="Toggle the visibility of deleted posts on the live frontend" href="{$URL}&toggleVisibility=1"><!--&IF($SHOW_DELETED_POSTS,'Hide','Show')--> deleted posts on live frontend</a>]</div>
+	<div class="toggleLink"><form method="POST" action="{$URL}&amp;toggleVisibility=1" style="display:inline">{$CSRF_TOKEN}[<button type="submit" class="buttonLink" title="Toggle the visibility of deleted posts on the live frontend"><!--&IF($SHOW_DELETED_POSTS,'Hide','Show')--> deleted posts on live frontend</button>]</form></div>

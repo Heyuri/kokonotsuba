@@ -403,6 +403,7 @@ class deletedPostRenderer {
 				'{$ARE_NO_POSTS}' => $areNoPosts,
 				'{$MODULE_HEADER_TEXT}' => $moduleHeader,
 				'{$URL}' => htmlspecialchars($this->modulePageUrl),
+				'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 				'{$FILTER_FORM}' => $filterFormHtml
 			]
 		);

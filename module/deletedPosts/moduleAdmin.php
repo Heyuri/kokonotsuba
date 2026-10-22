@@ -224,6 +224,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		// handle POST requests
 		if ($this->moduleContext->request->isPost()) {
 			requirePostWithCsrf($this->moduleContext->request);
+
+			// DP visibility toggle, posted from the [Show/Hide deleted posts] button
+			if ($this->moduleContext->request->hasParameter('toggleVisibility', 'GET')) {
+				$this->handleDpToggle();
+				redirect($this->modulePageUrl);
+			}
+
 			$result = $this->deletedPostActionHandler->handleModPageRequests($accountId, $roleLevel);
 
 			// return JSON for AJAX requests
@@ -238,13 +245,6 @@ class moduleAdmin extends abstractModuleAdmin {
 		// the [View entry] window asks for the entry's metadata and actions
 		else if($this->isEntryDataRequest()) {
 			renderJsonPage($this->fetchEntryData($accountId, $roleLevel));
-		}
-		// handle DP visibilty toggle
-		else if($this->moduleContext->request->hasParameter('toggleVisibility', 'GET')) {
-			$this->handleDpToggle();
-
-			// redirect back to module index
-			redirect($this->modulePageUrl);
 		}
 		// handle drawing
 		else {

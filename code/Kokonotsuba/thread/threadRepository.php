@@ -1195,6 +1195,31 @@ class threadRepository extends baseRepository {
 	}
 
 	/**
+	 * Every post each thread holds, deleted ones included.
+	 *
+	 * @param string[] $threadUIDs
+	 * @return array<string, int> thread_uid => post count
+	 */
+	public function getAllPostCounts(array $threadUIDs): array {
+		if (empty($threadUIDs)) {
+			return [];
+		}
+
+		$threadUIDs = array_values(array_map('strval', array_unique($threadUIDs)));
+		$placeholders = pdoPlaceholdersForIn($threadUIDs);
+
+		$query = "SELECT p.thread_uid, COUNT(*) AS post_count FROM {$this->postTable} p
+			WHERE p.thread_uid IN $placeholders GROUP BY p.thread_uid";
+
+		$counts = [];
+		foreach ($this->queryAll($query, $threadUIDs) as $row) {
+			$counts[(string)$row['thread_uid']] = (int)$row['post_count'];
+		}
+
+		return $counts;
+	}
+
+	/**
 	 * Return the reply count for a single thread.
 	 *
 	 * @param mixed $threadUID Thread UID.
@@ -1351,5 +1376,23 @@ class threadRepository extends baseRepository {
 
 		// return it
 		return $threadPage;
+	}
+
+	/**
+	 * UIDs of a board's threads created in [$from, $until), as 'Y-m-d H:i:s' times.
+	 *
+	 * @return string[]
+	 */
+	public function getThreadUidsCreatedBetween(int $boardUID, string $from, string $until): array {
+		$query = "SELECT thread_uid FROM {$this->table}
+			WHERE boardUID = :board_uid
+				AND thread_created_time >= :created_from
+				AND thread_created_time < :created_until";
+
+		return $this->queryFlatColumn($query, [
+			':board_uid' => $boardUID,
+			':created_from' => $from,
+			':created_until' => $until,
+		]);
 	}
 }

@@ -63,11 +63,11 @@ class quoteLinkRepository extends baseRepository {
 		return $indexedQuoteLinks;
 	}
 
-	private function getQuoteLinkQuery(): string {
+	private function getQuoteLinkQuery(bool $deletedInPositions = false): string {
 		// Objective position of the quoted (target) post within its thread — this is what
 		// the quote-link URL's page number is derived from. Using the stored post_position
 		// column here would point links at the wrong page once replies have been deleted.
-		$targetObjectivePosition = objectivePositionSubquery($this->postTable, $this->deletedPostsTable, 'tp', false);
+		$targetObjectivePosition = objectivePositionSubquery($this->postTable, $this->deletedPostsTable, 'tp', $deletedInPositions);
 
 		$query = "
 			SELECT
@@ -110,9 +110,10 @@ class quoteLinkRepository extends baseRepository {
 	 *
 	 * @param array $postUids                     Array of post UIDs to look up.
 	 * @param bool  $includeDeletedPostQuotelinks Whether to include links where a post is deleted.
+	 * @param bool  $deletedInPositions           Count deleted posts in target positions, as pages drawn with them do.
 	 * @return array Quote-link results indexed by host_post_uid.
 	 */
-	public function getQuoteLinksByPostUids(array $postUids, bool $includeDeletedPostQuotelinks = false): array {
+	public function getQuoteLinksByPostUids(array $postUids, bool $includeDeletedPostQuotelinks = false, bool $deletedInPositions = false): array {
 		if (empty($postUids)) {
 			return [];
 		}
@@ -120,7 +121,7 @@ class quoteLinkRepository extends baseRepository {
 		$inClause = pdoPlaceholdersForIn($postUids);
 
 		// get the query
-		$query = $this->getQuoteLinkQuery();
+		$query = $this->getQuoteLinkQuery($deletedInPositions);
 
 		// Host side only. This used to also match "OR q.target_post_uid IN (...)", which on a board
 		// whose rendered posts are popular quote targets pulled back every post that had ever

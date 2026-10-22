@@ -1,5 +1,6 @@
 	<div class="newEntryForm">
 		<form method="POST" action="{$MODULE_URL}">
+			{$CSRF_TOKEN}
 			<input name="action" value="addEntry" type="hidden">
 			<table>
 				<tbody>

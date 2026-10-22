@@ -3,6 +3,8 @@
 namespace Kokonotsuba\policy;
 
 use Kokonotsuba\cookie\cookieService;
+use Kokonotsuba\interfaces\IBoard;
+use Kokonotsuba\post\deletion\deletedPostStubs;
 use Kokonotsuba\userRole;
 
 class postRenderingPolicy extends policyBase {
@@ -61,5 +63,10 @@ class postRenderingPolicy extends policyBase {
 
 		// all is well - return true so deleted posts are rendered
 		return true;
+	}
+
+	/** Whether this viewer gets the board's deleted posts as stubs rather than not at all. */
+	public function stubsDeletedPosts(IBoard $board): bool {
+		return !$this->viewDeleted() && deletedPostStubs::enabledFor($board);
 	}
 }

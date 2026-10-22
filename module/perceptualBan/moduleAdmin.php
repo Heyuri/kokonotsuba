@@ -16,7 +16,9 @@ use Kokonotsuba\userRole;
 use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
@@ -56,6 +58,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->registerActionReference('perceptualban', fn(string $id): string => $this->getModulePageURL(['id' => (int) $id], false));
 
 		$this->registerLinksAboveBarHook(_T('admin_nav_perceptual_ban_title'), $this->moduleUrl, _T('admin_nav_perceptual_ban'), 'files');
+
+		$this->listenProtected('ModuleAdminHeader', function(string &$moduleHeader) {
+			$this->includeScript('perceptualBan.js', $moduleHeader);
+		});
 	}
 
 	private function onRenderAttachmentWidget(array &$widgetArray, array &$fileData): void {
@@ -69,7 +75,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				'post_uid' => $fileData['postUid'],
 				'fileId' => $fileData['fileId'],
 			], false, true);
-			$widgetArray[] = $this->buildWidgetEntry($banUrl, 'BanFile', _T('perceptual_ban_btn_title'), '');
+			$widgetArray[] = $this->buildWidgetEntry($banUrl, 'PBanFile', _T('perceptual_ban_btn_title'), '');
 		}
 
 		if ($canDelete) {
@@ -78,7 +84,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				'post_uid' => $fileData['postUid'],
 				'fileId' => $fileData['fileId'],
 			], false, true);
-			$widgetArray[] = $this->buildWidgetEntry($bdUrl, 'BanDeleteFile', _T('perceptual_ban_bd_btn_title'), '');
+			$widgetArray[] = $this->buildWidgetEntry($bdUrl, 'PBanDeleteFile', _T('perceptual_ban_bd_btn_title'), '');
 		}
 	}
 
@@ -86,11 +92,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		$action = $_REQUEST['action'] ?? '';
 
 		if ($action === 'banAndDelete') {
+			requirePostWithCsrf($this->moduleContext->request);
 			$this->handleBanAndDelete();
 			return;
 		}
 
 		if ($action === 'banOnly') {
+			requirePostWithCsrf($this->moduleContext->request);
 			$this->handleBanOnly();
 			return;
 		}
@@ -275,6 +283,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$indexHtml = $this->moduleContext->adminPageRenderer->ParseBlock('PERCEPTUAL_BAN_INDEX', [
 			'{$ROWS}' => $templateRows,
 			'{$MODULE_URL}' => htmlspecialchars($this->moduleUrl),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 			'{$PHASH_VALUE}' => '',
 			'{$THRESHOLD}' => htmlspecialchars((string) $threshold),
 			'{$PERCEPTUAL_BAN_INDEX_TITLE}' => _T('perceptual_ban_index_title'),

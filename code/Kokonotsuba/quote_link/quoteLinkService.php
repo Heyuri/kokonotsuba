@@ -17,10 +17,11 @@ class quoteLinkService {
 	 *
 	 * @param array $postUids                     Array of post UIDs (host or target).
 	 * @param bool  $includeDeletedPostQuotelinks Whether to include links from deleted posts.
+	 * @param bool  $deletedInPositions           Count deleted posts in target positions, as pages drawn with them do.
 	 * @return array Quote-link results indexed by host_post_uid.
 	 */
-	public function getQuoteLinksByPostUids(array $postUids, bool $includeDeletedPostQuotelinks = false): array {
-		$quoteLinks = $this->quoteLinkRepository->getQuoteLinksByPostUids($postUids, $includeDeletedPostQuotelinks);
+	public function getQuoteLinksByPostUids(array $postUids, bool $includeDeletedPostQuotelinks = false, bool $deletedInPositions = false): array {
+		$quoteLinks = $this->quoteLinkRepository->getQuoteLinksByPostUids($postUids, $includeDeletedPostQuotelinks, $deletedInPositions);
 	
 		return $quoteLinks;
 	}

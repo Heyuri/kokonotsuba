@@ -16,6 +16,8 @@
 	if (anigifData && anigifData.getAttribute('data-size-limit')) {
 		anigifLimit = parseInt(anigifData.getAttribute('data-size-limit'), 10) || 0;
 	}
+	// When the board animates every upload on its own, the per-file toggle is pointless
+	var anigifAuto = !!(anigifData && anigifData.getAttribute('data-auto') === '1');
 
 	// Whether the spoiler module is active (injected <template id="spoilerData"> in page head)
 	var spoilerEnabled = !!document.getElementById('spoilerData');
@@ -261,7 +263,7 @@
 		}
 
 		// Adds a toggle for animated GIFs if the server allows it and the file is within limits
-		if (st.type === 'image/gif' && anigifLimit > 0) {
+		if (st.type === 'image/gif' && anigifLimit > 0 && !anigifAuto) {
 			var sizeKB = st.blob.size / 1024;
 			if (sizeKB <= anigifLimit) {
 				var wrap = document.createElement('div');

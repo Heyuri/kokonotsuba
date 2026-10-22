@@ -246,6 +246,7 @@ function getBasePostQuery(
             {$attachmentColumns},
 
             {$deletedPostColumns},
+			dpa.role AS deleted_by_role,
 
 			{$soudaneColumns},
 
@@ -271,6 +272,7 @@ function getBasePostQuery(
 			dp.open_key = p.post_uid
 			OR NOT " . openDeletionExistsCondition($deletedPostsTable, 'p.post_uid') . "
 		)
+		LEFT JOIN $accountTable dpa ON dpa.id = dp.deleted_by
 		{$countryFlagJoin}
 		{$displayIpJoin}
     ";

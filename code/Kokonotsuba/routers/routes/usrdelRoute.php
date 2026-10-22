@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\cookie\cookieService;
@@ -19,7 +20,7 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 use function Puchiko\request\redirect;
 
-class usrdelRoute {
+class usrdelRoute implements route {
 	public function __construct(
 		private readonly array $config,
 		private readonly actionLoggerService $actionLoggerService,
@@ -33,7 +34,7 @@ class usrdelRoute {
 	) {}
 
 	/* User post deletion */
-	public function userPostDeletion(): void {
+	public function handle(): void {
 		// the password entered by the user for deleting the posts
 		$password = $this->request->getParameter('pwd', 'POST', '');
 

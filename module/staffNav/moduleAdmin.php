@@ -8,6 +8,7 @@ use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\html\getStaffNavCoreEntries;
 use function Puchiko\strings\sanitizeStr;
 
@@ -111,6 +112,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				'title' => (string) ($entry['title'] ?? ''),
 				'group' => (string) ($entry['group'] ?? ''),
 				'count' => max(0, (int) ($entry['count'] ?? 0)),
+				'method' => (string) ($entry['method'] ?? 'get'),
 			];
 		}
 
@@ -173,12 +175,15 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function renderItem(array $entry): string {
-		return $this->moduleContext->adminPageRenderer->ParseBlock('STAFF_NAV_ITEM', [
+		$isPost = $entry['method'] === 'post';
+
+		return $this->moduleContext->adminPageRenderer->ParseBlock($isPost ? 'STAFF_NAV_FORM_ITEM' : 'STAFF_NAV_ITEM', [
 			'{$URL}' => sanitizeStr($entry['url']),
 			'{$LINK_TITLE}' => sanitizeStr($entry['title']),
 			'{$LABEL}' => sanitizeStr($entry['label']),
 			'{$COUNT}' => '(' . $entry['count'] . ')',
 			'{$COUNT_CLASS}' => $entry['count'] === 0 ? 'indicatorHidden' : '',
+			'{$CSRF_TOKEN}' => $isPost ? getCsrfHiddenInput() : '',
 		]);
 	}
 

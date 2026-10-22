@@ -137,3 +137,14 @@
 .staffNavMenu .staffNavLink:hover {
 	background: rgba(0, 0, 0, 0.05);
 }
+
+/* post-only entries (rebuild) are a button in a form, drawn like the links around them */
+.staffNavForm {
+	display: inline;
+	margin: 0;
+}
+
+.staffNavMenu .staffNavForm button.staffNavLink {
+	width: 100%;
+	text-align: left;
+}

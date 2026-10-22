@@ -7,6 +7,7 @@
 		<td>
 			[<a href="{$VIEW_ENTRY_URL}">View</a>]
 			<form class="capcodeToggleForm" style="display:inline;" method="POST" action="{$MODULE_URL}">
+				{$CSRF_TOKEN}
 				<input name="capcodeId" value="{$ID}" type="hidden">
 				<button type="submit"
 					name="action"

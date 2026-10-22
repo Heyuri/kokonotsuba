@@ -2,6 +2,7 @@
 	[<a href="{$MODULE_URL}">Back</a>]
 	<div class="capcodeEntryContainer">
 		<form method="POST" action="{$MODULE_URL}">
+			{$CSRF_TOKEN}
 			<input name="capcodeId" value="{$ID}" type="hidden">
 			<table class="capcodeEntry">
 				<tr>

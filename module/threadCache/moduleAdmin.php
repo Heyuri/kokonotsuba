@@ -61,7 +61,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->registerScript('threadCache.js');
 	}
 
-	/** CSRF token and POST are enforced by dispatchModuleRequest() before this runs. */
+	/** CSRF token and POST are enforced by moduleRoute before this runs. */
 	protected function handleModuleRequest(): void {
 		$request = $this->moduleContext->request;
 		$mode = (string)$request->getParameter('threadCacheMode', 'POST', '');

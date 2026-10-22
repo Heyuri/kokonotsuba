@@ -22,6 +22,7 @@ use const Kokonotsuba\GLOBAL_BOARD_UID;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\getPageFromRequest;
 
@@ -213,6 +214,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$STATUS_MESSAGE}' => '',
 			'{$ROWS}' => $rows,
 			'{$EMPTY}' => empty($rows) ? '1' : '',
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 		];
 
 		$adminPageHtml = $this->moduleContext->adminPageRenderer->ParseBlock('BANNER_ADMIN_PAGE', $templateValues);

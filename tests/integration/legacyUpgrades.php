@@ -3,9 +3,9 @@
 /**
  * Integration test for the upgrade migrations that import an older install's data.
  *
- * The importers behind them (legacy bans, blotter, board config files, HTML posts) read files
- * and rewrite rows, so what needs an engine is the whole path: `up` on a schema seeded with the
- * old shapes leaves the new ones behind, and a second `up` finds nothing left to do.
+ * The importers behind them (legacy bans, blotter, board config files) read files and write
+ * rows, so what needs an engine is the whole path: `up` on a schema seeded with the old shapes
+ * leaves the new ones behind, leaves HTML posts alone, and a second `up` finds nothing left to do.
  *
  * The migration runner is pointed at a scratch app root whose migrations/ and module/ are links
  * back into the checkout and whose global/ holds the legacy files.
@@ -203,12 +203,10 @@ echo "\nRunning the imports\n";
 
 testCase('up applies the import migrations', function () use ($makeRunner) {
 	$applied = array_map(static fn ($m): string => $m->name, $makeRunner()->up());
+	$imports = ['legacy_board_configs', 'legacy_bans', 'legacy_banners', 'legacy_blotter', 'legacy_post_text'];
 
-	assertSameValue(
-		['legacy_board_configs', 'legacy_bans', 'legacy_banners', 'legacy_blotter', 'legacy_post_text'],
-		$applied,
-		'unexpected set of migrations applied'
-	);
+	// Later migrations ride along; the imports must all be there, in order.
+	assertSameValue($imports, array_values(array_intersect($applied, $imports)), 'unexpected set of import migrations applied');
 });
 
 testCase('the legacy config file becomes the global override row', function () use ($pdo, $tableNames) {
@@ -253,11 +251,11 @@ testCase('blotter lines become rows', function () use ($pdo, $tableNames) {
 	assertSameValue('2020-01-02 00:00:00', $rows[0]['date_added'], 'date-only line gets midnight');
 });
 
-testCase('the HTML post is converted to plain text', function () use ($pdo, $tableNames) {
+testCase('the HTML post is left as it was', function () use ($pdo, $tableNames) {
 	$row = $pdo->query("SELECT com, text_format FROM `{$tableNames['POST_TABLE']}` WHERE no = 1")->fetch(PDO::FETCH_ASSOC);
 
-	assertSameValue(textFormat::PLAIN_TEXT->value, (int)$row['text_format'], 'post was not flagged plain text');
-	assertSameValue("Hello <3\nworld", $row['com'], 'markup was not unwound');
+	assertSameValue(textFormat::LEGACY_HTML->value, (int)$row['text_format'], 'post was flagged away from legacy HTML');
+	assertSameValue('Hello &lt;3<br />world', $row['com'], 'stored markup was rewritten');
 });
 
 testCase('a second up finds nothing left to do', function () use ($makeRunner, $pdo, $tableNames) {

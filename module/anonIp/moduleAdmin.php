@@ -62,7 +62,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	/**
 	 * Handle the anonymize POST action.
 	 * CSRF token + POST method are enforced automatically by
-	 * abstractModuleAdmin::dispatchModuleRequest() before this fires.
+	 * moduleRoute before this fires.
 	 */
 	protected function handleModuleRequest(): void {
 		$action = $this->moduleContext->request->getParameter('anonIpAction', 'POST', '');

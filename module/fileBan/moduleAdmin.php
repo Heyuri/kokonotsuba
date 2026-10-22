@@ -15,6 +15,7 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
@@ -299,6 +300,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$indexHtml = $this->moduleContext->adminPageRenderer->ParseBlock('FILE_BAN_INDEX', [
 			'{$ROWS}' => $templateRows,
 			'{$MODULE_URL}' => htmlspecialchars($this->moduleUrl),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 			'{$MD5_VALUE}' => '',
 			'{$FILE_BAN_INDEX_TITLE}' => _T('file_ban_index_title'),
 			'{$FILE_BAN_HASH_LABEL}' => _T('file_ban_hash_label'),

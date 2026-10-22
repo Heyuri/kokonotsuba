@@ -2,8 +2,10 @@
 
 namespace Kokonotsuba\renderers;
 
+use Closure;
 use Kokonotsuba\cache\thread_fragment\threadFragmentCache;
 use Kokonotsuba\interfaces\IBoard;
+use Kokonotsuba\post\deletion\deletedPostStubs;
 use Kokonotsuba\quote_link\quoteLinkService;
 use Kokonotsuba\thread\Thread;
 use Kokonotsuba\thread\ThreadData;
@@ -31,6 +33,8 @@ final class threadPageRenderer {
 	 * @param IBoard $viewingBoard   The board whose page this is; the overboard's viewing board.
 	 * @param bool   $cacheFragments Whether this view is the one every anonymous reader gets.
 	 * @param bool   $crossBoard     Label each thread with the board it came from, as the overboard does.
+	 * @param ?Closure $stubsDeletedPosts fn(IBoard): bool, whether this viewer gets that board's deleted
+	 *                                    posts as stubs; null decides as for an anonymous reader.
 	 */
 	public function __construct(
 		private readonly boardRendererFactory $rendererFactory,
@@ -41,6 +45,7 @@ final class threadPageRenderer {
 		private readonly bool $includeDeleted,
 		private readonly bool $cacheFragments,
 		private readonly bool $crossBoard = false,
+		private readonly ?Closure $stubsDeletedPosts = null,
 	) {}
 
 	/**
@@ -76,6 +81,12 @@ final class threadPageRenderer {
 	public function renderThreads(array $threads, array $boards, int $previewCount, string $variant, array $templateValues): string {
 		$threads = array_values($threads);
 
+		// threads drawn with stubs count their deleted posts, which the stamp below has to see
+		$stubbedThreads = array_filter($threads, fn(Thread $thread) => $this->stubsFor($boards[(int)$thread->getBoardUID()] ?? null));
+		if ($stubbedThreads !== []) {
+			$this->threadService->countDeletedPostsIn($stubbedThreads);
+		}
+
 		// cached blocks are looked up first, so only the threads that have to be drawn load their posts
 		$cachedBlocks = [];
 		$threadsToDraw = [];
@@ -92,8 +103,16 @@ final class threadPageRenderer {
 			}
 		}
 
-		$previews = $this->threadService->buildThreadPreviews(array_values($threadsToDraw), $previewCount, $this->includeDeleted);
-		$previewByIndex = array_combine(array_keys($threadsToDraw), $previews);
+		// a stubbed thread's previews take its deleted posts too, the others keep the viewer's own visibility
+		$previewByIndex = [];
+		foreach ([true, false] as $stubbed) {
+			$group = array_filter($threadsToDraw, fn(int $i) => isset($stubbedThreads[$i]) === $stubbed, ARRAY_FILTER_USE_KEY);
+			if ($group !== []) {
+				$previewByIndex += array_combine(array_keys($group), $this->threadService->buildThreadPreviews(array_values($group), $previewCount, $stubbed || $this->includeDeleted));
+			}
+		}
+		ksort($previewByIndex);
+		$previews = array_values($previewByIndex);
 
 		// every thread in page order, for the navigation arrows; cached ones carry no posts
 		$threadsInPage = [];
@@ -104,7 +123,7 @@ final class threadPageRenderer {
 		// one set of quote links for the threads being drawn, shared by every board's renderer
 		$postUidsToDraw = getPostUidsFromThreadArrays($previews);
 		$this->rendererFactory->setQuoteLinks(
-			$postUidsToDraw === [] ? [] : $this->quoteLinkService->getQuoteLinksByPostUids($postUidsToDraw, $this->includeDeleted)
+			$postUidsToDraw === [] ? [] : $this->quoteLinkService->getQuoteLinksByPostUids($postUidsToDraw, $this->includeDeleted, $this->includeDeleted || $stubbedThreads !== [])
 		);
 
 		$this->prefetchPosts($previews, $boards);
@@ -138,6 +157,14 @@ final class threadPageRenderer {
 		return $html;
 	}
 
+	private function stubsFor(?IBoard $board): bool {
+		if ($board === null) {
+			return false;
+		}
+
+		return $this->stubsDeletedPosts !== null ? ($this->stubsDeletedPosts)($board) : deletedPostStubs::enabledFor($board);
+	}
+
 	/**
 	 * Let each board's listeners see the posts of its own threads before they are drawn.
 	 *
@@ -157,6 +184,9 @@ final class threadPageRenderer {
 			}
 
 			$boardPosts = array_merge(...$postLists);
+			if ($this->stubsFor($board)) {
+				deletedPostStubs::apply($boardPosts);
+			}
 			// the renderer factory's engine for the board is the one whose listeners draw these
 			// posts, so it is the one whose listeners must see them coming
 			$this->rendererFactory->moduleEngineFor($board)->dispatch('PostsPrefetch', [&$boardPosts]);

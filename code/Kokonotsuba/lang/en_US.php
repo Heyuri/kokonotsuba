@@ -14,6 +14,8 @@ $language['error_invalid_board_id']     = 'Invalid board UID!';
 $language['error_invalid_board_endpoint'] = 'Invalid board API endpoint page';
 $language['error_invalid_thread_id']    = 'Invalid thread ID supplied to system';
 $language['error_post_not_found']       = 'That post could not be found.';
+$language['invalid_request_method']     = 'Invalid request method.';
+$language['csrf_failed']                = 'Your session token is missing or expired. Reload the page and try again.';
 $language['invalid_action']             = 'Invalid action.';
 $language['page_not_found']				= 'Sorry, the page you requested is not found.';
 $language['thread_not_found']			= 'Thread not found!';
@@ -255,6 +257,7 @@ $language['no_attachment_ever']         = 'There was no attachment on this post 
 $language['blanket_error'] = "There has been an error. (;´Д`)";
 $language['comment_too_long'] = "Comment too long, view post %s to see the full comment.";
 $language['post_not_found'] = "Post not found!";
+$language['mode_not_found'] = "No such page.";
 $language['module_route_not_found'] = "Module route not found!";
 $language['anti_spam_message'] = "Your post was caught by anti-spam rules. Contact staff if you think it was a mistake.";
 $language['thread_not_found_for_deletion'] = "Thread not found for deleted post preview!";
@@ -703,7 +706,7 @@ $language['config_desc_modules.anonIp.AUTO_ANONYMIZE_DAYS'] = 'How often the ano
 // postStats module
 $language['poststats_link']             = 'Stats';
 $language['poststats_title']            = 'Statistics';
-$language['poststats_note']             = 'Counted using post numbers, so deleted posts are included. Purged posts whose day cannot be proven are counted as undated rather than guessed.';
+$language['poststats_note']             = 'Counted using post numbers per day.';
 $language['poststats_sitewide']         = 'Site-wide';
 $language['poststats_generating']       = 'Being worked out in the background. Reload in a moment.';
 $language['poststats_empty']            = 'No posts yet.';
@@ -757,6 +760,7 @@ $language['config_desc_TEMPLATE_FILE'] = 'Template directory for the index page.
 $language['config_desc_REPLY_TEMPLATE_FILE'] = 'Template directory for the thread/reply page.';
 $language['config_desc_TOP_THREAD_PAGER'] = 'Render a thread pager at the top of the thread.';
 $language['config_desc_RENDER_REPLY_NUMBER'] = 'Show the sequential reply number for each post within a thread.';
+$language['config_desc_DELETED_POST_STUBS'] = 'Leave a placeholder where a deleted reply was, saying whether the poster or staff deleted it. Staff who can view deleted posts still see the whole post.';
 $language['config_desc_REPLIES_PER_PAGE'] = 'Replies shown (excluding OP) per thread page.';
 $language['config_desc_PAGE_DEF'] = 'How many threads per index page.';
 $language['config_desc_ADMIN_PAGE_DEF'] = 'How many replies per page in the admin panel.';
@@ -857,6 +861,7 @@ $language['config_desc_modules.debugBar.PROFILER_STAFF_ONLY'] = 'Offer the profi
 
 // module/animatedGif/config.php
 $language['config_desc_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'] = 'Largest animated GIF, WebP or PNG that may be played in place of its thumbnail.';
+$language['config_desc_modules.animatedGif.AUTO_ANIMATE'] = 'Play every animated upload under the size limit in place of its thumbnail, without the poster ticking the checkbox.';
 
 // module/antiFlood/config.php
 $language['config_desc_modules.antiFlood.RENZOKU3'] = 'Minimum wait before a poster can start another thread.';
@@ -993,6 +998,7 @@ $language['config_label_TEMPLATE_FILE'] = 'Index template';
 $language['config_label_REPLY_TEMPLATE_FILE'] = 'Reply template';
 $language['config_label_TOP_THREAD_PAGER'] = 'Top thread pager';
 $language['config_label_RENDER_REPLY_NUMBER'] = 'Show reply numbers';
+$language['config_label_DELETED_POST_STUBS'] = 'Show placeholders for deleted posts';
 $language['config_label_REPLIES_PER_PAGE'] = 'Replies per thread page';
 $language['config_label_PAGE_DEF'] = 'Threads per page';
 $language['config_label_ADMIN_PAGE_DEF'] = 'Admin replies per page';
@@ -1163,6 +1169,7 @@ $language['config_label_modules.debugBar.PROFILER_STAFF_ONLY'] = 'Profiler for s
 
 // module/animatedGif/config.php
 $language['config_label_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'] = 'Max animated image size (KB)';
+$language['config_label_modules.animatedGif.AUTO_ANIMATE'] = 'Animate uploads automatically';
 $language['config_label_modules.animatedGif.AttachmentMenu.animateGif'] = 'File menu: Animated GIF';
 
 // module/antiFlood/config.php
@@ -1864,6 +1871,8 @@ $language['threadmod_log_unstripped'] = 'Enabled OP tools in thread';
 $language['threadmod_deleted_by_owner'] = 'This post was deleted by OP';
 $language['threadmod_deleted_by_mod'] = 'This post was deleted by a thread mod';
 $language['threadmod_deleted_by_token'] = 'Hidden by browser %s';
+$language['deleted_stub_user'] = 'This post was deleted by the user';
+$language['deleted_stub_staff'] = 'This post was deleted by staff';
 $language['threadmod_show'] = 'Show';
 $language['threadmod_hide'] = 'Hide';
 $language['threadmod_tools'] = 'Thread tools';

@@ -14,6 +14,7 @@ use Kokonotsuba\userRole;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\getPageFromRequest;
 use function Kokonotsuba\libraries\html\pageToOffset;
@@ -231,6 +232,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$SLOT_FILTER}'  => sanitizeStr($slotFilter),
 			'{$ROWS}'         => $rows,
 			'{$EMPTY}'        => empty($rows) ? '1' : '',
+			'{$CSRF_TOKEN}'   => getCsrfHiddenInput(),
 		];
 
 		$pageHtml = $this->moduleContext->adminPageRenderer->ParseBlock('ADS_ADMIN_PAGE', $templateValues);

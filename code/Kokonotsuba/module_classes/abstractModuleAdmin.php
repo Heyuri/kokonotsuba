@@ -7,7 +7,6 @@ use Kokonotsuba\module_classes\abstractModule;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
-use function Kokonotsuba\libraries\requirePostWithCsrf;
 
 abstract class abstractModuleAdmin extends abstractModule {
 	abstract public function getRequiredRole(): userRole;
@@ -24,18 +23,15 @@ abstract class abstractModuleAdmin extends abstractModule {
 	}
 
 	/**
-	 * Enforce POST method + CSRF token, then dispatch to handleModuleRequest().
-	 * Modules that perform state-changing actions should override 
-	 * handleModuleRequest() instead of ModulePage() to get automatic protection.
+	 * Dispatch a POST to handleModuleRequest().
+	 * moduleRoute has already checked the CSRF token for every admin POST.
 	 */
 	public function dispatchModuleRequest(): void {
-		requirePostWithCsrf($this->moduleContext->request);
 		$this->handleModuleRequest();
 	}
 
 	/**
-	 * Override this in modules that need POST+CSRF protection.
-	 * Called by dispatchModuleRequest() after validation has passed.
+	 * Override this in modules that handle POST actions.
 	 */
 	protected function handleModuleRequest(): void {}
 

@@ -1,5 +1,6 @@
 	<h3>{$FILE_BAN_ADD_TITLE}</h3>
 	<form action="{$MODULE_URL}" method="POST">
+		{$CSRF_TOKEN}
 		<input type="hidden" name="action" value="addBan">
 		<table>
 			<tbody>
