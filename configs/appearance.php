@@ -6,7 +6,7 @@
 
 require_once __DIR__ . '/_fieldTypes.php';
 
-use function Kokonotsuba\config\fields\{boolField, intField, stringField, textField, templateField};
+use function Kokonotsuba\config\fields\{boolField, intField, stringField, textField, templateField, arrayField};
 
 // The home link's default is the site-wide one from global/siteSettings.php (falling back to
 // globalconfig.php), so setting it once at install time covers every board while each board can
@@ -19,6 +19,7 @@ return [
 	'HOME'               => stringField('config_label_HOME', $homeDefault, 'config_desc_HOME'),
 	'FOOTTEXT'           => textField('config_label_FOOTTEXT', '', 'config_desc_FOOTTEXT'),
 	'REF_URL'            => stringField('config_label_REF_URL', '', 'config_desc_REF_URL'),
+	'CUSTOM_SCRIPTS'     => arrayField('config_label_CUSTOM_SCRIPTS', [], 'config_desc_CUSTOM_SCRIPTS'),
 
 	'TEMPLATE_FILE'       => templateField('config_label_TEMPLATE_FILE', 'kokoimg', 'config_desc_TEMPLATE_FILE'),
 	'REPLY_TEMPLATE_FILE' => templateField('config_label_REPLY_TEMPLATE_FILE', 'kokoimg', 'config_desc_REPLY_TEMPLATE_FILE'),
