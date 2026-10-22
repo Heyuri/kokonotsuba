@@ -74,7 +74,8 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 	// Cast to object to ensure json_encode always produces {} not [] when the array is empty
 	$pte_vals['{$JS_DEFAULT_SETTINGS}'] = '<script>window.KOKO_DEFAULT_SETTINGS=' . json_encode((object)$jsDefaults, JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
 
-	$pte_vals['{$BOARD_SCRIPTS}'] = generateBoardScripts($config['CUSTOM_SCRIPTS'] ?? []);
+	// admin-set, so drawn raw like FOOTTEXT
+	$pte_vals['{$CUSTOM_HEAD}'] = (string) ($config['CUSTOM_HEAD'] ?? '');
 
 	// Applied at the top of the body so the settings land before the first paint
 	$pte_vals['{$EARLY_JS_SETTINGS}'] = generateEarlySettingsScript();
@@ -169,25 +170,6 @@ function generateBoardStylesheets(array $styles, string $staticUrl, string $cssD
 			. htmlspecialchars($staticUrl . $cssDir . $filename)
 			. '" title="' . htmlspecialchars($title) . '">' . "\n";
 		$first = false;
-	}
-
-	return $html;
-}
-
-/**
- * Generate deferred <script> tags for the board's CUSTOM_SCRIPTS, each src used verbatim.
- *
- * @param array $scripts Script URLs.
- * @return string Generated <script> HTML tags.
- */
-function generateBoardScripts(array $scripts): string {
-	$html = '';
-
-	foreach ($scripts as $src) {
-		if (!is_string($src) || $src === '') {
-			continue;
-		}
-		$html .= "\t" . '<script src="' . htmlspecialchars($src) . '" defer></script>' . "\n";
 	}
 
 	return $html;

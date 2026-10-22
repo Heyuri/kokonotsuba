@@ -769,7 +769,7 @@ $language['config_desc_STATIC_HTML_UNTIL'] = 'How many index pages are staticall
 $language['config_desc_GZIP_COMPRESS_LEVEL'] = 'Gzip compression level (1-9, 0 = off).';
 $language['config_desc_MINIFY_HTML'] = 'Remove unnecessary whitespace from generated HTML.';
 $language['config_desc_AUTO_LINK'] = 'Turn URLs in comments into links.';
-$language['config_desc_CUSTOM_SCRIPTS'] = 'Javascript dependencies specific to this board. JSON array of script URLs, added to the page <head> in order.';
+$language['config_desc_CUSTOM_HEAD'] = 'HTML added to every page <head> on this board, e.g. <script> or <link> tags.';
 
 // configs/flooding.php
 $language['config_desc_RENZOKU'] = 'Minimum seconds between posts (0 = off).';
@@ -1006,7 +1006,7 @@ $language['config_label_STATIC_HTML_UNTIL'] = 'Static HTML pages';
 $language['config_label_GZIP_COMPRESS_LEVEL'] = 'Gzip level';
 $language['config_label_MINIFY_HTML'] = 'Minify HTML';
 $language['config_label_AUTO_LINK'] = 'Auto-link URLs';
-$language['config_label_CUSTOM_SCRIPTS'] = 'Custom scripts';
+$language['config_label_CUSTOM_HEAD'] = 'Custom head HTML';
 
 // configs/flooding.php
 $language['config_label_RENZOKU'] = 'Post interval (s)';
