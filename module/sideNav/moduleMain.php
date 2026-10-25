@@ -59,7 +59,8 @@ class moduleMain extends abstractModuleMain {
 		$renderer = new sideNavRenderer(
 			$this->moduleContext->adminPageRenderer,
 			$this->moduleContext->boardService->getAllListedBoards() ?? [],
-			(string) $this->getConfig('HOME')
+			(string) $this->getConfig('HOME'),
+			$this->moduleContext->board->getBoardURL(true) . '?mode=overboard'
 		);
 		return self::HIDE_SCRIPT . $renderer->render($this->sideNavRepository->getLayout());
 	}
