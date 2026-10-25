@@ -4,7 +4,7 @@
  */
 
 :root {
-	--side-nav-width: 11em;
+	--side-nav-width: 210px;
 	--side-nav-gutter: calc(var(--side-nav-width) + 8px);
 }
 
@@ -12,8 +12,10 @@ body:not(.sideNavHidden) {
 	padding-left: var(--side-nav-gutter);
 }
 
-body:not(.sideNavHidden) .stickyNav {
-	margin-left: calc(-1 * var(--side-nav-gutter));
+@media screen and (min-width: 801px) {
+	body:not(.sideNavHidden) {
+		margin-left: 0;
+	}
 }
 
 .sideNavHidden .sideNav {
@@ -21,27 +23,24 @@ body:not(.sideNavHidden) .stickyNav {
 }
 
 .sideNav {
-	position: sticky;
-	top: var(--side-nav-top, 0px);
-	height: 0;
-	margin-left: calc(-1 * var(--side-nav-gutter));
-	z-index: 2;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: var(--side-nav-width);
+	height: 100vh;
+	/* Above the pinned nav (3), the pager (1) and neomenu (100); below previews and windows. */
+	z-index: 101;
 }
 
-/* --side-nav-edge (set by sideNav.js) is the theme's body margin, so the panel reaches the window edge. */
 .sideNavPanel {
-	position: absolute;
-	top: 0;
-	left: calc(-1 * var(--side-nav-edge, 0px));
-	width: calc(var(--side-nav-width) + var(--side-nav-edge, 0px));
-	height: calc(100vh - var(--side-nav-top, 0px));
+	height: 100%;
 	overflow-y: auto;
 	box-sizing: border-box;
-	padding: 0.5em 0.5em 0.5em calc(0.5em + var(--side-nav-edge, 0px));
+	padding: 0 0.5em;
 	background-color: var(--color-bg-main);
 	border-right: 1px solid var(--color-lo-contrast-border);
-	font-size: var(--font-size-small);
 	text-align: left;
+	font-size: 10pt;
 }
 
 .sideNavGroup {
@@ -51,11 +50,16 @@ body:not(.sideNavHidden) .stickyNav {
 .sideNavGroupTitle {
 	font-weight: bold;
 	cursor: pointer;
+	list-style: none;
+}
+
+.sideNavGroupTitle::-webkit-details-marker {
+	display: none;
 }
 
 .sideNavList {
 	margin: 0;
-	padding: 0 0 0 1em;
+	padding: 0 0 0 0.2em;
 	list-style: none;
 }
 
@@ -76,16 +80,14 @@ body:not(.sideNavHidden) .stickyNav {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	outline: none;
 	text-decoration: none;
+	color: #550;
 }
 
 @media screen and (max-width: 800px) {
 	body:not(.sideNavHidden) {
 		padding-left: 0;
-	}
-
-	body:not(.sideNavHidden) .stickyNav {
-		margin-left: 0;
 	}
 
 	.sideNav {
