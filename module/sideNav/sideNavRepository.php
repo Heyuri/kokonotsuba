@@ -21,9 +21,9 @@ class sideNavRepository extends baseRepository {
 		return $this->queryAll("SELECT id, title, kind, sort_order FROM {$this->table} ORDER BY sort_order, id");
 	}
 
-	/** @return array<int, array{id: int, label: string, url: string, group_id: int, sort_order: int}> */
+	/** @return array<int, array{id: int, label: string, url: string, source: ?string, hidden: int, group_id: int, sort_order: int}> */
 	public function getLinks(): array {
-		return $this->queryAll("SELECT id, label, url, group_id, sort_order FROM {$this->linkTable} ORDER BY sort_order, id");
+		return $this->queryAll("SELECT id, label, url, source, hidden, group_id, sort_order FROM {$this->linkTable} ORDER BY sort_order, id");
 	}
 
 	/** @return array<int, array> groups in order, each with its links in order under 'links' */
@@ -55,18 +55,31 @@ class sideNavRepository extends baseRepository {
 		}
 	}
 
-	public function addLink(string $label, string $url, int $groupId, int $sortOrder): void {
+	/** @param array{label: string, url: string, source: ?string, hidden: int} $link */
+	public function addLink(array $link, int $groupId, int $sortOrder): void {
 		$this->query(
-			"INSERT INTO {$this->linkTable} (label, url, group_id, sort_order) VALUES (:label, :url, :group_id, :sort_order)",
-			[':label' => $label, ':url' => $url, ':group_id' => $groupId, ':sort_order' => $sortOrder]
+			"INSERT INTO {$this->linkTable} (label, url, source, hidden, group_id, sort_order) VALUES (:label, :url, :source, :hidden, :group_id, :sort_order)",
+			$this->linkParams($link, $groupId, $sortOrder)
 		);
 	}
 
-	public function updateLink(int $id, string $label, string $url, int $groupId, int $sortOrder): void {
+	/** @param array{label: string, url: string, source: ?string, hidden: int} $link */
+	public function updateLink(int $id, array $link, int $groupId, int $sortOrder): void {
 		$this->query(
-			"UPDATE {$this->linkTable} SET label = :label, url = :url, group_id = :group_id, sort_order = :sort_order WHERE id = :id",
-			[':label' => $label, ':url' => $url, ':group_id' => $groupId, ':sort_order' => $sortOrder, ':id' => $id]
+			"UPDATE {$this->linkTable} SET label = :label, url = :url, source = :source, hidden = :hidden, group_id = :group_id, sort_order = :sort_order WHERE id = :id",
+			$this->linkParams($link, $groupId, $sortOrder) + [':id' => $id]
 		);
+	}
+
+	private function linkParams(array $link, int $groupId, int $sortOrder): array {
+		return [
+			':label' => $link['label'],
+			':url' => $link['url'],
+			':source' => $link['source'],
+			':hidden' => (int) $link['hidden'],
+			':group_id' => $groupId,
+			':sort_order' => $sortOrder,
+		];
 	}
 
 	/** @param int[] $ids */

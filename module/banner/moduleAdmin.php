@@ -94,11 +94,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->drawAdminPage();
 	}
 
-	/** The preset the page is scoped to, as it came in: a preset key, or "all". */
+	/** The preset the page is scoped to, as it came in: a preset key, or "all" (the default). */
 	private function requestedFilter(): string {
 		$requested = (string) $this->moduleContext->request->getParameter('preset', 'GET', '');
 
-		return $requested === self::FILTER_ALL ? self::FILTER_ALL : $this->presets->resolve($requested)->key;
+		return $requested === '' || $requested === self::FILTER_ALL ? self::FILTER_ALL : $this->presets->resolve($requested)->key;
 	}
 
 	private function handlePostActions(): void {

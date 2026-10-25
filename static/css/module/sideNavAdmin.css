@@ -83,9 +83,14 @@
 	font-size: var(--font-size-small);
 }
 
-.sideNavBoardRow {
-	padding-left: 1.6em;
+.sideNavRowHidden {
+	flex: 0 0 auto;
 	font-size: var(--font-size-small);
+	white-space: nowrap;
+}
+
+.sideNavRowHidden input {
+	flex: none;
 }
 
 .sideNavGrip {

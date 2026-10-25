@@ -28,12 +28,9 @@
 		document.body.classList.add('sideNavHidden');
 	});
 
-	/** A second style selector mirroring the footer's, whose options the footer script already filled. */
+	/** The style selector is drawn by the server; this switches the style and keeps it in step with the footer's. */
 	var styleSelect = nav.querySelector('.sideNavStyle select');
-	var footerSelect = document.getElementById('styleSwitcherSelect');
-	if (styleSelect && footerSelect && typeof kkstyle !== 'undefined') {
-		styleSelect.innerHTML = footerSelect.innerHTML;
-		styleSelect.value = footerSelect.value;
+	if (styleSelect && typeof kkstyle !== 'undefined') {
 		styleSelect.addEventListener('change', function () { kkstyle.set_stylesheet(this.value, false); });
 
 		// Follow changes made from the footer or the Settings window.
@@ -63,9 +60,15 @@
 	function updateTop() {
 		var top = stickyNav && document.body.classList.contains('persistnav') ? stickyNav.offsetHeight : 0;
 		document.documentElement.style.setProperty('--side-nav-top', top + 'px');
+		document.documentElement.style.setProperty('--side-nav-edge', Math.max(0, nav.getBoundingClientRect().left + window.scrollX) + 'px');
 	}
 
 	updateTop();
 	new MutationObserver(updateTop).observe(document.body, { attributes: true, attributeFilter: ['class'] });
-	if (stickyNav && typeof ResizeObserver !== 'undefined') new ResizeObserver(updateTop).observe(stickyNav);
+	if (typeof ResizeObserver !== 'undefined') {
+		// the body resizes when a style switch changes its margin
+		var resized = new ResizeObserver(updateTop);
+		resized.observe(document.body);
+		if (stickyNav) resized.observe(stickyNav);
+	}
 })();

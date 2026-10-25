@@ -44,12 +44,6 @@
 
 	// ─── Reading the form ────────────────────────────────────────────────────
 
-	function linkBoxes() {
-		return Array.prototype.filter.call(boxes.querySelectorAll('.sideNavBox'), function (box) {
-			return box.dataset.kind === 'links';
-		});
-	}
-
 	function serialize() {
 		return Array.prototype.map.call(boxes.querySelectorAll('.sideNavBox'), function (box) {
 			return {
@@ -57,10 +51,16 @@
 				kind: box.dataset.kind,
 				title: box.querySelector('.sideNavBoxTitle').value.trim(),
 				links: Array.prototype.map.call(box.querySelectorAll('.sideNavRow'), function (row) {
+					var auto = row.dataset.source;
 					return {
 						key: row.dataset.key,
+						source: auto || null,
 						label: row.querySelector('.sideNavRowLabel').value.trim(),
-						url: row.querySelector('.sideNavRowUrl').value.trim()
+						// an automatic link's URL and default label come from the server (the label as HTML)
+						url: auto ? row.dataset.defaultUrl : row.querySelector('.sideNavRowUrl').value.trim(),
+						defaultLabel: auto ? row.dataset.defaultLabel : '',
+						title: auto ? row.dataset.linkTitle : '',
+						hidden: auto ? row.querySelector('.sideNavRowHidden input').checked : false
 					};
 				})
 			};
@@ -71,13 +71,13 @@
 
 	// ─── Keeping the form consistent ─────────────────────────────────────────
 
-	/** Each row's group select lists the current link groups and names the box the row is in. */
+	/** Each plain row's group select lists the current groups and names the box the row is in. */
 	function syncGroupSelects() {
-		var options = linkBoxes().map(function (box) {
+		var options = Array.prototype.map.call(boxes.querySelectorAll('.sideNavBox'), function (box) {
 			return '<option value="' + escapeHtml(box.dataset.key) + '">' + escapeHtml(box.querySelector('.sideNavBoxTitle').value) + '</option>';
 		}).join('');
 
-		boxes.querySelectorAll('.sideNavRow').forEach(function (row) {
+		boxes.querySelectorAll('.sideNavRow:not(.sideNavAutoRow)').forEach(function (row) {
 			var select = row.querySelector('.sideNavRowGroup');
 			select.innerHTML = options;
 			select.value = row.closest('.sideNavBox').dataset.key;
@@ -86,10 +86,11 @@
 
 	function renderPreview(layout) {
 		var groups = layout.map(function (group) {
-			var items = group.kind === 'boards'
-				// board titles are stored as HTML
-				? data.boards.map(function (b) { return fill(t.item, { URL: escapeHtml(b.url), LABEL: b.title, LINK_TITLE: escapeHtml('/' + b.identifier + '/') }); })
-				: group.links.map(function (l) { return fill(t.item, { URL: escapeHtml(l.url), LABEL: escapeHtml(l.label), LINK_TITLE: escapeHtml(l.label) }); });
+			var items = group.links.filter(function (l) { return !l.hidden; }).map(function (l) {
+				var label = l.label ? escapeHtml(l.label) : l.defaultLabel;
+				if (l.source === 'hide') return fill(t.hide, { LABEL: label });
+				return fill(t.item, { URL: escapeHtml(l.url), LABEL: label, LINK_TITLE: escapeHtml(l.label || l.title) });
+			});
 			if (!items.length) return '';
 			return fill(t.group, { ID: /^\d+$/.test(group.key) ? group.key : '0', TITLE: escapeHtml(group.title), ITEMS: items.join('') });
 		});
@@ -228,7 +229,8 @@
 
 		if (dragging.classList.contains('sideNavRow')) {
 			var box = e.target.closest('.sideNavBox');
-			if (!box || box.dataset.kind !== 'links') return;
+			// an automatic link stays in its own group
+			if (!box || (dragging.dataset.source && box !== dragging.closest('.sideNavBox'))) return;
 			var list = box.querySelector('.sideNavBoxLinks');
 			e.preventDefault();
 			list.insertBefore(dragging, insertionPoint(list, '.sideNavRow', e.clientY));
@@ -254,7 +256,7 @@
 	// ─── Changes and saving ──────────────────────────────────────────────────
 
 	function linkText(link) {
-		return link.label + ' (' + link.url + ')';
+		return (link.label || link.title) + (link.hidden ? ' (hidden)' : link.url ? ' (' + link.url + ')' : '');
 	}
 
 	/** Rows of [item, current, new] describing how layout differs from what was served. */

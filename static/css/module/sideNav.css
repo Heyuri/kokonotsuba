@@ -28,14 +28,17 @@ body:not(.sideNavHidden) .stickyNav {
 	z-index: 2;
 }
 
+/* --side-nav-edge (set by sideNav.js) is the theme's body margin, so the panel reaches the window edge. */
 .sideNavPanel {
 	position: absolute;
 	top: 0;
-	left: 0;
-	width: var(--side-nav-width);
+	left: calc(-1 * var(--side-nav-edge, 0px));
+	width: calc(var(--side-nav-width) + var(--side-nav-edge, 0px));
 	height: calc(100vh - var(--side-nav-top, 0px));
 	overflow-y: auto;
-	padding: 0.5em 0.5em 0.5em 0;
+	box-sizing: border-box;
+	padding: 0.5em 0.5em 0.5em calc(0.5em + var(--side-nav-edge, 0px));
+	background-color: var(--color-bg-main);
 	border-right: 1px solid var(--color-lo-contrast-border);
 	font-size: var(--font-size-small);
 	text-align: left;
@@ -56,12 +59,16 @@ body:not(.sideNavHidden) .stickyNav {
 	list-style: none;
 }
 
-.sideNavStyle {
-	margin-top: 0.5em;
+.sideNavStyle label {
+	display: flex;
+	align-items: center;
+	gap: 0.3em;
+	white-space: nowrap;
 }
 
 .sideNavStyle select {
-	max-width: 100%;
+	flex: 1;
+	min-width: 0;
 }
 
 .sideNavItem a {

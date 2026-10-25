@@ -1062,6 +1062,15 @@ caption h3 {
 
 /******** Neomenu ********/
 
+/* Swap menus from the early body class, before koko.js toggles their hidden attributes */
+.neomenuEnabled .classicmenu {
+	display: none;
+}
+
+.neomenuEnabled .neomenu.hidden {
+	display: block !important;
+}
+
 .neomenuEnabled .toplinks {
 	margin-top: 0;
 }

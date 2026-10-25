@@ -20,6 +20,7 @@ use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\rebuildAllBoards;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
+use function Kokonotsuba\libraries\html\getBoardStyleSet;
 
 /**
  * Manage the side nav's groups and links. Each link sits in one group.
@@ -82,7 +83,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function ModulePage(): void {
 		$renderer = $this->moduleContext->adminPageRenderer;
 		$navRenderer = $this->navRenderer();
-		$layout = $this->sideNavRepository->getLayout();
+		$layout = $navRenderer->resolve($this->sideNavRepository->getLayout());
 
 		$groupsHtml = '';
 		foreach ($layout as $group) {
@@ -99,7 +100,6 @@ class moduleAdmin extends abstractModuleAdmin {
 					'adminGroup' => $this->renderGroup('%%KEY%%', ['title' => '%%TITLE%%', 'kind' => 'links', 'links' => []], [], true),
 					'adminLink' => $this->renderLink('%%KEY%%', ['label' => '%%LABEL%%', 'url' => '%%URL%%'], '%%GROUP_OPTIONS%%'),
 				],
-				'boards' => $navRenderer->boardData(),
 			], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
 		]);
 
@@ -111,7 +111,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->moduleContext->adminPageRenderer,
 			$this->moduleContext->boardService->getAllListedBoards() ?? [],
 			(string) $this->getConfig('HOME'),
-			$this->moduleContext->board->getBoardURL(true) . '?mode=overboard'
+			$this->moduleContext->board->getBoardURL(true) . '?mode=overboard',
+			array_keys(getBoardStyleSet($this->moduleContext->board->loadBoardConfig())[1])
 		);
 	}
 
@@ -120,27 +121,43 @@ class moduleAdmin extends abstractModuleAdmin {
 	/** One group's box. With $raw the title is a token and is not escaped. */
 	private function renderGroup(string $key, array $group, array $layout, bool $raw = false): string {
 		$renderer = $this->moduleContext->adminPageRenderer;
-		$isBoards = $group['kind'] === 'boards';
+		$kind = in_array($group['kind'], ['boards', 'main'], true) ? $group['kind'] : 'links';
 
 		$rows = '';
-		if ($isBoards) {
-			foreach ($this->moduleContext->boardService->getAllListedBoards() ?? [] as $board) {
-				// board titles are stored as HTML
-				$rows .= $renderer->ParseBlock('SIDE_NAV_ADMIN_BOARD', ['{$TITLE}' => $board->getBoardTitle()]);
-			}
-		} else {
-			foreach ($group['links'] as $link) {
-				$rows .= $this->renderLink((string) $link['id'], $link, $this->groupOptions($layout, $key));
-			}
+		foreach ($group['links'] as $link) {
+			$rows .= $link['source'] ?? null
+				? $this->renderAutoLink($link, $key)
+				: $this->renderLink($link['key'], $link, $this->groupOptions($layout, $key));
 		}
 
 		return $renderer->ParseBlock('SIDE_NAV_ADMIN_GROUP', [
 			'{$KEY}' => $key,
-			'{$KIND}' => $isBoards ? 'boards' : 'links',
+			'{$KIND}' => $kind,
 			'{$TITLE}' => $raw ? $group['title'] : sanitizeStr($group['title']),
-			'{$KIND_LABEL}' => $isBoards ? '<span class="sideNavBoxKind">Listed boards</span>' : '',
+			'{$KIND_LABEL}' => match ($kind) {
+				'boards' => '<span class="sideNavBoxKind" title="New boards are added at the end">Listed boards</span>',
+				'main' => '<span class="sideNavBoxKind">Home, overboard, hide nav</span>',
+				default => '',
+			},
 			'{$ROWS}' => $rows,
-			'{$ADD_ROW}' => $isBoards ? '' : $renderer->ParseBlock('SIDE_NAV_ADMIN_ADD_LINK', ['{$KEY}' => $key]),
+			'{$ADD_ROW}' => $renderer->ParseBlock('SIDE_NAV_ADMIN_ADD_LINK', ['{$KEY}' => $key]),
+		]);
+	}
+
+	/** An automatic link's row: relabel (empty keeps the default), hide or move it, but not delete it. */
+	private function renderAutoLink(array $link, string $groupKey): string {
+		$plain = html_entity_decode(strip_tags($link['default_label']), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+		return $this->moduleContext->adminPageRenderer->ParseBlock('SIDE_NAV_ADMIN_AUTO_LINK', [
+			'{$KEY}' => sanitizeStr($link['key']),
+			'{$SOURCE}' => sanitizeStr($link['source']),
+			'{$GROUP}' => sanitizeStr($groupKey),
+			'{$LABEL}' => sanitizeStr($link['label']),
+			'{$PLACEHOLDER}' => sanitizeStr($plain),
+			// HTML, kept for the preview to draw as the server does
+			'{$DEFAULT_LABEL}' => sanitizeStr($link['default_label']),
+			'{$DEFAULT_URL}' => sanitizeStr($link['default_url']),
+			'{$LINK_TITLE}' => sanitizeStr(html_entity_decode(strip_tags($link['link_title']), ENT_QUOTES | ENT_HTML5, 'UTF-8')),
+			'{$HIDDEN_CHECKED}' => empty($link['hidden']) ? '' : ' checked',
 		]);
 	}
 
@@ -154,14 +171,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		]);
 	}
 
-	/** Options for the groups that hold links. */
+	/** Options for every group, each of which can hold links. */
 	private function groupOptions(array $layout, string $selected): string {
 		$html = '';
 		foreach ($layout as $group) {
-			if ($group['kind'] === 'links') {
-				$key = (string) $group['id'];
-				$html .= '<option value="' . $key . '"' . ($key === $selected ? ' selected' : '') . '>' . sanitizeStr($group['title']) . '</option>';
-			}
+			$key = (string) $group['id'];
+			$html .= '<option value="' . $key . '"' . ($key === $selected ? ' selected' : '') . '>' . sanitizeStr($group['title']) . '</option>';
 		}
 		return $html;
 	}
@@ -199,14 +214,22 @@ class moduleAdmin extends abstractModuleAdmin {
 		foreach ((array) $request->getParameter('link', 'POST', []) as $key => $fields) {
 			$key = (string) $key;
 			$groupKey = is_array($fields) ? (string) ($fields['group'] ?? '') : '';
-			if (!isset($groups[$groupKey]) || $groups[$groupKey]['kind'] !== 'links') {
+			if (!isset($groups[$groupKey])) {
 				throw new BoardException(_T('sidenav_invalid_group'));
+			}
+			// an automatic link stays in a group of its own kind
+			$source = isset($fields['source']) ? (string) $fields['source'] : null;
+			if ($source !== null && (!preg_match('/^(board:\d+|home|overboard|hide)$/', $source)
+				|| $groups[$groupKey]['kind'] !== (str_starts_with($source, 'board:') ? 'boards' : 'main'))) {
+				throw new BoardException(_T('sidenav_invalid_layout'));
 			}
 			$groups[$groupKey]['links'][] = [
 				'key' => $key,
 				'id' => ctype_digit($key) && isset($existingLinks[(int) $key]) ? (int) $key : null,
 				'label' => (string) ($fields['label'] ?? ''),
 				'url' => (string) ($fields['url'] ?? ''),
+				'source' => $source,
+				'hidden' => empty($fields['hidden']) ? 0 : 1,
 			];
 		}
 
@@ -225,11 +248,11 @@ class moduleAdmin extends abstractModuleAdmin {
 				$layout[] = ['key' => $this->newKey(), 'id' => null, 'kind' => 'links', 'title' => (string) $request->getParameter('new_group_title', 'POST', ''), 'links' => []];
 				break;
 			case 'add_link':
-				if ($groupIndex === false || $layout[$groupIndex]['kind'] !== 'links') {
+				if ($groupIndex === false) {
 					throw new BoardException(_T('sidenav_invalid_group'));
 				}
 				$fields = (array) (((array) $request->getParameter('new_link', 'POST', []))[$target] ?? []);
-				$layout[$groupIndex]['links'][] = ['key' => $this->newKey(), 'id' => null, 'label' => (string) ($fields['label'] ?? ''), 'url' => (string) ($fields['url'] ?? '')];
+				$layout[$groupIndex]['links'][] = ['key' => $this->newKey(), 'id' => null, 'label' => (string) ($fields['label'] ?? ''), 'url' => (string) ($fields['url'] ?? ''), 'source' => null, 'hidden' => 0];
 				break;
 			case 'delete_group':
 				if ($groupIndex !== false) {
@@ -291,8 +314,14 @@ class moduleAdmin extends abstractModuleAdmin {
 				} elseif ($link['id'] !== null) {
 					$claimed[$link['id']] = true;
 				}
-				$layout[$g]['links'][$l]['label'] = $this->requireText($link['label']);
-				$layout[$g]['links'][$l]['url'] = $this->requireUrl($link['url']);
+				if ($link['source'] !== null) {
+					// an automatic link keeps only its label override; its URL is derived
+					$layout[$g]['links'][$l]['label'] = mb_substr(trim($link['label']), 0, 255);
+					$layout[$g]['links'][$l]['url'] = '';
+				} else {
+					$layout[$g]['links'][$l]['label'] = $this->requireText($link['label']);
+					$layout[$g]['links'][$l]['url'] = $this->requireUrl($link['url']);
+				}
 			}
 		}
 
@@ -312,9 +341,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 				foreach ($group['links'] as $linkOrder => $link) {
 					if ($link['id'] !== null) {
-						$this->sideNavRepository->updateLink($link['id'], $link['label'], $link['url'], $groupId, $linkOrder);
+						$this->sideNavRepository->updateLink($link['id'], $link, $groupId, $linkOrder);
 					} else {
-						$this->sideNavRepository->addLink($link['label'], $link['url'], $groupId, $linkOrder);
+						$this->sideNavRepository->addLink($link, $groupId, $linkOrder);
 					}
 				}
 			}

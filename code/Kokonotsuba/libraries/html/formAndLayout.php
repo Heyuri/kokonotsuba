@@ -133,29 +133,31 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 }
 
 /**
- * Resolve and generate stylesheet <link> tags from the board config.
- * Checks TEMPLATE_FILE and REPLY_TEMPLATE_FILE to determine the style set:
- * if either is 'kokotxt' or 'kokotxtreply', uses kokotxt styles (static/css/kokotxt/),
- * otherwise uses kokoimg styles (static/css/kokoimg/).
+ * The board's style set: kokotxt when either TEMPLATE_FILE or REPLY_TEMPLATE_FILE is a text-board
+ * template, otherwise kokoimg.
+ *
+ * @param array $config The board configuration array.
+ * @return array{0: string, 1: array<string, string>} The set's key and its style name => CSS filename.
+ */
+function getBoardStyleSet(array $config): array {
+	$textTemplates = ['kokotxt', 'kokotxtreply'];
+	$isTextStyle = in_array($config['TEMPLATE_FILE'] ?? '', $textTemplates, true)
+		|| in_array($config['REPLY_TEMPLATE_FILE'] ?? '', $textTemplates, true);
+	$styleKey = $isTextStyle ? 'kokotxt' : 'kokoimg';
+
+	return [$styleKey, $config['styles'][$styleKey] ?? []];
+}
+
+/**
+ * Generate the board's stylesheet <link> tags from its config.
  *
  * @param array $config The board configuration array.
  * @return string Generated <link> HTML tags.
  */
 function getBoardStylesheetsFromConfig(array $config): string {
-	$textTemplates = ['kokotxt', 'kokotxtreply'];
-	$templateFile = $config['TEMPLATE_FILE'] ?? '';
-	$replyTemplateFile = $config['REPLY_TEMPLATE_FILE'] ?? '';
+	[$styleKey, $styles] = getBoardStyleSet($config);
 
-	// Use kokotxt styles if either template is a text-board template
-	$isTextStyle = in_array($templateFile, $textTemplates, true)
-		|| in_array($replyTemplateFile, $textTemplates, true);
-	$styleKey = $isTextStyle ? 'kokotxt' : 'kokoimg';
-
-	return generateBoardStylesheets(
-		$config['styles'][$styleKey] ?? [],
-		$config['STATIC_URL'] ?? '',
-		'css/' . $styleKey . '/'
-	);
+	return generateBoardStylesheets($styles, $config['STATIC_URL'] ?? '', 'css/' . $styleKey . '/');
 }
 
 /**
