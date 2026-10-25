@@ -82,6 +82,26 @@ final class TableBlueprintTest extends TestCase {
 		);
 	}
 
+	public function testCollateAppendsUnlessTheColumnAlreadyNamesOne(): void {
+		$blueprint = (new tableBlueprint())
+			->column('thread_uid', 'VARCHAR(255) NOT NULL')
+			->column('explicit', 'VARCHAR(10) CHARACTER SET latin1 NOT NULL')
+			->collate('thread_uid', 'utf8mb4_general_ci')
+			->collate('explicit', 'utf8mb4_general_ci')
+			->collate('missing', 'utf8mb4_general_ci');
+
+		$this->assertSame([
+			'thread_uid' => 'VARCHAR(255) NOT NULL COLLATE utf8mb4_general_ci',
+			'explicit' => 'VARCHAR(10) CHARACTER SET latin1 NOT NULL',
+		], $blueprint->getColumns());
+	}
+
+	public function testCollateRejectsInjectedCollation(): void {
+		$this->assertThrows(function () {
+			(new tableBlueprint())->column('a', 'VARCHAR(1)')->collate('a', 'x; DROP TABLE posts');
+		}, InvalidArgumentException::class);
+	}
+
 	public function testRejectsInjectedIdentifiers(): void {
 		$this->assertThrows(
 			static fn () => (new tableBlueprint())->column('id`, DROP TABLE posts --', 'INT'),

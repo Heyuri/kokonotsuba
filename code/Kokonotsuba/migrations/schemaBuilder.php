@@ -45,6 +45,7 @@ class schemaBuilder {
 		$definer($blueprint);
 
 		$tableName = $this->sql->table($tableKey);
+		$this->matchReferencedCollations($blueprint);
 
 		if (!$this->isReconciling()) {
 			$this->sql->run($blueprint->toCreateSql($tableName, $this->sql));
@@ -62,6 +63,28 @@ class schemaBuilder {
 		}
 
 		$this->reconcileExistingTable($tableName, $blueprint);
+	}
+
+	/**
+	 * Copy each referenced text column's collation onto its foreign key column. A new table takes the
+	 * database default, which on an older install need not match the tables it references, and
+	 * MariaDB refuses that key (errno 150). A referenced table that does not exist yet is skipped.
+	 */
+	private function matchReferencedCollations(tableBlueprint $blueprint): void {
+		foreach ($blueprint->getForeignKeys() as $key) {
+			$referencedTable = $this->sql->table($key['tableKey']);
+			if (!$this->inspector->tableExists($referencedTable)) {
+				continue;
+			}
+
+			$referencedColumns = $this->inspector->getColumns($referencedTable);
+			foreach ($key['columns'] as $i => $column) {
+				$collation = $referencedColumns[$key['references'][$i]]['collation'] ?? null;
+				if ($collation !== null) {
+					$blueprint->collate($column, $collation);
+				}
+			}
+		}
 	}
 
 	private function reconcileExistingTable(string $tableName, tableBlueprint $blueprint): void {

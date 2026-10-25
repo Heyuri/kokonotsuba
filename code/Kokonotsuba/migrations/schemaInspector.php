@@ -40,14 +40,14 @@ class schemaInspector {
 		return array_column($rows, 'TABLE_NAME');
 	}
 
-	/** @return array<string, array{type: string, nullable: bool, default: ?string, extra: string}> */
+	/** @return array<string, array{type: string, nullable: bool, default: ?string, extra: string, collation: ?string}> */
 	public function getColumns(string $table): array {
 		if (isset($this->columnCache[$table])) {
 			return $this->columnCache[$table];
 		}
 
 		$rows = $this->databaseConnection->fetchAllAsArray(
-			'SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, EXTRA
+			'SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, EXTRA, COLLATION_NAME
 			 FROM INFORMATION_SCHEMA.COLUMNS
 			 WHERE TABLE_SCHEMA = :db AND TABLE_NAME = :table
 			 ORDER BY ORDINAL_POSITION',
@@ -61,6 +61,7 @@ class schemaInspector {
 				'nullable' => $row['IS_NULLABLE'] === 'YES',
 				'default' => $row['COLUMN_DEFAULT'],
 				'extra' => $row['EXTRA'],
+				'collation' => $row['COLLATION_NAME'],
 			];
 		}
 
