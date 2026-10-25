@@ -1,7 +1,7 @@
 /**
- * sideNav.js - the side navigation's hide setting, remembered collapsed groups, and its offset under
- * a pinned nav section. The nav itself is rendered and shown by the server; the inline script before
- * it applies .sideNavHidden before paint.
+ * sideNav.js - the side navigation's hide setting, remembered collapsed groups and style selector.
+ * The nav itself is rendered and shown by the server; the inline script before it applies
+ * .sideNavHidden before paint.
  *
  * Depends on: koko.js (kkSetting)
  */
@@ -54,21 +54,4 @@
 			try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify(list)); } catch (e) {}
 		});
 	});
-
-	/** Under Persistent navigation the nav section stays on screen, so start below it. */
-	var stickyNav = document.querySelector('.stickyNav');
-	function updateTop() {
-		var top = stickyNav && document.body.classList.contains('persistnav') ? stickyNav.offsetHeight : 0;
-		document.documentElement.style.setProperty('--side-nav-top', top + 'px');
-		document.documentElement.style.setProperty('--side-nav-edge', Math.max(0, nav.getBoundingClientRect().left + window.scrollX) + 'px');
-	}
-
-	updateTop();
-	new MutationObserver(updateTop).observe(document.body, { attributes: true, attributeFilter: ['class'] });
-	if (typeof ResizeObserver !== 'undefined') {
-		// the body resizes when a style switch changes its margin
-		var resized = new ResizeObserver(updateTop);
-		resized.observe(document.body);
-		if (stickyNav) resized.observe(stickyNav);
-	}
 })();
