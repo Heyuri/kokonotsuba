@@ -13,6 +13,7 @@ require_once __DIR__ . '/bannerEntry.php';
 require_once __DIR__ . '/bannerRepository.php';
 require_once __DIR__ . '/bannerService.php';
 require_once __DIR__ . '/bannerLib.php';
+require_once __DIR__ . '/bannerActionType.php';
 
 use Kokonotsuba\ban\banCheckpoint;
 use Kokonotsuba\error\BoardException;
@@ -61,6 +62,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->moduleContext->actionLoggerService->registerTypes(bannerActionType::class);
+
 		$this->presets = bannerPresetRegistry::fromConfig(
 			fn (string $key, mixed $default): mixed => $this->getModuleConfig($key, $default)
 		);

@@ -109,6 +109,10 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 	$pte_vals['{$TOP_NAV_SECTION_HOOK}'] = '';
 	$moduleEngine->dispatch('TopNavSection', array(&$pte_vals['{$TOP_NAV_SECTION_HOOK}']));
 
+	// Hook: SideNav — the side navigation, after the nav section.
+	$pte_vals['{$SIDE_NAV_HOOK}'] = '';
+	$moduleEngine->dispatch('SideNav', array(&$pte_vals['{$SIDE_NAV_HOOK}']));
+
 	$html .= $templateEngine->ParseBlock('BODYHEAD', $pte_vals);
 
 	// Optionally render POST_AREA after BODYHEAD

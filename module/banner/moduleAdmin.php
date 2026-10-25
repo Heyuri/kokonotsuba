@@ -8,8 +8,8 @@ require_once __DIR__ . '/bannerEntry.php';
 require_once __DIR__ . '/bannerRepository.php';
 require_once __DIR__ . '/bannerService.php';
 require_once __DIR__ . '/bannerLib.php';
+require_once __DIR__ . '/bannerActionType.php';
 
-use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
@@ -124,7 +124,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$selectedIds = $this->getSelectedIds();
 			if ($selectedIds !== []) {
 				$apply($selectedIds);
-				$this->logAction("{$verb} " . count($selectedIds) . " banner(s)", GLOBAL_BOARD_UID, actionType::CONTENT_BANNER);
+				$this->logAction("{$verb} " . count($selectedIds) . " banner(s)", GLOBAL_BOARD_UID, bannerActionType::BANNERS);
 			}
 
 			return;
@@ -152,7 +152,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		$this->bannerService->adminUploadBanner($preset, $file, $link);
-		$this->logAction("Uploaded {$preset->key} banner (auto-approved)", GLOBAL_BOARD_UID, actionType::CONTENT_BANNER);
+		$this->logAction("Uploaded {$preset->key} banner (auto-approved)", GLOBAL_BOARD_UID, bannerActionType::BANNERS);
 	}
 
 	private function getSelectedIds(): array {

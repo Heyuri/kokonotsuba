@@ -34,6 +34,15 @@ class actionLoggerService {
 		$this->typeRegistry->register($key, $label, $group, $default);
 	}
 
+	/**
+	 * Declare every case of a feature's action type enum.
+	 *
+	 * @param class-string<actionTypeDefinition> $enumClass
+	 */
+	public function registerTypes(string $enumClass): void {
+		$this->typeRegistry->registerEnum($enumClass);
+	}
+
 	/** The references log lines point at, and the resolvers that make them clickable. */
 	public function getReferences(): actionLogReferences {
 		return $this->references;
@@ -91,12 +100,12 @@ class actionLoggerService {
 	 *
 	 * @param string $actionString Human-readable description of the action.
 	 * @param int    $board_uid    Board UID the action was performed on.
-	 * @param actionType|string $type The kind of event, for filtering.
+	 * @param actionTypeDefinition|string $type The kind of event, for filtering.
 	 * @param bool $isAnon Flag whether to log the role + username of the user
 	 * @return void
 	 */
-	public function logAction(string $actionString, int $board_uid, actionType|string $type = actionType::OTHER, bool $isAnon = false): void {
-		$typeKey = $type instanceof actionType ? $type->value : strtolower(trim($type));
+	public function logAction(string $actionString, int $board_uid, actionTypeDefinition|string $type = actionType::OTHER, bool $isAnon = false): void {
+		$typeKey = $type instanceof actionTypeDefinition ? $type->value : strtolower(trim($type));
 
 		if (!$this->typeRegistry->has($typeKey)) {
 			$typeKey = actionType::OTHER->value;

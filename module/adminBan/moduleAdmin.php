@@ -38,6 +38,7 @@ use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 require_once __DIR__ . '/banPolicy.php';
 require_once __DIR__ . '/bannedPostPreview.php';
+require_once __DIR__ . '/adminBanActionType.php';
 
 /**
  * The moderator half of the ban system: the ban form, the ban table, one ban's full record, and
@@ -375,7 +376,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'tieVisitorToken' => $request->hasParameter('tieToken', 'POST'),
 		]);
 
-		$this->logAction(_T('ban_log_edited', $ban->ipPattern, $ban->id), $ban->boardUid, actionType::BAN_EDIT);
+		$this->logAction(_T('ban_log_edited', $ban->ipPattern, $ban->id), $ban->boardUid, adminBanActionType::EDIT);
 
 		if ($ban->postUid !== null && ($publicReason !== '' || $ban->publicReason !== '')) {
 			$post = $this->moduleContext->postRepository->getPostByUid($ban->postUid, true);
@@ -404,7 +405,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$revoked = $this->getBanService()->revokeBans($banIds, $this->currentAccountId > 0 ? $this->currentAccountId : null);
 
 		foreach ($revoked as $ban) {
-			$this->logAction(_T('ban_log_revoked', $ban->ipPattern, $ban->id), $ban->boardUid, actionType::BAN_REVOKE);
+			$this->logAction(_T('ban_log_revoked', $ban->ipPattern, $ban->id), $ban->boardUid, adminBanActionType::REVOKE);
 		}
 
 		$this->redirectBack();
@@ -444,7 +445,7 @@ class moduleAdmin extends abstractModuleAdmin {
 					? _T('ban_log_appeal_approved', $count)
 					: _T('ban_log_appeal_reduced', $count, banDuration::humanize($reduceSeconds)),
 				$this->moduleContext->board->getBoardUID(),
-				actionType::BAN_APPEAL
+				adminBanActionType::APPEAL
 			);
 		} else {
 			$count = $this->getBanService()->denyAppeals(
@@ -453,7 +454,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				$staffNote
 			);
 
-			$this->logAction(_T('ban_log_appeal_denied', $count), $this->moduleContext->board->getBoardUID(), actionType::BAN_APPEAL);
+			$this->logAction(_T('ban_log_appeal_denied', $count), $this->moduleContext->board->getBoardUID(), adminBanActionType::APPEAL);
 		}
 
 		$this->redirectBack();

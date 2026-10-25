@@ -57,4 +57,6 @@ return [
 	'ADS_TABLE' => 'ads',
 	'BLOTTER_TABLE' => 'blotter',
 	'THREAD_MOD_TABLE' => 'thread_mods',
+	'SIDE_NAV_GROUP_TABLE' => 'side_nav_groups',
+	'SIDE_NAV_LINK_TABLE' => 'side_nav_links',
 ];

@@ -8,6 +8,7 @@ use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 
 require __DIR__ . '/tripcode_src/tripcodeProcessor.php';
 require __DIR__ . '/tripcode_src/tripcodeRenderer.php';
+require_once __DIR__ . '/capcodeActionType.php';
 
 class moduleMain extends abstractModuleMain {
 	use RenderTripcodeListenerTrait;
@@ -28,6 +29,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->moduleContext->actionLoggerService->registerTypes(capcodeActionType::class);
+
 		
 		// init tripcode renderer
 		// disabled capcodes are left out so they render as a plain tripcode; read on first use

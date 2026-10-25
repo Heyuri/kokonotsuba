@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\adminBan;
 
 require_once __DIR__ . '/bannedPostPreview.php';
+require_once __DIR__ . '/adminBanActionType.php';
 
 use Kokonotsuba\ban\banCheckpoint;
 use Kokonotsuba\ban\banImagePicker;
@@ -62,6 +63,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->moduleContext->actionLoggerService->registerTypes(adminBanActionType::class);
+
 		$staticUrl = $this->getConfig('STATIC_URL');
 
 		// The ban page's picture is drawn from static/image/ban/ on every render; post notices

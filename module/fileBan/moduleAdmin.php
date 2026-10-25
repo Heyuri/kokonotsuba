@@ -5,8 +5,8 @@ namespace Kokonotsuba\Modules\fileBan;
 require_once __DIR__ . '/fileBanRepository.php';
 require_once __DIR__ . '/fileBanService.php';
 require_once __DIR__ . '/fileBanLib.php';
+require_once __DIR__ . '/fileBanActionType.php';
 
-use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
@@ -187,7 +187,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->actionLoggerService->logAction(
 			'Banned and deleted file hash: ' . $md5 . ' from post No.' . $post->getNumber(),
 			$boardUID,
-			actionType::TOOL_FILE_BAN
+			fileBanActionType::MANAGE
 		);
 
 		if ($this->moduleContext->request->isAjax()) {
@@ -228,7 +228,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->actionLoggerService->logAction(
 			'Banned file hash: ' . $md5 . ' from post No.' . $post->getNumber(),
 			$boardUID,
-			actionType::TOOL_FILE_BAN
+			fileBanActionType::MANAGE
 		);
 
 		if ($this->moduleContext->request->isAjax()) {
@@ -254,7 +254,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->actionLoggerService->logAction(
 			'Banned file hash: ' . $md5,
 			$this->moduleContext->board->getBoardUID(),
-			actionType::TOOL_FILE_BAN
+			fileBanActionType::MANAGE
 		);
 
 		redirect($this->moduleUrl);
@@ -272,7 +272,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->actionLoggerService->logAction(
 			'Removed ' . count($entryIDs) . ' file ban(s)',
 			$this->moduleContext->board->getBoardUID(),
-			actionType::TOOL_FILE_BAN
+			fileBanActionType::MANAGE
 		);
 
 		redirect($this->moduleUrl);

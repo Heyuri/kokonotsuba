@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\ads;
 
 require_once __DIR__ . '/adEntry.php';
 require_once __DIR__ . '/adRepository.php';
+require_once __DIR__ . '/adsActionType.php';
 
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
@@ -49,6 +50,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->moduleContext->actionLoggerService->registerTypes(adsActionType::class);
+
 		$this->modulePageUrl = $this->getModulePageURL([], false, false);
 
 		$this->registerScript('pageMedia.js');

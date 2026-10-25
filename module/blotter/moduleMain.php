@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\blotter;
 require_once __DIR__ . '/blotterEntry.php';
 require_once __DIR__ . '/blotterRepository.php';
 require_once __DIR__ . '/blotterService.php';
+require_once __DIR__ . '/blotterActionType.php';
 
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
@@ -30,6 +31,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->moduleContext->actionLoggerService->registerTypes(blotterActionType::class);
+
 		$blotterRepository = new blotterRepository(
 			databaseConnection::getInstance(),
 			$this->moduleContext->getTableName('BLOTTER_TABLE'),

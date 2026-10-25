@@ -6,8 +6,8 @@ require_once __DIR__ . '/editAttachments.php';
 require_once __DIR__ . '/editPostFields.php';
 require_once __DIR__ . '/editedPostRenderer.php';
 require_once __DIR__ . '/postRevisionService.php';
+require_once __DIR__ . '/editActionType.php';
 
-use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\ban\banCheckpoint;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\board\board;
@@ -75,6 +75,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->registerActionTypes(editActionType::class);
+
 		$this->attachments = new editAttachments($this->moduleContext);
 
 		$this->revisions = new postRevisionService(new postRevisionRepository(
@@ -325,7 +327,7 @@ class moduleMain extends abstractModuleMain {
 			$editedPost = $this->getEditablePost($postUid);
 		});
 
-		$this->logAction("Edited own post No.{$editedPost->getNumber()}", $editedPost->getBoardUID(), actionType::POST_EDIT);
+		$this->logAction("Edited own post No.{$editedPost->getNumber()}", $editedPost->getBoardUID(), editActionType::EDIT);
 
 		$this->finishEdit($editedPost);
 	}
@@ -369,7 +371,7 @@ class moduleMain extends abstractModuleMain {
 			$editedPost = $this->getStaffPost($postUid);
 		});
 
-		$this->logAction("Edited post No.{$editedPost->getNumber()}", $editedPost->getBoardUID() ?? GLOBAL_BOARD_UID, actionType::POST_EDIT);
+		$this->logAction("Edited post No.{$editedPost->getNumber()}", $editedPost->getBoardUID() ?? GLOBAL_BOARD_UID, editActionType::EDIT);
 
 		$this->finishEdit($editedPost);
 	}

@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\privateMessage;
 require_once __DIR__ . '/messageRepository.php';
 require_once __DIR__ . '/messageRenderer.php';
 require_once __DIR__ . '/messageUtility.php';
+require_once __DIR__ . '/privateMessageActionType.php';
 
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\database\databaseConnection;
@@ -93,7 +94,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$ids = $this->getSelectedIds();
 		if (!empty($ids)) {
 			$this->messageRepository->deleteMessages($ids);
-			$this->logAction('Deleted ' . count($ids) . ' private message(s)', $this->moduleContext->board->getBoardUID(), actionType::TOOL_PM);
+			$this->logAction('Deleted ' . count($ids) . ' private message(s)', $this->moduleContext->board->getBoardUID(), privateMessageActionType::MESSAGES);
 		}
 		redirect($this->moduleContext->request->getReferer());
 		exit;

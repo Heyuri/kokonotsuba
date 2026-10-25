@@ -2,7 +2,6 @@
 
 namespace Kokonotsuba\Modules\tripcode;
 
-use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\capcode_backend\capcodeService;
@@ -15,6 +14,7 @@ use const Kokonotsuba\GLOBAL_BOARD_UID;
 use function Kokonotsuba\libraries\_T;
 
 require __DIR__ . '/capcodeLib.php';
+require_once __DIR__ . '/../capcodeActionType.php';
 
 class capcodeModuleRequestHandler {
 	public function __construct(
@@ -68,7 +68,7 @@ class capcodeModuleRequestHandler {
 			$this->capcodeService->removeCapcode($capcodeId);
 
 			// log the deletion
-			$this->actionLoggerService->logAction("Deleted capcode ($capcodeId)", GLOBAL_BOARD_UID, actionType::TOOL_CAPCODE);
+			$this->actionLoggerService->logAction("Deleted capcode ($capcodeId)", GLOBAL_BOARD_UID, capcodeActionType::CAPCODES);
 		});
 	}
 	
@@ -97,7 +97,7 @@ class capcodeModuleRequestHandler {
 
 			// log the toggle
 			$state = $isEnabled ? 'Enabled' : 'Disabled';
-			$this->actionLoggerService->logAction("$state capcode ($capcodeId)", GLOBAL_BOARD_UID, actionType::TOOL_CAPCODE);
+			$this->actionLoggerService->logAction("$state capcode ($capcodeId)", GLOBAL_BOARD_UID, capcodeActionType::CAPCODES);
 		});
 	}
 
@@ -120,7 +120,7 @@ class capcodeModuleRequestHandler {
 			);
 
 			// log the creation
-			$this->actionLoggerService->logAction("Created capcode ($capcodeId)", GLOBAL_BOARD_UID, actionType::TOOL_CAPCODE);
+			$this->actionLoggerService->logAction("Created capcode ($capcodeId)", GLOBAL_BOARD_UID, capcodeActionType::CAPCODES);
 		});
 	}
 
@@ -258,7 +258,7 @@ class capcodeModuleRequestHandler {
 			$this->capcodeService->editCapcode($capcodeId, $data);
 
 			// log the modification
-			$this->actionLoggerService->logAction("Modified capcode ($capcodeId)", GLOBAL_BOARD_UID, actionType::TOOL_CAPCODE);
+			$this->actionLoggerService->logAction("Modified capcode ($capcodeId)", GLOBAL_BOARD_UID, capcodeActionType::CAPCODES);
 		});
 	}
 

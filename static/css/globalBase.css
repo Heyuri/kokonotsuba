@@ -1699,6 +1699,7 @@ caption h3 {
 /* A deleted post's place in the thread: its position and who deleted it, nothing else. */
 .reply.deletedStub {
 	color: var(--color-fg-omitted, #707070);
+	padding: 0.25em;
 }
 
 .reply.deletedStub-user {

@@ -3,8 +3,8 @@
 namespace Kokonotsuba\Modules\edit;
 
 require_once __DIR__ . '/postRevisionService.php';
+require_once __DIR__ . '/editActionType.php';
 
-use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
@@ -216,7 +216,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->logAction(
 			"Restored post No.{$restoredPost->getNumber()} from revision #{$revisionId}",
 			$restoredPost->getBoardUID() ?? GLOBAL_BOARD_UID,
-			actionType::POST_EDIT
+			editActionType::EDIT
 		);
 
 		rebuildBoardsFromPosts([$postUid], $this->moduleContext->postService);

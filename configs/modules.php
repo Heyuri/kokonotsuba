@@ -72,6 +72,7 @@ return [
 	'ModuleList.spoiler'      => boolField('config_label_ModuleList.spoiler', true),
 	'ModuleList.threadWatcher'=> boolField('config_label_ModuleList.threadWatcher', true),
 	'ModuleList.threadMod'    => boolField('config_label_ModuleList.threadMod', true),
+	'ModuleList.sideNav'      => boolField('config_label_ModuleList.sideNav', true),
 
 	/* misc */
 	'ModuleList.soudane'      => boolField('config_label_ModuleList.soudane', true),

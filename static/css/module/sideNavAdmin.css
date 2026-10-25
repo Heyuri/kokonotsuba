@@ -1,0 +1,151 @@
+/**
+ * sideNavAdmin.css - the side navigation's drag and drop editor (admin page only).
+ */
+
+.sideNavEditor {
+	display: flex;
+	gap: 1em;
+	align-items: flex-start;
+}
+
+.sideNavEditorMain {
+	flex: 1 1 auto;
+	min-width: 0;
+	max-width: 50em;
+}
+
+.sideNavEditorHint {
+	font-size: var(--font-size-small);
+}
+
+.sideNavEditorPreview {
+	flex: 0 0 auto;
+	position: sticky;
+	top: 8px;
+}
+
+/* The preview is the live nav's markup; only its pinning to the page edge is undone. */
+.sideNavEditor .sideNavEditorPreview .sideNav {
+	display: block;
+	position: static;
+	height: auto;
+	margin: 0;
+}
+
+.sideNavEditorPreview .sideNavPanel {
+	position: static;
+	height: auto;
+	max-height: calc(100vh - 16px);
+}
+
+.sideNavBox {
+	margin-bottom: 8px;
+	padding: 4px;
+	border: 1px solid var(--color-lo-contrast-border);
+	background-color: var(--color-bg-reply);
+}
+
+.sideNavBoxHead,
+.sideNavRow,
+.sideNavBoxAdd,
+.sideNavEditorAddGroup {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	margin-bottom: 3px;
+}
+
+.sideNavBoxHead input,
+.sideNavRow input,
+.sideNavBoxAdd input,
+.sideNavEditorAddGroup input {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.sideNavBoxTitle {
+	font-weight: bold;
+}
+
+.sideNavBoxLinks {
+	min-height: 1.5em;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.sideNavBoxAdd {
+	margin-top: 4px;
+	padding-left: 1.6em;
+}
+
+.sideNavBoxKind {
+	font-size: var(--font-size-small);
+}
+
+.sideNavBoardRow {
+	padding-left: 1.6em;
+	font-size: var(--font-size-small);
+}
+
+.sideNavGrip {
+	padding: 0 4px;
+	cursor: grab;
+	user-select: none;
+}
+
+.sideNavDragging {
+	opacity: 0.5;
+}
+
+/* First in the form so Enter in a field saves, rather than pressing the first ↑ */
+.sideNavDefaultAction {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.sideNavRowGroup {
+	flex: 0 1 auto;
+	max-width: 10em;
+}
+
+.sideNavEditorBoxes > .sideNavBox:first-child .sideNavBoxHead .sideNavMoveUp,
+.sideNavEditorBoxes > .sideNavBox:last-child .sideNavBoxHead .sideNavMoveDown,
+.sideNavRow:first-child .sideNavMoveUp,
+.sideNavRow:last-child .sideNavMoveDown {
+	visibility: hidden;
+}
+
+.sideNavEditor button {
+	flex: 0 0 auto;
+	padding: 0 8px;
+	line-height: 1.6;
+	cursor: pointer;
+}
+
+.sideNavEditor input:invalid {
+	outline: 1px solid red;
+}
+
+.sideNavEditorDirty .buttonSection {
+	position: sticky;
+	bottom: 8px;
+}
+
+@media screen and (max-width: 800px) {
+	.sideNavEditor {
+		flex-direction: column;
+	}
+
+	.sideNavEditorPreview {
+		position: static;
+	}
+
+	.sideNavRow {
+		flex-wrap: wrap;
+	}
+}

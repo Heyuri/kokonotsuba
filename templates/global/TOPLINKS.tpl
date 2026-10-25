@@ -5,3 +5,4 @@
 		</div>
 		{$TOP_NAV_SECTION_HOOK}
 	</div>
+	{$SIDE_NAV_HOOK}
