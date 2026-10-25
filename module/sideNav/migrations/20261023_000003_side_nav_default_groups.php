@@ -10,7 +10,9 @@ return new class extends migration {
 	}
 
 	public function up(migrationContext $ctx): void {
-		if ((int) $ctx->fetchValue('SELECT COUNT(*) FROM {SIDE_NAV_GROUP_TABLE}') > 0) {
+		// A dry run only printed the CREATE TABLE before this, so the table may not exist yet.
+		if ($ctx->schema->tableExists('SIDE_NAV_GROUP_TABLE')
+			&& (int) $ctx->fetchValue('SELECT COUNT(*) FROM {SIDE_NAV_GROUP_TABLE}') > 0) {
 			return;
 		}
 
