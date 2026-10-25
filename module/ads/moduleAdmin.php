@@ -4,8 +4,8 @@ namespace Kokonotsuba\Modules\ads;
 
 require_once __DIR__ . '/adEntry.php';
 require_once __DIR__ . '/adRepository.php';
+require_once __DIR__ . '/adsActionType.php';
 
-use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
@@ -14,6 +14,7 @@ use Kokonotsuba\userRole;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\getPageFromRequest;
 use function Kokonotsuba\libraries\html\pageToOffset;
@@ -122,7 +123,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$html  !== '' ? $html  : null,
 		);
 
-		$this->logAction("Added ad for slot '{$slot}' (type: {$type})", GLOBAL_BOARD_UID, actionType::CONTENT_AD);
+		$this->logAction("Added ad for slot '{$slot}' (type: {$type})", GLOBAL_BOARD_UID, adsActionType::ADS);
 	}
 
 	private function handleBulkDelete(): void {
@@ -137,7 +138,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		if (!empty($ids)) {
-			$this->logAction("Deleted ad(s): " . implode(', ', $ids), GLOBAL_BOARD_UID, actionType::CONTENT_AD);
+			$this->logAction("Deleted ad(s): " . implode(', ', $ids), GLOBAL_BOARD_UID, adsActionType::ADS);
 		}
 	}
 
@@ -181,7 +182,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		if (!empty($updated)) {
-			$this->logAction('Saved ad(s): ' . implode(', ', $updated), GLOBAL_BOARD_UID, actionType::CONTENT_AD);
+			$this->logAction('Saved ad(s): ' . implode(', ', $updated), GLOBAL_BOARD_UID, adsActionType::ADS);
 		}
 	}
 
@@ -231,6 +232,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$SLOT_FILTER}'  => sanitizeStr($slotFilter),
 			'{$ROWS}'         => $rows,
 			'{$EMPTY}'        => empty($rows) ? '1' : '',
+			'{$CSRF_TOKEN}'   => getCsrfHiddenInput(),
 		];
 
 		$pageHtml = $this->moduleContext->adminPageRenderer->ParseBlock('ADS_ADMIN_PAGE', $templateValues);

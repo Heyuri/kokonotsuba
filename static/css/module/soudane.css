@@ -1,0 +1,5 @@
+/* soudane module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+.sod.noVotes {
+	font-family: monospace;
+}

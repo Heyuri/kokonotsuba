@@ -6,10 +6,12 @@ use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\PostMenuListListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 
 class moduleMain extends abstractModuleMain {
+	use ModuleHeaderListenerTrait;
 	use PostMenuListListenerTrait;
 	use IncludeScriptTrait;
 
@@ -38,6 +40,12 @@ class moduleMain extends abstractModuleMain {
 		$this->listenPostMenuList('onRenderPostMenuList');
 
 		$this->registerScript('onlineCounterUpdater.js?v=2');
+		$this->listenModuleHeader('onModuleHeaderStylesheet');
+	}
+
+	/** The module's own stylesheet. */
+	private function onModuleHeaderStylesheet(string &$moduleHeader): void {
+		$this->includeStylesheet('onlineCounter.css', $moduleHeader);
 	}
 
 	/**

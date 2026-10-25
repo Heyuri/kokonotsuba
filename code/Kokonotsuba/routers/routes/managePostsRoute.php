@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\renderers\commentFormatter;
 
@@ -25,7 +26,6 @@ use function Kokonotsuba\libraries\createAssocArrayFromBoardArray;
 use function Kokonotsuba\libraries\html\drawManagePostsFilterForm;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
-use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Kokonotsuba\libraries\getAttachmentUrl;
@@ -33,7 +33,7 @@ use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 
-class managePostsRoute {
+class managePostsRoute implements route {
 	public function __construct(
 		private board $board,
 		private readonly array $config,
@@ -51,7 +51,7 @@ class managePostsRoute {
 		private readonly request $request
 	) {}
 
-	public function drawManagePostsPage() {
+	public function handle(): void {
 		// Validate user permissions
 		$this->softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_MANAGE_POSTS']);
 		
@@ -102,9 +102,6 @@ class managePostsRoute {
 		if (!$postUidsFromCheckbox) {
 			return;
 		}
-
-		// Deletion is state-changing - require a valid CSRF token (form already emits one).
-		requirePostWithCsrf($this->request);
 
 		$onlyDeleteImages = !empty($this->request->getParameter('onlyimgdel', 'POST'));
 		$this->deletePostsFromCheckboxes($postUidsFromCheckbox, $onlyDeleteImages, $context['accountId']);

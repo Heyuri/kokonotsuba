@@ -1,6 +1,8 @@
 @charset "UTF-8";
 
 :root {
+	/* OP-deleted post and its collapsed preview */
+	--color-bg-op-deleted: #f8d7d7;
 	/* Global */
 	--font-family-main: var(--font-family-serif);
 	--font-size-main: 12pt;

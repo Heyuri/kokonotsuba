@@ -1,5 +1,6 @@
 	<div class="banFormContainer">
 		<form class="warnForm" method="POST" action="<!--&IF($FORM_ACTION,'{$FORM_ACTION}','')-->">
+			{$CSRF_TOKEN}
 			<h3 class="centerText">{$FORM_HEADING}</h3>
 
 			<input type="hidden" name="postUid" value="<!--&IF($POST_UID,'{$POST_UID}','')-->">

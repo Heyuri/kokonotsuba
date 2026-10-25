@@ -4,6 +4,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Exception;
 use Kokonotsuba\board\board;
 use Kokonotsuba\board\boardService;
@@ -24,7 +25,7 @@ use function Kokonotsuba\libraries\getCsrfHiddenInput;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
-class boardsRoute {
+class boardsRoute implements route {
 	public function __construct(
 		private readonly array $config,
 		private readonly staffAccountFromSession $staffSession,
@@ -37,7 +38,7 @@ class boardsRoute {
 		private readonly configService $configService
 	) {}
 
-	public function drawBoardPage(): void {
+	public function handle(): void {
 		$authRoleLevel = $this->staffSession->getRoleLevel();
 
 		$this->softErrorHandler->handleAuthError(userRole::LEV_ADMIN);

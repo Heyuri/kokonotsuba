@@ -6,8 +6,10 @@ use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\PostWidgetListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\AttachmentWidgetListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 
 class moduleMain extends abstractModuleMain {
+	use ModuleHeaderListenerTrait;
 	use PostWidgetListenerTrait;
 	use AttachmentWidgetListenerTrait;
 	use IncludeScriptTrait;
@@ -29,6 +31,12 @@ class moduleMain extends abstractModuleMain {
 
 		// loaded in <head> without defer so stored filters apply before posts paint
 		$this->registerScript('filter.js', false);
+		$this->listenModuleHeader('onModuleHeaderStylesheet');
+	}
+
+	/** The module's own stylesheet. */
+	private function onModuleHeaderStylesheet(string &$moduleHeader): void {
+		$this->includeStylesheet('filter.css', $moduleHeader);
 	}
 
 	private function onRenderPostWidget(array &$widgetArray): void {

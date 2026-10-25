@@ -14,6 +14,7 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Puchiko\json\renderJsonErrorPage;
@@ -56,6 +57,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// set antispam service instance
 		$this->antiSpamService = getAntiSpamService();
+		$this->moduleContext->moduleEngine->addRoleProtectedListener($this->getRequiredRole(), 'ModuleHeader', function (string &$moduleHeader): void {
+			$this->includeStylesheet('antiSpam.css', $moduleHeader);
+		});
 	}
 	
 	public function renderFilterPostButton(string &$modfunc, Post $post, bool $noScript): void {
@@ -85,7 +89,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		$form = $this->moduleContext->adminPageRenderer->ParseBlock('NEW_ENTRY_FORM',
 			[
 				'{$MODULE_URL}' => htmlspecialchars($this->moduleUrl),
-				'{$PATTERN_VALUE}' => ''
+				'{$PATTERN_VALUE}' => '',
+				'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 			]
 		);
 
@@ -353,13 +358,17 @@ class moduleAdmin extends abstractModuleAdmin {
 
 			// decode html elements just in case
 			$patternValue = html_entity_decode($patternValue);
+
+			// re-escape for the textarea, or a decoded </textarea> would close it
+			$patternValue = htmlspecialchars($patternValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 		}
 
 		// generate the form
 		$form = $this->moduleContext->adminPageRenderer->ParseBlock('NEW_ENTRY_FORM', 
 			[
 				'{$MODULE_URL}' => htmlspecialchars($this->moduleUrl),
-				'{$PATTERN_VALUE}' => $patternValue
+				'{$PATTERN_VALUE}' => $patternValue,
+				'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 			]
 		);
 
@@ -379,6 +388,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// add module url
 		$templateValues['{$MODULE_URL}'] = htmlspecialchars($this->moduleUrl);
+		$templateValues['{$CSRF_TOKEN}'] = getCsrfHiddenInput();
 
 		// add the edit form-specific templates
 		$templateValues = array_merge(
@@ -475,6 +485,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		return [
 			'{$ROWS}' => $templateRows,
 			'{$MODULE_URL}' => htmlspecialchars($this->moduleUrl),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 		];
 	}
 

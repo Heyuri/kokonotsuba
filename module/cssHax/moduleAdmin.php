@@ -12,6 +12,7 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\thread\Thread;
 use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
@@ -85,7 +86,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function generateThemeJsTemplate(string $moduleUrl): string {
 		// generate an empty theme form (parse block)
-		$themeFormHtml = $this->moduleContext->adminPageRenderer->ParseBlock('THEME_FORM', ['{$MODULE_URL}' => $moduleUrl]);
+		$themeFormHtml = $this->moduleContext->adminPageRenderer->ParseBlock('THEME_FORM', ['{$MODULE_URL}' => $moduleUrl, '{$CSRF_TOKEN}' => getCsrfHiddenInput()]);
 
 		// generate template
 		// wraps content in HTML <template> tags
@@ -276,6 +277,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$THREAD_NUMBER}'			=> sanitizeStr($thread->getOpNumber() ?? ''),
 			'{$THREAD_UID}'				=> sanitizeStr($thread->getUid() ?? ''),
 			'{$MODULE_URL}'				=> sanitizeStr($this->moduleUrl),
+			'{$CSRF_TOKEN}'				=> getCsrfHiddenInput(),
 		];
 	}
 

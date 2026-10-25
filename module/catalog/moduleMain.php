@@ -61,6 +61,7 @@ class moduleMain extends abstractModuleMain {
 
 	/** Inject the catalog JSON endpoint URL and thread cell template into the page head. */
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		$this->includeStylesheet('catalog.css', $moduleHeader);
 		$jsonUrl = $this->getModulePageURL(['output' => 'json']);
 		$moduleHeader .= '<meta name="catalogJsonUrl" content="' . $jsonUrl . '">';
 

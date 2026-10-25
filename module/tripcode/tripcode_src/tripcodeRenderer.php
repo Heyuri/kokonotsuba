@@ -6,13 +6,23 @@ use function Puchiko\array\find_row_by_key_value;
 
 class tripcodeRenderer {
 	/**
-	 * @param array|\Closure $userCapcodes The enabled user capcodes, or a closure returning them,
-	 *                                     called the first time a tripcode is looked up.
+	 * @param array|\Closure $userCapcodes  The enabled user capcodes, or a closure returning them,
+	 *                                      called the first time a tripcode is looked up.
+	 * @param array|\Closure $staffCapcodes The capcode key => ['capcodeHtml' => ...] map, or a closure
+	 *                                      returning it once every module has had its say.
 	 */
 	public function __construct(
 		private array|\Closure $userCapcodes,
-		private array $staffCapcodes
+		private array|\Closure $staffCapcodes
 	) {}
+
+	private function staffCapcodes(): array {
+		if ($this->staffCapcodes instanceof \Closure) {
+			$this->staffCapcodes = ($this->staffCapcodes)();
+		}
+
+		return $this->staffCapcodes;
+	}
 
 	private function userCapcodes(): array {
 		if ($this->userCapcodes instanceof \Closure) {
@@ -104,10 +114,12 @@ class tripcodeRenderer {
 	}
 
 	private function generateStaffCapcodeWrapper(string $capcode): string {
+		$staffCapcodes = $this->staffCapcodes();
+
 		// Handle staff capcodes if defined in the config
-		if(array_key_exists($capcode, $this->staffCapcodes)) {
+		if(array_key_exists($capcode, $staffCapcodes)) {
 			// Retrieve the corresponding capcode HTML template
-			$capcodeMap = $this->staffCapcodes[$capcode];
+			$capcodeMap = $staffCapcodes[$capcode];
 			$capcodePlaceholder = $capcodeMap['capcodeHtml'];
 		
 			// Apply the capcode formatting (usually wraps or replaces nameHtml)
@@ -116,10 +128,10 @@ class tripcodeRenderer {
 			// return the html
 			return $capcodeHtml;
 		} 
-		// no staff capcode found - return normal capcode
+		// a capcode nothing defines any more: no wrapper, rather than a format string that eats the name
 		else {
-			return $capcode;
-		}		
+			return '';
+		}
 	}
 
 	private function findUserCapcode(string $tripcode, string $secure_tripcode): ?array {

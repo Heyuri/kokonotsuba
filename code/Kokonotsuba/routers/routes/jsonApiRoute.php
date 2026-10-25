@@ -2,17 +2,18 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\request\request;
 use Throwable;
 
-class jsonApiRoute {
+class jsonApiRoute implements route {
 	public function __construct(
 		private array $allowedClasses,
 		private readonly request $request
 	) {}
 
-	public function routeApiRequests(): void {
+	public function handle(): void {
 		// get the API switch, used to determine which api to run
 		$apiEndpoint = $this->request->getParameter('apiEndpoint');
 

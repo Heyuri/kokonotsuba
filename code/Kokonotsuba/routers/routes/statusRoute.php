@@ -4,6 +4,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Kokonotsuba\board\board;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\template\templateEngine;
@@ -13,7 +14,7 @@ use Kokonotsuba\thumb\thumbnailerFactory;
 use function Kokonotsuba\libraries\_T;
 use function Puchiko\strings\formatFileSize;
 
-class statusRoute {
+class statusRoute implements route {
 	public function __construct(
         private board $board, 
 		private readonly array $config,
@@ -24,7 +25,7 @@ class statusRoute {
         ) {}
 
 	/* Show instance/board information */
-	public function drawStatus() {
+	public function handle(): void {
 		$countline = $this->postRepository->postCountFromBoard($this->board); // Calculate the current number of data entries in the submitted text log file
 		$counttree = $this->threadRepository->threadCountFromBoard($this->board); // Calculate the current number of data entries in the tree structure log file
 		$tmp_total_size = $this->board->getCurrentStorageSize(); // The total size of the attached image file usage

@@ -2,7 +2,6 @@
 
 namespace Kokonotsuba\Modules\report;
 
-use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
@@ -31,6 +30,7 @@ require_once __DIR__ . '/reportRepository.php';
 require_once __DIR__ . '/reportService.php';
 require_once __DIR__ . '/reportPolicy.php';
 require_once __DIR__ . '/reportPostPreview.php';
+require_once __DIR__ . '/reportActionType.php';
 
 /**
  * Moderator half of the report system.
@@ -334,8 +334,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	/**
-	 * POST actions. abstractModuleAdmin routes POSTs here through dispatchModuleRequest(),
-	 * which has already enforced the request method and CSRF token.
+	 * POST actions. abstractModuleAdmin routes POSTs here through dispatchModuleRequest();
+	 * moduleRoute has already enforced the request method and CSRF token.
 	 */
 	protected function handleModuleRequest(): void {
 		$request = $this->moduleContext->request;
@@ -413,7 +413,7 @@ class moduleAdmin extends abstractModuleAdmin {
 						. ($deletePost ? ', deleting them' : ', leaving them up')
 					: 'Dismissed ' . $affected . ' report(s)',
 				$this->moduleContext->board->getBoardUID(),
-				actionType::TOOL_REPORT
+				reportActionType::REPORTS
 			);
 		}
 
@@ -451,7 +451,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->logAction(
 				'Cleared ' . $cleared . ' report(s) on post UID ' . $postUid,
 				$this->moduleContext->board->getBoardUID(),
-				actionType::TOOL_REPORT
+				reportActionType::REPORTS
 			);
 		}
 
@@ -498,7 +498,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->logAction(
 				'Cleared ' . $cleared . ' report(s) from reporter ' . $reporterIp,
 				$this->moduleContext->board->getBoardUID(),
-				actionType::TOOL_REPORT
+				reportActionType::REPORTS
 			);
 		}
 

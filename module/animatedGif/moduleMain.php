@@ -45,10 +45,21 @@ class moduleMain extends abstractModuleMain {
 
 		// size limit data in <head> for JS to read
 		$animatedGifSizeLimit = $this->getConfig('MAX_SIZE_FOR_ANIMATED_GIF', 2000);
-		$this->registerHeaderHtml('<template id="anigifData" data-size-limit="' . sanitizeStr($animatedGifSizeLimit) . '"></template>');
+		$autoAttribute = $this->isAutoAnimate() ? ' data-auto="1"' : '';
+		$this->registerHeaderHtml('<template id="anigifData" data-size-limit="' . sanitizeStr($animatedGifSizeLimit) . '"' . $autoAttribute . '></template>');
+	}
+
+	/** Whether every animated upload under the size limit is played without the poster asking. */
+	private function isAutoAnimate(): bool {
+		return (bool)$this->getModuleConfig('AUTO_ANIMATE', true);
 	}
 
 	private function onRenderPostFormFile(string &$file): void {
+		// nothing to opt into when uploads are animated automatically
+		if ($this->isAutoAnimate()) {
+			return;
+		}
+
 		// noscript fallback checkbox for no-JS users
 		$file .= '<noscript><div id="anigifContainer"><label id="anigifLabel" title="Plays animated GIF, WebP and PNG uploads in place of their thumbnail"><input type="checkbox" name="anigif" id="anigif" value="on">Animated image</label></div></noscript>';
 	}
@@ -63,10 +74,11 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function handlePostAnimatedGif(array &$attachments): void {
-		// whether anigif was toggled
-		$anigifRequested = $this->moduleContext->request->hasParameter('anigif', 'POST');
+		// whether anigif was toggled, or is implied by the board animating every upload
+		$anigifRequested = $this->isAutoAnimate()
+			|| $this->moduleContext->request->hasParameter('anigif', 'POST');
 
-		// if toggled then mark every attachment that actually holds more than one frame
+		// if requested then mark every attachment that actually holds more than one frame
 		if ($anigifRequested) {
 			$this->animateAllAttachments($attachments);
 		}

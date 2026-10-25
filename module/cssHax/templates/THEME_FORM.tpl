@@ -2,6 +2,7 @@
 	<p>Edit the thread's style and elements - AKA css hax.</p>
 	<div class="themeForm">
 		<form method="POST" action="{$MODULE_URL}">
+			{$CSRF_TOKEN}
 			<input name="action" value="<!--&IF($IS_EDIT,'edit','create')-->" type="hidden">
 			<input name="thread_uid" value="<!--&IF($THREAD_UID,'{$THREAD_UID}','')-->" type="hidden">
 			<table>

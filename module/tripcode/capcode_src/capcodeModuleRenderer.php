@@ -11,6 +11,7 @@ use Kokonotsuba\template\pageRenderer;
 
 use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 
 class capcodeModuleRenderer {
 	public function __construct(
@@ -84,6 +85,7 @@ class capcodeModuleRenderer {
 			'{$STAFF_CAPCODES}' => $staffCapcodeTablePlaceholders,
 			'{$ARE_NO_CAPCODES}' => empty($allCapcodes),
 			'{$MODULE_URL}' => $this->modulePageUrl,
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 			'{$REGULAR_TRIP_KEY}' => _T('trip_pre'),
 			'{$SECURE_TRIP_KEY}' => _T('cap_char')
 		];
@@ -243,7 +245,8 @@ class capcodeModuleRenderer {
 			'{$IS_ENABLED}' => $isEnabled,
 			'{$PREVIEW}' => $capcodePreviewHtml, // premade html - dont sanitize or it'll break the html 
 			'{$VIEW_ENTRY_URL}' => htmlspecialchars($viewUrl),
-			'{$MODULE_URL}' => $this->modulePageUrl
+			'{$MODULE_URL}' => $this->modulePageUrl,
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 		];
 
 		// return the placeholders

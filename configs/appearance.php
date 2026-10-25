@@ -26,6 +26,7 @@ return [
 
 	'TOP_THREAD_PAGER'   => boolField('config_label_TOP_THREAD_PAGER', false, 'config_desc_TOP_THREAD_PAGER'),
 	'RENDER_REPLY_NUMBER'=> boolField('config_label_RENDER_REPLY_NUMBER', true, 'config_desc_RENDER_REPLY_NUMBER'),
+	'DELETED_POST_STUBS' => boolField('config_label_DELETED_POST_STUBS', true, 'config_desc_DELETED_POST_STUBS'),
 	// Page sizes divide: 0 is not a size but a crash in every pager and quote link.
 	'REPLIES_PER_PAGE'   => intField('config_label_REPLIES_PER_PAGE', 200, 'config_desc_REPLIES_PER_PAGE', 1),
 

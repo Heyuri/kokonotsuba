@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\privateMessage;
 require_once __DIR__ . '/messageRepository.php';
 require_once __DIR__ . '/messageRenderer.php';
 require_once __DIR__ . '/messageUtility.php';
+require_once __DIR__ . '/privateMessageActionType.php';
 
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\database\databaseConnection;
@@ -17,6 +18,7 @@ use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
@@ -92,7 +94,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$ids = $this->getSelectedIds();
 		if (!empty($ids)) {
 			$this->messageRepository->deleteMessages($ids);
-			$this->logAction('Deleted ' . count($ids) . ' private message(s)', $this->moduleContext->board->getBoardUID(), actionType::TOOL_PM);
+			$this->logAction('Deleted ' . count($ids) . ' private message(s)', $this->moduleContext->board->getBoardUID(), privateMessageActionType::MESSAGES);
 		}
 		redirect($this->moduleContext->request->getReferer());
 		exit;
@@ -179,6 +181,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$contentHtml = $this->moduleContext->adminPageRenderer->ParseBlock('PM_ADMIN_PAGE', [
 			'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 			'{$PAGE_TITLE}' => _T('pm_admin_title'),
 			'{$TH_SELECT}' => _T('pm_admin_th_select'),
 			'{$TH_SENDER}' => _T('pm_admin_th_sender'),

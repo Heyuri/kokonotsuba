@@ -6,9 +6,9 @@ require_once __DIR__ . '/perceptualBanRepository.php';
 require_once __DIR__ . '/perceptualBanService.php';
 require_once __DIR__ . '/perceptualBanLib.php';
 require_once __DIR__ . '/perceptualHasher.php';
+require_once __DIR__ . '/perceptualBanActionType.php';
 
 use Kokonotsuba\action_log\actionLogReferences;
-use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
@@ -33,6 +33,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->registerActionTypes(perceptualBanActionType::class);
+
 		$this->listenRegistBegin('onRegistBegin');
 
 		$this->perceptualBanService = getPerceptualBanService($this->moduleContext->transactionManager);
@@ -85,7 +87,7 @@ class moduleMain extends abstractModuleMain {
 		$this->moduleContext->transactionManager->afterRollback(fn() => $this->logAction(
 			"{$reference} blocked an upload ({$hashHex})",
 			$this->moduleContext->board->getBoardUID(),
-			actionType::FILE_BAN_TRIGGER,
+			perceptualBanActionType::TRIGGER,
 			true
 		));
 	}

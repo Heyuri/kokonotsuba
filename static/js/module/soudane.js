@@ -38,17 +38,43 @@
 		}, "Interface");
 	}
 
+	// Votes are POSTs with the session token. The buttons sit in static HTML, so the token is
+	// fetched once per page and dropped again after any failure in case the session expired.
+	var tokenRequest = null;
+
+	function getToken(url) {
+		if (!tokenRequest) {
+			tokenRequest = fetch(url + "&modPage=token", {
+				credentials: 'same-origin',
+				headers: { 'X-Requested-With': 'XMLHttpRequest' }
+			})
+				.then(function(response) { return response.json(); })
+				.then(function(json) { return (json && json.token) || ''; });
+		}
+		return tokenRequest;
+	}
+
 	soudane.vote = function(postUid, type, url) {
 		var elem = document.getElementById("vote_" + type + "_" + postUid);
 		var originalText = elem.innerHTML;
 		elem.innerHTML = "&hellip;";
 
-		fetch(url + "&postUid=" + encodeURIComponent(postUid) + "&type=" + type, {
-			headers: { 'X-Requested-With': 'XMLHttpRequest' }
-		})
+		getToken(url)
+			.then(function(token) {
+				var body = new URLSearchParams();
+				body.append('csrf_token', token);
+
+				return fetch(url + "&postUid=" + encodeURIComponent(postUid) + "&type=" + type, {
+					method: 'POST',
+					credentials: 'same-origin',
+					headers: { 'X-Requested-With': 'XMLHttpRequest' },
+					body: body
+				});
+			})
 			.then(function(response) { return response.json(); })
 			.then(function(json) {
 				if (json.error) {
+					tokenRequest = null;
 					elem.innerHTML = originalText;
 					showMessage(json.message, false);
 					return;
@@ -64,6 +90,7 @@
 				}
 			})
 			.catch(function(err) {
+				tokenRequest = null;
 				elem.innerHTML = originalText;
 				console.error("Vote failed:", err);
 			});

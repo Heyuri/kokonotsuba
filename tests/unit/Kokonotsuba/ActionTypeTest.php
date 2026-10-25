@@ -19,7 +19,7 @@ final class ActionTypeTest extends TestCase {
 		$this->assertSame('post.delete', actionType::POST_DELETE->value);
 		$this->assertSame('post.purge', actionType::POST_PURGE->value);
 		$this->assertSame('ban.issue', actionType::BAN_ISSUE->value);
-		$this->assertSame('ban.revoke', actionType::BAN_REVOKE->value);
+		$this->assertSame('ban.trigger', actionType::BAN_TRIGGER->value);
 		$this->assertSame('account.login_failed', actionType::ACCOUNT_LOGIN_FAILED->value);
 		$this->assertSame('board.rebuild', actionType::BOARD_REBUILD->value);
 		$this->assertSame('other', actionType::OTHER->value);
@@ -70,6 +70,51 @@ final class ActionTypeTest extends TestCase {
 		$this->assertTrue(in_array('nonsense.thing', array_column($grouped['tool']['entries'], 'key'), true));
 	}
 
+	/** A feature's enum registers every case with its own label, group and default. */
+	public function testRegisteredEnumJoinsTheRegistry(): void {
+		$registry = new actionTypeRegistry();
+		$registry->registerEnum(ActionTypeTestEnum::class);
+
+		$this->assertSame('Drawings', $registry->labelFor('content.tegaki'));
+		$this->assertTrue(in_array('content.tegaki', array_column($registry->grouped()['content']['entries'], 'key'), true));
+		$this->assertFalse(in_array('tool.tegaki_debug', $registry->defaultKeys(), true));
+	}
+
+	public function testRegisteringANonDefinitionClassIsRejected(): void {
+		$threw = false;
+
+		try {
+			(new actionTypeRegistry())->registerEnum(\stdClass::class);
+		} catch (\InvalidArgumentException $e) {
+			$threw = true;
+		}
+
+		$this->assertTrue($threw);
+	}
+
+	/** The key strings feature enums write are part of the stored format, so pin them too. */
+	public function testFeatureEnumKeysAreStable(): void {
+		$expected = [
+			'module/edit/editActionType.php' => ['post.edit'],
+			'module/moveThread/moveThreadActionType.php' => ['post.move'],
+			'module/adminBan/adminBanActionType.php' => ['ban.edit', 'ban.revoke', 'ban.appeal'],
+			'module/fileBan/fileBanActionType.php' => ['file_ban.trigger', 'tool.file_ban'],
+			'module/perceptualBan/perceptualBanActionType.php' => ['file_ban.trigger', 'tool.file_ban'],
+			'module/banner/bannerActionType.php' => ['content.banner'],
+			'module/blotter/blotterActionType.php' => ['content.blotter'],
+			'module/ads/adsActionType.php' => ['content.ad'],
+			'module/tripcode/capcodeActionType.php' => ['tool.capcode'],
+			'module/report/reportActionType.php' => ['tool.report'],
+			'module/privateMessage/privateMessageActionType.php' => ['tool.pm'],
+			'module/anonIp/anonIpActionType.php' => ['tool.anon_ip'],
+		];
+
+		foreach ($expected as $file => $keys) {
+			preg_match_all("/case \\w+ = '([^']+)';/", file_get_contents(dirname(__DIR__, 3) . '/' . $file), $m);
+			$this->assertSame($keys, $m[1], $file);
+		}
+	}
+
 	/** A module must not be able to redefine what a built-in type means. */
 	public function testRegisteringOverABuiltInIsIgnored(): void {
 		$registry = new actionTypeRegistry();
@@ -114,5 +159,22 @@ final class ActionTypeTest extends TestCase {
 		$registry = new actionTypeRegistry();
 
 		$this->assertSame('tool.gone', $registry->labelFor('tool.gone'));
+	}
+}
+
+enum ActionTypeTestEnum: string implements \Kokonotsuba\action_log\actionTypeDefinition {
+	case TEGAKI = 'content.tegaki';
+	case TEGAKI_DEBUG = 'tool.tegaki_debug';
+
+	public function label(): string {
+		return $this === self::TEGAKI ? 'Drawings' : 'Drawing debug';
+	}
+
+	public function group(): actionTypeGroup {
+		return $this === self::TEGAKI ? actionTypeGroup::CONTENT : actionTypeGroup::TOOL;
+	}
+
+	public function isDefault(): bool {
+		return $this === self::TEGAKI;
 	}
 }

@@ -2,6 +2,8 @@
 @import "pseud0ch.css";
 
 :root {
+	/* OP-deleted post and its collapsed preview */
+	--color-bg-op-deleted: #f5d9d9;
 	/* Global */
 	--color-fg-main: #000080;
 	--color-fg-name: #ff0000;

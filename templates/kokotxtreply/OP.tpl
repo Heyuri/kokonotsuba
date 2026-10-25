@@ -1,4 +1,4 @@
-	<div class="post op" id="p{$BOARD_UID}_{$NO}" {$DATA_ATTRIBUTES}>
+	<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" {$DATA_ATTRIBUTES}>
 		<h1 class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h1><!--&IF($TAG,'<span class="tag" title="{$TAG_TITLE}">[{$TAG}]</span>','')-->
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]</div>
 		<div class="postinfo">
@@ -14,6 +14,7 @@
 		</div>
 		<div class="comment">{$COM}</div>
 		<div class="belowComment comment">{$BELOW_COMMENT}</div>
+		<!--&IF($MODULE_POST_FOOTER,'{$MODULE_POST_FOOTER}','')-->
 		<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
 		{$WARN_OLD}{$WARN_BEKILL}{$WARN_ENDREPLY}{$WARN_HIDEPOST}
 	</div>

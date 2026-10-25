@@ -11,11 +11,16 @@
             imageElement.style.opacity = 0.5;
         }
 
+        var body = new URLSearchParams();
+        body.append('csrf_token', (document.querySelector('meta[name="csrf-token"]') || {}).content || '');
+
         fetch(ctx.menuItem.href, {
-            method: 'GET',
+            method: 'POST',
+            credentials: 'same-origin',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
-            }
+            },
+            body: body
         })
             .then(function (response) {
                 if (!response.ok) {

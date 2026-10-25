@@ -4,8 +4,8 @@ namespace Kokonotsuba\Modules\anonIp;
 
 require_once __DIR__ . '/anonIpTask.php';
 require_once __DIR__ . '/anonIpLib.php';
+require_once __DIR__ . '/anonIpActionType.php';
 
-use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\BackgroundTaskTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
@@ -62,7 +62,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	/**
 	 * Handle the anonymize POST action.
 	 * CSRF token + POST method are enforced automatically by
-	 * abstractModuleAdmin::dispatchModuleRequest() before this fires.
+	 * moduleRoute before this fires.
 	 */
 	protected function handleModuleRequest(): void {
 		$action = $this->moduleContext->request->getParameter('anonIpAction', 'POST', '');
@@ -92,7 +92,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				? "Set IP anonymization to run every $everyDays day(s)"
 				: 'Turned scheduled IP anonymization off',
 			GLOBAL_BOARD_UID,
-			actionType::TOOL_ANON_IP
+			anonIpActionType::ANON_IP
 		);
 
 		redirect($this->getModulePageURL(['scheduled' => '1'], false, true));
@@ -131,7 +131,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->moduleContext->actionLoggerService->logAction(
 					"Queued IP anonymization (timeframe: $timeframe)",
 					GLOBAL_BOARD_UID,
-					actionType::TOOL_ANON_IP
+					anonIpActionType::ANON_IP
 				);
 			}
 		);

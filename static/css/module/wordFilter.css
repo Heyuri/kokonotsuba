@@ -1,0 +1,64 @@
+/* wordFilter module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+.rabienrose {
+	background-color: #ffe6f9;
+	color: #78376d;
+	font-family: serif;
+	font-weight: var(--font-weight-bold);
+}
+
+.partybus {
+	font-family: "Comic Sans MS", cursive;
+	font-size: 1.5em;
+	text-shadow: 0.0625em 0.0625em 0 #000000a8;
+}
+
+.partybusColor1 {
+	color: #ff00ff;
+}
+
+.partybusColor2 {
+	color: #ffff80;
+	position: relative;
+	bottom: 0.125em;
+}
+
+.partybusColor3 {
+	color: #00ff80;
+}
+
+.partybusColor4 {
+	color: #80ffff;
+	position: relative;
+	top: 0.125em;
+}
+
+.partybusColor5 {
+	color: #8080ff;
+}
+
+.partybusColor6 {
+	color: #ff0080;
+}
+
+.partybusColor7 {
+	color: #ff8040;
+	position: relative;
+	bottom: 0.125em;
+}
+
+.partybusColor8 {
+	color: #0080ff;
+}
+
+.boku {
+	font-weight: var(--font-weight-bold);
+}
+
+.bokuGreen {
+	color: #489b67;
+}
+
+.bokuRed {
+	color: #d30615;
+}

@@ -335,3 +335,93 @@
 	max-width: 40em;
 	word-break: break-word;
 }
+
+/* ---- ban form and ban screen, moved out of globalBase.css ---- */
+
+/************************ Ban management*******************************/
+
+#banForm {
+	margin: 1em auto;
+	max-width: 640px;
+}
+
+#banForm #bandays {
+	width: 100%;
+	max-width: 4em;
+}
+
+#banForm #banprivmsg,
+#banForm #banmsg {
+	width: 100%;
+	height: 5em;
+}
+
+#bigredbutton {
+	background-color: #ff0000;
+	color: white;
+	border-style: outset;
+	border-width: 3px;
+	font-family: Verdana, Tahoma, Arial, sans-serif;
+	font-size: 1.2em;
+	font-weight: var(--font-weight-bold);
+	cursor: pointer;
+}
+
+#bigredbutton:active:hover {
+	border-style: inset;
+}
+
+#banTableContainer {
+	overflow: auto;
+}
+
+#banTable .colDel {
+	text-align: center;
+}
+
+/************************ Ban screen **********************************/
+
+/* Holds the summary row, then each ban's post and appeal form underneath it. */
+
+#banScreen {
+	background-color: var(--color-bg-reply);
+	max-width: 800px;
+	margin: 0 auto;
+	padding: 0.5em;
+}
+
+/* The text on the left, the picture pushed to the right. */
+
+#banScreenSummary {
+	display: flex;
+	gap: 0.5em;
+	justify-content: space-between;
+	align-items: center;
+}
+
+#banScreenText {
+	flex: 1;
+	text-align: left;
+}
+
+#banimg {
+	margin-left: auto;
+	border: 1px solid;
+	max-width: 100%;
+	width: 300px;
+	height: auto;
+}
+
+#hrBan {
+	clear: both;
+}
+
+@media screen and (max-width: 640px) {
+	#banScreenSummary {
+		flex-direction: column;
+	}
+	#banimg {
+		margin-left: 0;
+		width: 100%; /* Makes the image container fill the width */
+	}
+}

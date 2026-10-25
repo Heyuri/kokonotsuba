@@ -1,6 +1,6 @@
 <div id="pc{$BOARD_UID}_{$NO}" class="reply-container">
 	<!--&IF($IS_PREVIEW,'<table class="thread" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3"><tbody><tr><td>','')-->
-	<div class="post reply" id="p{$BOARD_UID}_{$NO}" {$DATA_ATTRIBUTES}>
+	<div class="post reply<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" {$DATA_ATTRIBUTES}>
 		<span class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span>
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]</div>
 		<div class="postinfo">
@@ -18,6 +18,7 @@
 		</div>
 		<div class="comment">{$COM}</div>
 		<div class="belowComment comment">{$BELOW_COMMENT}</div>
+		<!--&IF($MODULE_POST_FOOTER,'{$MODULE_POST_FOOTER}','')-->
 		<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
 		{$WARN_BEKILL}
 	</div>

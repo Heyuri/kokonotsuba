@@ -416,6 +416,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		$this->includeStylesheet('threadWatcher.css', $moduleHeader);
 		$watchLabel = sanitizeStr(_T('thread_watch_label'));
 		$unwatchLabel = sanitizeStr(_T('thread_unwatch_label'));
 

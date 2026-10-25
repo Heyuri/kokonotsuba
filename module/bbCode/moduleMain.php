@@ -8,12 +8,14 @@ use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\CommentExtrasListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\ip\ipAnonymizer;
 
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain { 
+	use ModuleHeaderListenerTrait;
 	use PostCommentListenerTrait;
 	use CommentExtrasListenerTrait;
 	use IncludeScriptTrait;
@@ -93,6 +95,12 @@ class moduleMain extends abstractModuleMain {
 		$this->supportScroll = $this->getModuleConfig('supportScroll', false);
 		$this->supportCodeBlocks = $this->getModuleConfig('supportCodeBlocks', false);
 		$this->supportKao = $this->getModuleConfig('supportKao', false);
+		$this->listenModuleHeader('onModuleHeaderStylesheet');
+	}
+
+	/** The module's own stylesheet. */
+	private function onModuleHeaderStylesheet(string &$moduleHeader): void {
+		$this->includeStylesheet('bbCode.css', $moduleHeader);
 	}
 
 	private function onRenderCommentExtras(string &$html): void {

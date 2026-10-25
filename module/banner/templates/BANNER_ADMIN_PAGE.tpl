@@ -3,6 +3,7 @@
 <!--&IF($SHOW_UPLOAD,'<!--&BANNER_SUBMIT_FORM/-->','')-->
 
 <form id="banneradminform" action="{$MODULE_PAGE_URL}" method="POST">
+	{$CSRF_TOKEN}
 	<h3>All Banners</h3>
 	<!--&IF($EMPTY,'','<!--&BANNER_ADMIN_BUTTONS/-->')-->
 	<div class="tableViewportWrapper">

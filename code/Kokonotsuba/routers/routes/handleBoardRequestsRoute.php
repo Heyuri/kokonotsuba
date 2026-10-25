@@ -4,6 +4,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Exception;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\softErrorHandler;
@@ -26,12 +27,11 @@ use function Puchiko\json\sendJsonResponse;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Kokonotsuba\libraries\logError;
-use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Puchiko\isValidMySQLDumpFile;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
-class handleBoardRequestsRoute {
+class handleBoardRequestsRoute implements route {
 	public function __construct(
 		private databaseConnection $databaseConnection,
 		private array $config,
@@ -49,11 +49,8 @@ class handleBoardRequestsRoute {
 
 
 	// handle actions
-	public function handleBoardRequests(): void {
+	public function handle(): void {
 		$this->softErrorHandler->handleAuthError(userRole::LEV_ADMIN);
-
-		// All board actions are state-changing POST submissions - require a valid CSRF token.
-		requirePostWithCsrf($this->request);
 
 		// edit a board
 		if(!empty($this->request->getParameter('edit-board', 'POST'))) {

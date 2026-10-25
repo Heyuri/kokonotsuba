@@ -7,6 +7,7 @@ use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Puchiko\strings\sanitizeStr;
 
@@ -44,7 +45,7 @@ function generateUserNavBar(string $staticIndexFile, request $request): string {
  *
  * @param  bool $includeLiveFrontend Whether to lead with the link back to the live board.
  *              False where that link is already rendered separately.
- * @return array<int, array{key: string, label: string, url: string, title: string, group: string}>
+ * @return array<int, array{key: string, label: string, url: string, title: string, group: string, method: string}>
  */
 function getStaffNavCoreEntries(string $liveIndexFile, userRole $actionLogRole, bool $includeLiveFrontend = true): array {
 	$roleLevel = getRoleLevelFromSession();
@@ -54,7 +55,7 @@ function getStaffNavCoreEntries(string $liveIndexFile, userRole $actionLogRole, 
 		['key' => 'actionLog', 'query' => ['mode' => 'actionLog'], 'label' => _T('admin_nav_action_log'), 'title' => _T('admin_nav_action_log_title'), 'role' => $actionLogRole],
 		['key' => 'account', 'query' => ['mode' => 'account'], 'label' => _T('admin_nav_accounts'), 'title' => _T('admin_nav_accounts_title'), 'role' => userRole::LEV_USER],
 		['key' => 'managePosts', 'query' => ['mode' => 'managePosts'], 'label' => _T('admin_nav_posts'), 'title' => _T('admin_nav_posts_title'), 'role' => userRole::LEV_JANITOR],
-		['key' => 'rebuild', 'query' => ['mode' => 'rebuild'], 'label' => _T('admin_nav_rebuild'), 'title' => _T('admin_nav_rebuild_title'), 'role' => userRole::LEV_JANITOR, 'group' => 'rebuilding'],
+		['key' => 'rebuild', 'query' => ['mode' => 'rebuild'], 'label' => _T('admin_nav_rebuild'), 'title' => _T('admin_nav_rebuild_title'), 'role' => userRole::LEV_JANITOR, 'group' => 'rebuilding', 'method' => 'post'],
 		['key' => 'boards', 'query' => ['mode' => 'boards'], 'label' => _T('admin_nav_boards'), 'title' => _T('admin_nav_boards_title'), 'role' => userRole::LEV_ADMIN],
 		['key' => 'globalConfig', 'query' => ['mode' => 'globalConfig'], 'label' => _T('admin_nav_global_config'), 'title' => _T('admin_nav_global_config_title'), 'role' => userRole::LEV_ADMIN],
 	];
@@ -75,6 +76,7 @@ function getStaffNavCoreEntries(string $liveIndexFile, userRole $actionLogRole, 
 			'url' => $liveIndexFile . '?' . http_build_query($destination['query']),
 			'title' => $destination['title'],
 			'group' => $destination['group'] ?? '',
+			'method' => $destination['method'] ?? 'get',
 		];
 	}
 
@@ -84,6 +86,14 @@ function getStaffNavCoreEntries(string $liveIndexFile, userRole $actionLogRole, 
 /** One core nav entry as the list item the admin nav bar is built from. */
 function renderStaffNavCoreEntry(array $entry): string {
 	$titleHtml = ($entry['title'] ?? '') !== '' ? ' title="' . htmlspecialchars($entry['title']) . '"' : '';
+
+	// state-changing destinations post with the token instead of linking
+	if (($entry['method'] ?? 'get') === 'post') {
+		return '<li class="adminNavLink"><form method="POST" action="' . htmlspecialchars($entry['url']) . '" style="display:inline">'
+			. getCsrfHiddenInput()
+			. '<button type="submit" class="buttonLink"' . $titleHtml . '>' . htmlspecialchars($entry['label']) . '</button>'
+			. '</form></li>';
+	}
 
 	return '<li class="adminNavLink"><a' . $titleHtml . ' href="' . htmlspecialchars($entry['url']) . '">'
 		. htmlspecialchars($entry['label']) . '</a></li>';

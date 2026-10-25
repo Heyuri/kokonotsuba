@@ -10,6 +10,7 @@ require __DIR__ . '/exif.php';
 
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\AttachmentWidgetListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use RuntimeException;
 
 use function Kokonotsuba\libraries\attachmentFileExists;
@@ -18,6 +19,7 @@ use function Kokonotsuba\libraries\getAttachmentUrl;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 
 class moduleMain extends abstractModuleMain {
+	use ModuleHeaderListenerTrait;
 	use AttachmentWidgetListenerTrait;
 
 	private $enable_exif, $enable_imgops, $enable_iqdb, $enable_swfchan = false; // Initialize options, actually defined in config files
@@ -31,6 +33,12 @@ class moduleMain extends abstractModuleMain {
 
 		// Listen to posts rendering
 		$this->listenAttachmentWidget('onRenderAttachmentWidget');
+		$this->listenModuleHeader('onModuleHeaderStylesheet');
+	}
+
+	/** The module's own stylesheet. */
+	private function onModuleHeaderStylesheet(string &$moduleHeader): void {
+		$this->includeStylesheet('imageMeta.css', $moduleHeader);
 	}
 
 	public function getName(): string {

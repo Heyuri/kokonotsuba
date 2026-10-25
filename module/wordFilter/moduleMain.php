@@ -4,9 +4,11 @@ namespace Kokonotsuba\Modules\wordFilter;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\Post;
 
 class moduleMain extends abstractModuleMain {
+	use ModuleHeaderListenerTrait;
 	use PostCommentListenerTrait;
 	private array $FILTERS;
 
@@ -14,6 +16,12 @@ class moduleMain extends abstractModuleMain {
 		$this->FILTERS = $this->getModuleConfig('FILTERS');
 		
 		$this->listenPostComment('onRenderComment');
+		$this->listenModuleHeader('onModuleHeaderStylesheet');
+	}
+
+	/** The module's own stylesheet. */
+	private function onModuleHeaderStylesheet(string &$moduleHeader): void {
+		$this->includeStylesheet('wordFilter.css', $moduleHeader);
 	}
 		 
 	public function getName(): string {

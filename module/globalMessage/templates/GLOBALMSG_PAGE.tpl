@@ -1,4 +1,5 @@
 	<form action="{$MODULE_URL}&action=setmessage" method="post">
+		{$CSRF_TOKEN}
 		<h3>Edit global message</h3>
 
 		<table id="postform_tbl">

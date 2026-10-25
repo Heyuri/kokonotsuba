@@ -57,6 +57,9 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->modulePageUrl,
 			_T('admin_nav_recent_posts')
 		);
+		$this->moduleContext->moduleEngine->addRoleProtectedListener($this->getRequiredRole(), 'ModuleHeader', function (string &$moduleHeader): void {
+			$this->includeStylesheet('recentPosts.css', $moduleHeader);
+		});
 	}
 
 	public function ModulePage(): void {

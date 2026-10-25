@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\board;
 
+use Closure;
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\cache\thread_fragment\threadFragmentCache;
@@ -14,6 +15,7 @@ use Kokonotsuba\renderers\threadRenderer;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\policy\postRenderingPolicy;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\post\deletion\deletedPostStubs;
 use Kokonotsuba\quote_link\quoteLinkService;
 use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
@@ -104,6 +106,7 @@ class boardRebuilder {
 		$previewCount = $this->board->getConfigValue('RE_DEF', 5);
 		$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
 		$includeDeleted = $this->postRenderingPolicy->viewDeleted();
+		$stubs = $this->postRenderingPolicy->stubsDeletedPosts($this->board);
 
 		// the last-N view is the reader's own choice of N, so it is never cached
 		$cache = is_null($amountOfRepliesToRender) ? $this->fragmentCache(!$this->adminMode && !$this->canViewDeleted) : null;
@@ -116,15 +119,21 @@ class boardRebuilder {
 		if ($thread === false) {
 			throw new BoardException(_T('thread_not_found'), 404);
 		}
+		if ($stubs) {
+			$this->threadService->countDeletedPostsIn([$thread]);
+		}
 
 		$cachedBlock = $cache?->get($uid, $variant, threadFragmentCache::stampFor($thread));
 
 		$threadData = $cachedBlock !== null
 			? $this->threadService->getThreadWithOpeningPost($uid, $includeDeleted, $thread)
-			: $this->getThreadForRendering($uid, $previewCount, $repliesPerPage, $page, $amountOfRepliesToRender, $includeDeleted, $thread);
+			: $this->getThreadForRendering($uid, $previewCount, $repliesPerPage, $page, $amountOfRepliesToRender, $includeDeleted || $stubs, $thread);
 
 		if ($threadData === false) {
 			throw new BoardException(_T('thread_not_found'), 404);
+		}
+		if ($stubs) {
+			deletedPostStubs::apply($threadData->getPosts());
 		}
 
 		$thread = $threadData->getThread();
@@ -155,7 +164,7 @@ class boardRebuilder {
 			$this->getThreadRenderer()->notifyCachedThread($thread, true);
 			$block = $cachedBlock;
 		} else {
-			$block = $this->renderThreadPageBlock($threadData, $pte_vals, $currentPage, $totalThreadPages, $amountOfRepliesToRender);
+			$block = $this->renderThreadPageBlock($threadData, $pte_vals, $currentPage, $totalThreadPages, $amountOfRepliesToRender, $includeDeleted, $stubs);
 			$cache?->put($uid, $variant, threadFragmentCache::stampFor($thread), $block);
 		}
 		$pte_vals['{$THREADS}'] .= $block . $this->getThreadRenderer()->renderThreadSeparator(0);
@@ -183,9 +192,9 @@ class boardRebuilder {
 	}
 
 	/** The thread's own markup on a thread page, without the separator. */
-	private function renderThreadPageBlock(ThreadData $threadData, array $pte_vals, int $currentPage, int $totalThreadPages, ?int $amountOfRepliesToRender): string {
+	private function renderThreadPageBlock(ThreadData $threadData, array $pte_vals, int $currentPage, int $totalThreadPages, ?int $amountOfRepliesToRender, bool $includeDeleted, bool $stubs): string {
 		$posts = $threadData->getPosts();
-		$quoteLinks = $this->quoteLinkService->getQuoteLinksByPostUids($threadData->getPostUids(), $this->canViewDeleted);
+		$quoteLinks = $this->quoteLinkService->getQuoteLinksByPostUids($threadData->getPostUids(), $includeDeleted, $includeDeleted || $stubs);
 		$threadRenderer = $this->getThreadRenderer($quoteLinks);
 		$this->moduleEngine->dispatch('PostsPrefetch', [&$posts]);
 
@@ -206,6 +215,15 @@ class boardRebuilder {
 		}
 
 		$uid = $thread->getUid();
+
+		// get stubs enabled condition
+		$stubs = deletedPostStubs::enabledFor($this->board);
+		
+		// if stubs are enabled on this board then include deleted posts in the count
+		if ($stubs) {
+			$this->threadService->countDeletedPostsIn([$thread]);
+		}
+
 		$stamp = threadFragmentCache::stampFor($thread);
 		$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
 		$totalThreadPages = getPageForPostPosition(max(0, $thread->getPostCount() - 1), $repliesPerPage);
@@ -221,13 +239,16 @@ class boardRebuilder {
 				continue;
 			}
 
-			$threadData = $this->getThreadForRendering($uid, $this->board->getConfigValue('RE_DEF', 5), $repliesPerPage, $page, null, false, $thread);
+			$threadData = $this->getThreadForRendering($uid, $this->board->getConfigValue('RE_DEF', 5), $repliesPerPage, $page, null, $stubs, $thread);
 			if ($threadData === false || $threadData->getPosts() === []) {
 				continue;
 			}
+			if ($stubs) {
+				deletedPostStubs::apply($threadData->getPosts());
+			}
 
 			$pte_vals ??= $this->buildPteVals(true);
-			$cache->put($uid, $variant, $stamp, $this->renderThreadPageBlock($threadData, $pte_vals, $page, $totalThreadPages, null));
+			$cache->put($uid, $variant, $stamp, $this->renderThreadPageBlock($threadData, $pte_vals, $page, $totalThreadPages, null, false, $stubs));
 			$drawn++;
 		}
 
@@ -294,48 +315,35 @@ class boardRebuilder {
 	private function getThreadPageTitle(Post $opPost, string $boardTitle): string {
 		$format = $opPost->getTextFormat();
 
-		$subject = commentFormatter::fieldToPlainText($opPost->getSubject(), $format); // thread subject/topic
-		$comment = commentFormatter::commentToPlainText($opPost->getComment(), $format); // op post comment
-		
-		// get the first attachment
+		$subject = $this->titleText(commentFormatter::fieldToPlainText($opPost->getSubject(), $format));
+		$comment = $this->titleText(commentFormatter::commentToPlainText($opPost->getComment(), $format));
+
 		$firstAttachment = $opPost->getFirstAttachment();
+		$fileName = $firstAttachment ? $this->titleText($firstAttachment['fileName'] . '.' . $firstAttachment['fileExtension']) : '';
 
-		// set first filename if it exists
-		$firstAttachment ? $fileName = strip_tags($firstAttachment['fileName'] . '.' . $firstAttachment['fileExtension']) : $fileName = null;
-
-		// Max length before truncating strings
 		$maxTitleLength = 20;
-		
-		// The pieces above are plain text and the title is emitted as markup, so each is escaped
-		// as it goes in. The board title is configuration, not post content, and is left alone.
-		// first, have it include the subject + board title 
-		if(!empty($subject)) {
-			// truncate the subject
-			$truncateSubject = sanitizeStr(truncateText($subject, $maxTitleLength));
 
-			$threadTitle = "$truncateSubject - $boardTitle";
-		} 
-		// then try the comment
-		else if(!empty($comment) && $comment !== $this->config['DEFAULT_NOCOMMENT']) {
-			// truncate the comment
-			$truncatedComment = sanitizeStr(truncateText($comment, $maxTitleLength));
-
-			$threadTitle = $truncatedComment . ' - ' . $boardTitle;
-		} 
-		// then try the file name (useful for dump/flash boards)
-		else if(!empty($fileName)) {
-			// truncate file name
-			$truncateFileName = sanitizeStr(truncateText($fileName, $maxTitleLength));
-
-			$threadTitle = $truncateFileName . ' - ' . $boardTitle;
-		}
-		// otherwise, just use the board title
-		else { 
-			$threadTitle = $boardTitle;
+		// The excerpt is plain text and the title is emitted as markup, so it is escaped once here.
+		// The board title is configuration, not post content, and is left alone.
+		if ($subject !== '') {
+			$excerpt = $subject;
+		} else if ($comment !== '' && $comment !== $this->config['DEFAULT_NOCOMMENT']) {
+			$excerpt = $comment;
+		} else if ($fileName !== '') {
+			$excerpt = $fileName;
+		} else {
+			return $boardTitle;
 		}
 
-		return $threadTitle;
+		return sanitizeStr(truncateText($excerpt, $maxTitleLength)) . ' - ' . $boardTitle;
+	}
 
+	/** Reduce a post field to the bare text a page title can show: no entities, tags or bbcode. */
+	private function titleText(string $text): string {
+		$text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+		$text = (string)preg_replace('#\[/?[a-z]+(?:=[^\]]*)?\]#i', '', $text);
+
+		return trim((string)preg_replace('/\s+/u', ' ', $text));
 	}
 
 	public function drawPage(int $page = 1): void {
@@ -351,7 +359,7 @@ class boardRebuilder {
 		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml(0, $pte_vals, $this->adminMode);
 
 		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threads, $pte_vals, $this->adminMode, $this->canViewDeleted,
-			!$this->adminMode && !$this->canViewDeleted);
+			!$this->adminMode && !$this->canViewDeleted, $this->postRenderingPolicy->stubsDeletedPosts(...));
 
 		$pte_vals['{$BOTTOM_PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'), $this->request);
 
@@ -596,7 +604,8 @@ class boardRebuilder {
 	 *
 	 * @param Thread[] $threads
 	 */
-	private function renderThreadsToPteVals(array $threads, array $pte_vals, bool $adminMode, bool $includeDeleted, bool $cacheFragments): string {
+	/** @param ?Closure $stubsDeletedPosts fn(IBoard): bool; null draws stubs as an anonymous reader gets them. */
+	private function renderThreadsToPteVals(array $threads, array $pte_vals, bool $adminMode, bool $includeDeleted, bool $cacheFragments, ?Closure $stubsDeletedPosts = null): string {
 		$pageRenderer = new threadPageRenderer(
 			$this->rendererFactory(),
 			$this->threadService,
@@ -604,7 +613,8 @@ class boardRebuilder {
 			$this->board,
 			$adminMode,
 			$includeDeleted,
-			$cacheFragments
+			$cacheFragments,
+			stubsDeletedPosts: $stubsDeletedPosts
 		);
 
 		return $pageRenderer->renderThreads(

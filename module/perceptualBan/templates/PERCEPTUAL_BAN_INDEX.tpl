@@ -2,6 +2,7 @@
 	<!--&PERCEPTUAL_BAN_ADD_FORM/-->
 	<hr>
 	<form action="{$MODULE_URL}" method="POST">
+		{$CSRF_TOKEN}
 		<input type="hidden" name="action" value="delete">
 		<!--&IF($ROWS,'
 		<div class="tableViewportWrapper">

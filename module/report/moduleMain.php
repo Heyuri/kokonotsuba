@@ -30,6 +30,7 @@ require_once __DIR__ . '/reportStatus.php';
 require_once __DIR__ . '/reportRepository.php';
 require_once __DIR__ . '/reportService.php';
 require_once __DIR__ . '/reportPostPreview.php';
+require_once __DIR__ . '/reportActionType.php';
 
 /**
  * User-facing half of the report system.
@@ -63,6 +64,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->moduleContext->actionLoggerService->registerTypes(reportActionType::class);
+
 		$this->modulePageUrl = $this->getModulePageURL([], false);
 		$this->myReportsUrl = $this->getModulePageURL(['pageName' => 'myReports'], false);
 		$this->reasonMaxLength = (int) $this->getModuleConfig('REASON_MAX_LENGTH', 1000);

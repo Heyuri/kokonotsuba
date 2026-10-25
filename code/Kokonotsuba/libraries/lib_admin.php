@@ -68,6 +68,7 @@ function updateAccountSession(accountRepository $accountRepository, loginSession
 	// just destroy the session if the account no longer exists
 	if(!$account || !($account instanceof staffAccount)) {
 		$loginSessionHandler->logout();
+		return;
 	}
 
 	// now update the session
@@ -116,11 +117,11 @@ function validateCsrfToken(string $submittedToken): bool {
  */
 function requirePostWithCsrf(\Kokonotsuba\request\request $request): void {
 	if (!$request->isPost()) {
-		throw new \Kokonotsuba\error\BoardException('ERROR: Invalid request method.');
+		throw new \Kokonotsuba\error\BoardException(_T('invalid_request_method'), 405);
 	}
 	$submittedToken = $request->getParameter('csrf_token', 'POST', '');
 	if (!validateCsrfToken($submittedToken)) {
-		throw new \Kokonotsuba\error\BoardException('ERROR: CSRF validation failed.');
+		throw new \Kokonotsuba\error\BoardException(_T('csrf_failed'), 403);
 	}
 }
 

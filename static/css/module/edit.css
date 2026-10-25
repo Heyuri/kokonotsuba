@@ -1,0 +1,53 @@
+/* edit module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+/*********************** Editing a post *******************************/
+
+/* One removable file per row, thumbnail beside its name. */
+
+.editAttachmentList {
+	margin-bottom: 0.3em;
+}
+
+.editAttachmentEntry {
+	align-items: center;
+	display: flex;
+	gap: 0.4em;
+}
+
+.editAttachmentThumb {
+	max-height: 40px;
+	max-width: 40px;
+}
+
+.editAttachmentName {
+	font-family: monospace;
+	font-size: var(--font-size-small);
+}
+
+.editAttachmentsEmpty {
+	font-size: var(--font-size-small);
+}
+
+/* A post's edit history: one block per revision, oldest at the bottom. */
+
+.postRevision {
+	border: 1px solid var(--color-border, rgba(128, 128, 128, 0.4));
+	margin-bottom: 0.8em;
+	padding: 0.4em;
+}
+
+.postRevisionHeader {
+	font-weight: var(--font-weight-bold);
+}
+
+.postRevisionWho {
+	font-weight: normal;
+}
+
+.postRevisionValue {
+	word-break: break-word;
+}
+
+.postRevisionsEmpty {
+	font-style: italic;
+}

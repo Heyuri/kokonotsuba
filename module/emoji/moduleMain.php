@@ -7,12 +7,14 @@ use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\CommentExtrasListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\Post;
 
 
 require_once __DIR__ . '/emojiReplacer.php';
 
 class moduleMain extends abstractModuleMain {
+	use ModuleHeaderListenerTrait;
 	use PostCommentListenerTrait;
 	use CommentExtrasListenerTrait;
 	use IncludeScriptTrait;
@@ -39,6 +41,12 @@ class moduleMain extends abstractModuleMain {
 		$this->listenPostComment('onRenderComment');
 		$this->listenCommentExtras('onRenderCommentExtras');
 		$this->registerScript('addemoji.js');
+		$this->listenModuleHeader('onModuleHeaderStylesheet');
+	}
+
+	/** The module's own stylesheet. */
+	private function onModuleHeaderStylesheet(string &$moduleHeader): void {
+		$this->includeStylesheet('emoji.css', $moduleHeader);
 	}
 
 	private function onRenderCommentExtras(string &$html): void {

@@ -4,21 +4,23 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\request\request;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 
-class moduleRoute {
+class moduleRoute implements route {
 	public function __construct(
 		private moduleEngine $moduleEngine,
 		private readonly softErrorHandler $softErrorHandler,
 		private readonly request $request
 	) {}
 
-	public function handleModule(): void {
+	public function handle(): void {
 		$load = $this->request->getParameter('load', default: '');
 
 		if ($this->moduleEngine->onlyLoad($load)) {
@@ -30,6 +32,11 @@ class moduleRoute {
 				if (isset($moduleInstance['moduleAdmin'])) {
 					$admin = $moduleInstance['moduleAdmin'];
 					$admin->authenticateRequest();
+
+					// every admin POST, whichever method handles it
+					if ($this->request->isPost()) {
+						requirePostWithCsrf($this->request);
+					}
 
 					if ($this->hasModuleRequest($admin) && $this->request->isPost()) {
 						$admin->dispatchModuleRequest();

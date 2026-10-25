@@ -36,6 +36,21 @@ class actionTypeRegistry {
 	}
 
 	/**
+	 * Register every case of a feature's action type enum.
+	 *
+	 * @param class-string<actionTypeDefinition> $enumClass
+	 */
+	public function registerEnum(string $enumClass): void {
+		if (!is_subclass_of($enumClass, actionTypeDefinition::class)) {
+			throw new \InvalidArgumentException("{$enumClass} does not implement actionTypeDefinition");
+		}
+
+		foreach ($enumClass::cases() as $case) {
+			$this->register($case->value, $case->label(), $case->group()->value, $case->isDefault());
+		}
+	}
+
+	/**
 	 * Built-ins first, then registered extras in registration order.
 	 *
 	 * @return list<array{key: string, label: string, group: string, default: bool}>

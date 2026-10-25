@@ -4,6 +4,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Exception;
 use Throwable;
 use Kokonotsuba\config\configArrayMove;
@@ -20,7 +21,6 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawGlobalConfigForm;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\logError;
-use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
 
@@ -31,7 +31,7 @@ use const Kokonotsuba\GLOBAL_BOARD_UID;
  * sits between the schema defaults and each board's own overrides. Editing it here therefore
  * changes every board that hasn't overridden the value itself - see configService.
  */
-class globalConfigRoute {
+class globalConfigRoute implements route {
 	public function __construct(
 		private readonly array $config,
 		private readonly softErrorHandler $softErrorHandler,
@@ -42,7 +42,7 @@ class globalConfigRoute {
 		private readonly configService $configService
 	) {}
 
-	public function handleGlobalConfig(): void {
+	public function handle(): void {
 		$this->softErrorHandler->handleAuthError(userRole::LEV_ADMIN);
 
 		// Reset is checked before save: the form posts its saveGlobalConfig field whichever of its
@@ -81,7 +81,6 @@ class globalConfigRoute {
 	}
 
 	private function saveGlobalConfigFromRequest(): void {
-		requirePostWithCsrf($this->request);
 
 		$submitted = $this->request->getParameter('config', 'POST', []);
 		if (!is_array($submitted)) {
@@ -124,7 +123,6 @@ class globalConfigRoute {
 	}
 
 	private function resetGlobalConfigFromRequest(): void {
-		requirePostWithCsrf($this->request);
 
 		try {
 			$this->configService->resetOverrides(GLOBAL_BOARD_UID);

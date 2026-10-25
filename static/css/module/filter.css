@@ -1,0 +1,58 @@
+/* filter module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+/************************ Filters *************************************/
+
+.filter .comment,
+.filter .post,
+.filter .omittedposts,
+.filter .filesize,
+.filter .postimg,
+.filter > .reply-container {
+  display: none;
+}
+
+.filter .post.op {
+  display: block;
+}
+
+.filter .postinfo,
+.filter .category {
+  opacity: 0.5;
+}
+
+/* post still being parsed, held until filter.js can match it */
+
+.filterPending {
+  visibility: hidden;
+}
+
+/* .filterpost {
+  text-decoration: none;
+  font-weight: var(--font-weight-bold);
+	font-size: 9pt;
+} */
+
+/* .filterpostContainer::before {
+	content: "["
+}
+
+.filterpostContainer::after {
+	content: "]"
+} */
+
+.filterpost:hover {
+  opacity: 1;
+}
+
+.filterImage .postimg {
+  opacity: 0;
+}
+
+.filterImage .attachmentAnchor {
+  position: relative;
+}
+
+#filterdie {
+  display: block;
+  font-size: var(--font-size-small);
+}

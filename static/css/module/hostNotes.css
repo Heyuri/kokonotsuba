@@ -1,0 +1,39 @@
+/* hostNotes module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+/* Notes on the poster's host rather than the post, so they read as a separate block under
+   their own header and in a colour post notes never use. */
+
+.hostNotesContainer {
+	font-size: var(--font-size-small);
+	color: var(--color-fg-link);
+}
+
+.hostNotesHeader {
+	display: block;
+	font-weight: var(--font-weight-bold);
+}
+
+.hostNotesPanel .hostNotesPanelList {
+	margin-bottom: 0.5em;
+}
+
+.hostNotesPanel .hostNoteOnPost {
+	font-size: var(--font-size-small);
+}
+
+.hostNotesPanelEmpty {
+	font-size: var(--font-size-small);
+	font-style: italic;
+}
+
+/* The host-note form picks between the post's two targets rather than asking for either, so the
+   choices sit on their own lines with the value they stand for beside them. */
+
+.hostNoteTargetChoice label {
+	display: block;
+}
+
+.hostNoteFormPattern,
+.hostNoteFormToken {
+	font-family: monospace;
+}

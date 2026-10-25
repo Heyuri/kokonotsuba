@@ -50,6 +50,10 @@ final class postModuleHooks {
 		$threadPosts = $ctx->threadPosts;
 		$adminMode = $ctx->adminMode;
 
+		// Drawn right after the comment, as a child of the post element rather than of a comment
+		// div; a listener below fills it (the thread moderation module puts its "deleted by OP" line there)
+		$templateValues['{$MODULE_POST_FOOTER}'] = '';
+
 		$this->moduleEngine->dispatch('Post', [&$templateValues, &$post, &$threadPosts, &$board, &$adminMode]);
 
 		// The flag tells listeners this is a full thread view rather than a listing;

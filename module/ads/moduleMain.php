@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\ads;
 
 require_once __DIR__ . '/adEntry.php';
 require_once __DIR__ . '/adRepository.php';
+require_once __DIR__ . '/adsActionType.php';
 
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
@@ -15,12 +16,14 @@ use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\listeners\PageTopListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostSeparateListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ThreadSeparateListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 
 use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Puchiko\json\renderJsonPage;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
+	use ModuleHeaderListenerTrait;
 	use IncludeScriptTrait;
 	use IncludeHtmlTrait;
 
@@ -47,6 +50,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->moduleContext->actionLoggerService->registerTypes(adsActionType::class);
+
 		$this->modulePageUrl = $this->getModulePageURL([], false, false);
 
 		$this->registerScript('pageMedia.js');
@@ -67,6 +72,12 @@ class moduleMain extends abstractModuleMain {
 		$this->listenBelowThreadsGlobal('onRenderBelowThreads');
 		$this->listenThreadSeparate('onRenderThreadSeparate');
 		$this->listenPostSeparate('onRenderPostSeparate');
+		$this->listenModuleHeader('onModuleHeaderStylesheet');
+	}
+
+	/** The module's own stylesheet. */
+	private function onModuleHeaderStylesheet(string &$moduleHeader): void {
+		$this->includeStylesheet('ads.css', $moduleHeader);
 	}
 
 	private function onRenderAboveThreads(string &$html): void {

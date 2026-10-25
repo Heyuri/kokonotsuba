@@ -5,9 +5,9 @@ namespace Kokonotsuba\Modules\fileBan;
 require_once __DIR__ . '/fileBanRepository.php';
 require_once __DIR__ . '/fileBanService.php';
 require_once __DIR__ . '/fileBanLib.php';
+require_once __DIR__ . '/fileBanActionType.php';
 
 use Kokonotsuba\action_log\actionLogReferences;
-use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
@@ -31,6 +31,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->registerActionTypes(fileBanActionType::class);
+
 		$this->listenRegistBegin('onRegistBegin');
 
 		$this->fileBanService = getFileBanService($this->moduleContext->transactionManager);
@@ -72,7 +74,7 @@ class moduleMain extends abstractModuleMain {
 		$this->moduleContext->transactionManager->afterRollback(fn() => $this->logAction(
 			"{$reference} blocked an upload ({$md5})",
 			$this->moduleContext->board->getBoardUID(),
-			actionType::FILE_BAN_TRIGGER,
+			fileBanActionType::TRIGGER,
 			true
 		));
 	}

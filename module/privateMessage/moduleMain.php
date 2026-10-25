@@ -8,6 +8,7 @@ require_once __DIR__ . '/messageUtility.php';
 require_once __DIR__ . '/messagePolicy.php';
 require_once __DIR__ . '/messageRenderer.php';
 require_once __DIR__ . '/messageRequestHandler.php';
+require_once __DIR__ . '/privateMessageActionType.php';
 
 use Kokonotsuba\board\board;
 use Kokonotsuba\database\databaseConnection;
@@ -50,6 +51,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->moduleContext->actionLoggerService->registerTypes(privateMessageActionType::class);
+
 		$this->modulePageUrl = $this->getModulePageURL([], false);
 
 		$this->addTopLink($this->modulePageUrl, _T('private_message_top_bar'));
@@ -156,6 +159,7 @@ class moduleMain extends abstractModuleMain {
 
 		$this->moduleContext->moduleEngine->addListener('ModuleHeader',
 			function (string &$moduleHeader) use ($apiUrl) {
+				$this->includeStylesheet('privateMessage.css', $moduleHeader);
 				$moduleHeader .= '<meta name="pmNotifyApi" content="' . sanitizeStr($apiUrl) . '">';
 			}
 		);

@@ -1,5 +1,6 @@
 <h3>{$UPLOAD_HEADING} ({$PRESET_LABEL})</h3>
 <form action="{$MODULE_PAGE_URL}" method="post" enctype="multipart/form-data">
+	{$CSRF_TOKEN}
 	<input type="hidden" name="action" value="submitBanner">
 	<input type="hidden" name="preset" value="{$PRESET_KEY}">
 	<table class="formtable">

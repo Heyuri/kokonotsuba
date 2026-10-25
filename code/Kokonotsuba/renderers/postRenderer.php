@@ -17,6 +17,9 @@ use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\thread\Thread;
 
+use function Kokonotsuba\libraries\_T;
+use function Puchiko\strings\sanitizeStr;
+
 /**
  * Draws one post through the board's OP or REPLY template block.
  *
@@ -97,6 +100,10 @@ class postRenderer {
 		bool $renderAsOp = false,
 		?Thread $thread = null
 	): string {
+		if ($post->getStubKind() !== null) {
+			return $this->renderStub($post);
+		}
+
 		// Bundle the arguments so every stage below reads the same facts about this render
 		$ctx = new postRenderContext(
 			post: $post,
@@ -138,6 +145,21 @@ class postRenderer {
 
 		// A reply drawn on its own (search hits, previews) borrows the OP block
 		return $this->templateEngine->ParseBlock($ctx->usesOpBlock() ? 'OP' : 'REPLY', $templateValues);
+	}
+
+	/** A deleted post's place in the thread, with nothing of what it said. */
+	private function renderStub(Post $post): string {
+		$kind = (string)$post->getStubKind();
+
+		return $this->templateEngine->ParseBlock('DELETED_STUB', [
+			'{$BOARD_UID}' => $this->board->getBoardUID(),
+			'{$NO}' => $post->getNumber(),
+			'{$POST_UID}' => $post->getUid(),
+			'{$STUB_KIND}' => sanitizeStr($kind),
+			'{$STUB_LABEL}' => sanitizeStr(_T('deleted_stub_' . $kind)),
+			'{$POST_POSITION_ENABLED}' => (bool)$this->board->getConfigValue('RENDER_REPLY_NUMBER', true),
+			'{$POST_POSITION}' => $post->getPostPosition(),
+		]);
 	}
 
 	/**

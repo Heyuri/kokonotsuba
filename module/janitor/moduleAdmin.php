@@ -15,6 +15,7 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Puchiko\strings\newLinesToBreakLines;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
@@ -120,6 +121,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		return [
 			'{$REASON_DEFAULT}'	=> sanitizeStr(_T('ban_no_reason')),
 			'{$FORM_ACTION}'	=> $this->getModulePageURL(),
+			'{$CSRF_TOKEN}'		=> getCsrfHiddenInput(),
 			'{$FORM_HEADING}'	=> sanitizeStr(_T('warn_form_heading')),
 			'{$LABEL_POST}'		=> sanitizeStr(_T('warn_form_label_post')),
 			'{$LABEL_REASON}'	=> sanitizeStr(_T('warn_form_label_reason')),
@@ -157,7 +159,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		$ip = $post->getIp();
-		$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', newLinesToBreakLines($this->moduleContext->request->getParameter('msg', 'POST', ''))));
+		$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', newLinesToBreakLines(sanitizeStr($this->moduleContext->request->getParameter('msg', 'POST', '')))));
 		if (!$reason) $reason = 'No reason given.';
 
 		// The public notice rides on the ban, the way adminBan's does: the post's comment is the

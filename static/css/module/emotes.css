@@ -1,0 +1,35 @@
+/* emotes module. Linked from the module itself; globalBase.css keeps only shared rules. */
+
+/* The emote and kaomoji pickers under the post form */
+#emotesContainer,
+#kaomojiContainer {
+	max-width: 390px;
+}
+
+.emoteButton,
+.kaomojiButton {
+	border-color: var(--color-border-button);
+	border-width: 1px;
+	border-radius: 0;
+	padding: 1px;
+	margin: 1px;
+	vertical-align: top;
+}
+
+.kaomojiButton {
+	padding: 2px;
+}
+
+.emoteButton {
+	width: 45px;
+	height: 35px;
+}
+
+.emoteImage {
+	display: block;
+	margin: 0 auto;
+	max-height: 100%;
+	max-width: 100%;
+}
+
+

@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\anonIp;
 
 require_once __DIR__ . '/anonIpLib.php';
+require_once __DIR__ . '/anonIpActionType.php';
 
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\RegistPostInsertedListenerTrait;
@@ -28,6 +29,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->moduleContext->actionLoggerService->registerTypes(anonIpActionType::class);
+
 		if ((int) $this->getModuleConfig('AUTO_ANONYMIZE_DAYS', 0) <= 0) {
 			return;
 		}

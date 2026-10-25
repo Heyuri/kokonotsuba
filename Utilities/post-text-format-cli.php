@@ -5,14 +5,6 @@ declare(strict_types=1);
 /**
  * Convert posts stored as HTML into the plain text the renderer now formats at render time.
  *
- * Posts used to be escaped and marked up on the way into the database: `com` held <br> tags,
- * autolink anchors, and whatever markup modules baked in. Posts are stored as typed now, and
- * `posts.text_format` says which a row is - 0 legacy HTML, 1 plain text, 2 raw HTML.
- *
- * `php Utilities/migrate-cli.php up` converts every legacy post as part of the upgrade. This is
- * the hand-driven version of the same conversion (Kokonotsuba\post\legacyPostConverter): for
- * previewing what it will do first, or converting one board or a big table in sittings.
- *
  *   php Utilities/post-text-format-cli.php status
  *       Count the posts in each format, per board.
  *
@@ -28,18 +20,7 @@ declare(strict_types=1);
  *   --batch=N     Rows read per query (default 500).
  *   --no-color    Disable ANSI colour.
  *
- * BACK UP THE POSTS TABLE FIRST. Conversion rewrites `com`, `name`, `email`, `sub` and
- * `category` in place and there is no reverse command.
- *
- * Two things do not survive exactly, both visible in --preview:
- *
- *   - A post made with the rawHtml tool is indistinguishable from any other legacy row, so its
- *     markup is reduced to text like everything else. Note those post numbers before converting
- *     and set their text_format to 2 by hand afterwards.
- *   - Very old rows kept a poster's tripcode and capcode markup inside the name column. There is
- *     no plain text that renders back to that, so the markup goes and its text stays.
- *
- * Rebuild the static pages afterwards; nothing here touches them.
+
  */
 
 use Kokonotsuba\config\configRepository;

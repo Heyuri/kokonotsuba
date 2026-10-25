@@ -4,6 +4,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Kokonotsuba\board\board;
 use Kokonotsuba\log_in\adminLoginController;
 use Kokonotsuba\log_in\loginAttemptService;
@@ -12,11 +13,13 @@ use Kokonotsuba\template\pageRenderer;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawAdminLoginForm;
+use function Kokonotsuba\libraries\generateModerateForm;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\getIdFromSession;
 use function Kokonotsuba\libraries\isLoggedIn;
 use function Puchiko\request\redirect;
 
-class adminRoute {
+class adminRoute implements route {
 	public function __construct(
 		private board $board,
 		private readonly adminLoginController $adminLoginController,
@@ -24,7 +27,7 @@ class adminRoute {
 		private readonly loginAttemptService $loginAttemptService,
 		private readonly request $request) {}
 
-	public function drawAdminPage(): void {
+	public function handle(): void {
 		$username = $this->request->getParameter('username', 'POST', '');
 		$password = $this->request->getParameter('password', 'POST', '');
 
@@ -37,6 +40,7 @@ class adminRoute {
 
 		$modAction = $this->request->getParameter('modAction', 'GET', '');
 		if($modAction === 'logout') {
+			requirePostWithCsrf($this->request);
 			$this->adminLoginController->adminLogout();
 			redirect($adminRouteUrl);
 		}
@@ -47,7 +51,7 @@ class adminRoute {
 
 		if(isLoggedIn()) {
 			$adminRouteHtml .= $this->drawFailedLoginWarning();
-			$adminRouteHtml .= '[<a href="'.$adminRouteUrl.'&modAction=logout">' . _T('admin_logout') . '</a>]';
+			$adminRouteHtml .= generateModerateForm($adminRouteUrl . '&modAction=logout', _T('admin_logout'), '', 'logoutButton', false, false);
 		} else {
 			$adminRouteHtml .= drawAdminLoginForm($adminRouteUrl);
 		}

@@ -15,6 +15,7 @@ return [
 	'_module' => 'Animated images',
 
 	'MAX_SIZE_FOR_ANIMATED_GIF' => intField('config_label_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF', 2000, 'config_desc_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'),
+	'AUTO_ANIMATE' => boolField('config_label_modules.animatedGif.AUTO_ANIMATE', true, 'config_desc_modules.animatedGif.AUTO_ANIMATE'),
 
 	// menu entries this module adds, see widgetMenuPolicy
 	'AttachmentMenu.animateGif' => boolField('config_label_modules.animatedGif.AttachmentMenu.animateGif', true),

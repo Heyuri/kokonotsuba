@@ -36,6 +36,8 @@ require_once __DIR__ . '/../../code/Kokonotsuba/libraries/lib_query.php';
 
 use Kokonotsuba\post\Post;
 
+use Kokonotsuba\userRole;
+
 use function Kokonotsuba\libraries\excludeDeletedThreadsCondition;
 use function Kokonotsuba\libraries\getBasePostQuery;
 use function Kokonotsuba\libraries\mergeMultiplePostRows;
@@ -168,7 +170,8 @@ function resetSchema(PDO $pdo): void {
 
 	$pdo->exec("CREATE TABLE `" . ACCOUNTS . "` (
 		id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-		username VARCHAR(255) NOT NULL
+		username VARCHAR(255) NOT NULL,
+		role INT DEFAULT 0
 	) ENGINE=InnoDB");
 
 	$pdo->exec("CREATE TABLE `" . FILES . "` (
@@ -245,7 +248,7 @@ function resetSchema(PDO $pdo): void {
  *  13  two files, whole post deleted
  */
 function loadFixtures(PDO $pdo): void {
-	$pdo->exec("INSERT INTO `" . ACCOUNTS . "` (id, username) VALUES (1, 'mod')");
+	$pdo->exec("INSERT INTO `" . ACCOUNTS . "` (id, username, role) VALUES (1, 'mod', 50)");
 
 	foreach ([['T1', 1, 1], ['T2', 9, 9], ['T3', 10, 10], ['T4', 11, 11]] as [$uid, $no, $opUid]) {
 		$pdo->exec("INSERT INTO `" . THREADS . "` (thread_uid, post_op_number, post_op_post_uid, boardUID)
@@ -400,6 +403,17 @@ testCase('an undeleted post is visible', function () use ($pdo) {
 
 testCase('a deleted post is hidden', function () use ($pdo) {
 	assertHidden(visiblePostUids($pdo, 'T1'), 3, 'post with an open deletion');
+});
+
+testCase('a deleted post carries its deleter\'s role, and a stub keeps only its place', function () use ($pdo) {
+	$post = mergedPosts($pdo, 'T1')[3];
+	assertSameValue(userRole::LEV_MODERATOR, $post->getDeletedByRole(), 'deleted by the mod account');
+
+	$post->stubAs('staff');
+	assertSameValue('', $post->getComment(), 'stub drops the comment');
+	assertSameValue([], $post->getAttachments(), 'stub drops the attachments');
+	assertSameValue(3, $post->getUid(), 'stub keeps the uid');
+	assertSameValue('staff', $post->getStubKind(), 'stub kind');
 });
 
 testCase('a restored post is visible again', function () use ($pdo) {

@@ -19,6 +19,7 @@
 	</details>
 
 	<form action="{$MODULE_URL}" method="post">
+		{$CSRF_TOKEN}
 		<input type="hidden" name="action" value="add">
 		<h3>Add new ad</h3>
 		<table class="formtable">
@@ -76,6 +77,7 @@
 	</form>
 
 	<form action="{$MODULE_URL}" method="post">
+		{$CSRF_TOKEN}
 		<input type="hidden" name="action" value="bulk">
 		<div class="tableViewportWrapper">
 			<table class="postlists" id="inventoryTable">

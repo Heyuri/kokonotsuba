@@ -2,13 +2,14 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\routers\route;
 use Kokonotsuba\board\board;
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
 
-class moduleloadedRoute {
+class moduleloadedRoute implements route {
 	public function __construct(
 		private readonly array $config,
 		private board $board,
@@ -17,7 +18,7 @@ class moduleloadedRoute {
 	) {}
 
 	/* Displays loaded module information */
-	public function listModules(): void {
+	public function handle(): void {
 		$dat = '';
 		
 		$dat .= $this->board->getBoardHead();

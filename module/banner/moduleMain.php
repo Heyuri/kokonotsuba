@@ -13,6 +13,7 @@ require_once __DIR__ . '/bannerEntry.php';
 require_once __DIR__ . '/bannerRepository.php';
 require_once __DIR__ . '/bannerService.php';
 require_once __DIR__ . '/bannerLib.php';
+require_once __DIR__ . '/bannerActionType.php';
 
 use Kokonotsuba\ban\banCheckpoint;
 use Kokonotsuba\error\BoardException;
@@ -23,6 +24,7 @@ use Kokonotsuba\module_classes\traits\listeners\BelowThreadsGlobalListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\listeners\PageTopListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\serveMedia;
@@ -32,6 +34,7 @@ use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\getPageFromRequest;
 
 class moduleMain extends abstractModuleMain {
+	use ModuleHeaderListenerTrait;
 	use AboveThreadsGlobalListenerTrait;
 	use BanCheckpointTrait;
 	use BelowThreadsGlobalListenerTrait;
@@ -59,6 +62,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->moduleContext->actionLoggerService->registerTypes(bannerActionType::class);
+
 		$this->presets = bannerPresetRegistry::fromConfig(
 			fn (string $key, mixed $default): mixed => $this->getModuleConfig($key, $default)
 		);
@@ -84,6 +89,12 @@ class moduleMain extends abstractModuleMain {
 
 		// How a reader reaches the banner listing and, where a preset takes them, its submit form.
 		$this->addTopLink($this->modulePageUrl, _T('banner_toplink'));
+		$this->listenModuleHeader('onModuleHeaderStylesheet');
+	}
+
+	/** The module's own stylesheet. */
+	private function onModuleHeaderStylesheet(string &$moduleHeader): void {
+		$this->includeStylesheet('banner.css', $moduleHeader);
 	}
 
 	/**
@@ -293,6 +304,7 @@ class moduleMain extends abstractModuleMain {
 			'{$STATUS_MESSAGE}' => $statusMessage,
 			'{$ROWS}' => $rows,
 			'{$EMPTY}' => empty($rows) ? '1' : '',
+			'{$CSRF_TOKEN}' => '',
 		];
 
 		$pageContent = $this->moduleContext->adminPageRenderer->ParseBlock('BANNER_INDEX', $templateValues);

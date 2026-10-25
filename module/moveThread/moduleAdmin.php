@@ -2,9 +2,10 @@
 
 namespace Kokonotsuba\Modules\moveThread;
 
+require_once __DIR__ . '/moveThreadActionType.php';
+
 use Kokonotsuba\cache\thread_fragment\threadFragments;
 
-use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Exception;
 use Kokonotsuba\post\FlagHelper;
@@ -54,6 +55,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
+		$this->moduleContext->actionLoggerService->registerTypes(moveThreadActionType::class);
+
 		$this->modulePageUrl = $this->getModulePageURL();
 
 		$this->registerThreadControlPair('renderMoveThreadButton');
@@ -62,6 +65,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
 		$this->registerScript('moveThread.js');
 		$this->registerScript('mergeThread.js');
+		$this->moduleContext->moduleEngine->addRoleProtectedListener($this->getRequiredRole(), 'ModuleHeader', function (string &$moduleHeader): void {
+			$this->includeStylesheet('moveThread.css', $moduleHeader);
+		});
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
@@ -621,7 +627,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->actionLoggerService->logAction(
 			"Moved thread No.{$thread->getThread()->getOpNumber()} to board $destinationBoardTitle",
 			$hostBoard->getBoardUID(),
-			actionType::POST_MOVE
+			moveThreadActionType::MOVE
 		);
 
 		if ($this->moduleContext->request->isAjax()) {
@@ -722,7 +728,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->actionLoggerService->logAction(
 			"Merged " . count($sourceThreadUids) . " thread(s) into thread No.{$destinationThread->getOpNumber()}",
 			$board->getBoardUID(),
-			actionType::POST_MOVE
+			moveThreadActionType::MOVE
 		);
 
 		$redirectURL = $board->getBoardThreadURL($destinationThread->getOpNumber());
