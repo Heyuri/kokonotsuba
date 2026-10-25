@@ -184,6 +184,42 @@ testCase('nothing is pending', function () use ($makeRunner) {
 	assertSameValue([], $makeRunner()->pending(), 'migrations still pending after up()');
 });
 
+testCase('a dry run of a module whose tables do not exist yet reaches the end', function () use ($pdo, $tableNames, $makeRunner) {
+	$makeRunner()->down(3, 'module:sideNav');
+	assertTrueValue(!in_array($tableNames['SIDE_NAV_GROUP_TABLE'], liveTables($pdo), true), 'side nav tables rolled back');
+
+	$planned = $makeRunner()->up(null, 'module:sideNav', true);
+	assertSameValue(3, count($planned), 'dry run lists every side nav migration');
+	assertTrueValue(!in_array($tableNames['SIDE_NAV_GROUP_TABLE'], liveTables($pdo), true), 'dry run created nothing');
+
+	$makeRunner()->up(null, 'module:sideNav');
+});
+
+testCase('a foreign key column takes the collation of the column it references', function () use ($pdo, $databaseConnection, $tableNames, $databaseName, $makeRunner) {
+	$collationOf = static fn(string $table, string $column) => $pdo->query(
+		"SELECT COLLATION_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE()
+		 AND TABLE_NAME = " . $pdo->quote($table) . " AND COLUMN_NAME = " . $pdo->quote($column)
+	)->fetchColumn();
+	$original = $pdo->query('SELECT @@collation_database')->fetchColumn();
+
+	// An older install: new tables default to a charset the existing ones do not use.
+	$makeRunner()->down(1, 'module:threadMod');
+	// Through the runner's own connection: a session caches its database's default charset.
+	$databaseConnection->execute("ALTER DATABASE `{$databaseName}` CHARACTER SET latin1 COLLATE latin1_swedish_ci");
+	try {
+		$makeRunner()->up(null, 'module:threadMod');
+		$matched = $collationOf($tableNames['THREAD_MOD_TABLE'], 'thread_uid');
+	} finally {
+		$databaseConnection->execute("ALTER DATABASE `{$databaseName}` COLLATE {$original}");
+	}
+
+	assertSameValue($collationOf($tableNames['THREAD_TABLE'], 'thread_uid'), $matched, 'thread_mods.thread_uid matches threads.thread_uid');
+
+	// Recreate it under the restored default so later cases see a normal install.
+	$makeRunner()->down(1, 'module:threadMod');
+	$makeRunner()->up(null, 'module:threadMod');
+});
+
 testCase('doctor reports no drift against a freshly migrated database', function () use ($makeRunner) {
 	assertSameValue([], $makeRunner()->doctor(), 'doctor found drift on a fresh install');
 });

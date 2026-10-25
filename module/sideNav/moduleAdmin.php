@@ -110,7 +110,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		return new sideNavRenderer(
 			$this->moduleContext->adminPageRenderer,
 			$this->moduleContext->boardService->getAllListedBoards() ?? [],
-			(string) $this->getConfig('HOME')
+			(string) $this->getConfig('HOME'),
+			$this->moduleContext->board->getBoardURL(true) . '?mode=overboard'
 		);
 	}
 

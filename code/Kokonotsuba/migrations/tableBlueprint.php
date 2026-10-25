@@ -131,6 +131,22 @@ class tableBlueprint {
 		return $this;
 	}
 
+	/**
+	 * Give a column an explicit collation, unless its definition already names a charset or collation.
+	 * schemaBuilder uses this to match a foreign key column to the column it references.
+	 */
+	public function collate(string $column, string $collation): self {
+		self::assertColumnName($column);
+		self::assertIdentifier($collation);
+
+		$definition = $this->columns[$column] ?? null;
+		if ($definition !== null && !preg_match('/\b(COLLATE|CHARACTER\s+SET|CHARSET)\b/i', $definition)) {
+			$this->columns[$column] = "{$definition} COLLATE {$collation}";
+		}
+
+		return $this;
+	}
+
 	public function engine(string $engine): self {
 		self::assertIdentifier($engine);
 		$this->engine = $engine;

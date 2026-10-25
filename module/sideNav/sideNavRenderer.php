@@ -16,6 +16,7 @@ class sideNavRenderer {
 		private readonly pageRenderer $renderer,
 		private readonly array $boards,
 		private readonly string $homeUrl,
+		private readonly string $overboardUrl,
 	) {}
 
 	/** @param array $layout groups with title, kind, id and links (label, url) */
@@ -62,9 +63,12 @@ class sideNavRenderer {
 	private function nav(string $groupsHtml): string {
 		return $this->renderer->ParseBlock('SIDE_NAV', [
 			'{$ARIA_LABEL}' => sanitizeStr(_T('sidenav_title')),
+			'{$MAIN_LABEL}' => _T('sidenav_main'),
 			'{$HOME_URL}' => sanitizeStr($this->homeUrl),
 			'{$HOME_LABEL}' => _T('head_home'),
 			'{$HIDE_LABEL}' => _T('sidenav_hide'),
+			'{$OVERBOARD_URL}' => sanitizeStr($this->overboardUrl),
+			'{$OVERBOARD_LABEL}' => _T('sidenav_overboard'),
 			'{$STYLE_LABEL}' => _T('sidenav_style'),
 			'{$GROUPS}' => $groupsHtml,
 		]);

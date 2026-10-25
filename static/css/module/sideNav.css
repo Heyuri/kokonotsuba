@@ -41,14 +41,6 @@ body:not(.sideNavHidden) .stickyNav {
 	text-align: left;
 }
 
-.sideNavHome {
-	font-weight: bold;
-}
-
-.sideNavHide {
-	font-weight: normal;
-}
-
 .sideNavGroup {
 	margin-top: 0.5em;
 }
