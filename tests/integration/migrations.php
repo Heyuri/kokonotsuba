@@ -184,12 +184,13 @@ testCase('nothing is pending', function () use ($makeRunner) {
 	assertSameValue([], $makeRunner()->pending(), 'migrations still pending after up()');
 });
 
-testCase('a dry run of a module whose tables do not exist yet reaches the end', function () use ($pdo, $tableNames, $makeRunner) {
-	$makeRunner()->down(3, 'module:sideNav');
+testCase('a dry run of a module whose tables do not exist yet reaches the end', function () use ($pdo, $tableNames, $makeRunner, $root) {
+	$count = count(glob($root . '/module/sideNav/migrations/*.php'));
+	$makeRunner()->down($count, 'module:sideNav');
 	assertTrueValue(!in_array($tableNames['SIDE_NAV_GROUP_TABLE'], liveTables($pdo), true), 'side nav tables rolled back');
 
 	$planned = $makeRunner()->up(null, 'module:sideNav', true);
-	assertSameValue(3, count($planned), 'dry run lists every side nav migration');
+	assertSameValue($count, count($planned), 'dry run lists every side nav migration');
 	assertTrueValue(!in_array($tableNames['SIDE_NAV_GROUP_TABLE'], liveTables($pdo), true), 'dry run created nothing');
 
 	$makeRunner()->up(null, 'module:sideNav');

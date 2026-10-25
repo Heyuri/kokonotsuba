@@ -37,12 +37,12 @@ function getBannerService(transactionManager $transactionManager): bannerService
 function renderPresetNav(bannerPresetRegistry $presets, string $baseUrl, ?string $currentKey, bool $withAll = false): string {
 	$entries = [];
 
-	foreach ($presets->all() as $key => $preset) {
-		$entries[] = [$preset->label(), $baseUrl . '&preset=' . urlencode($key), $key === $currentKey];
-	}
-
 	if ($withAll) {
 		$entries[] = [_T('banner_preset_all'), $baseUrl . '&preset=all', $currentKey === null];
+	}
+
+	foreach ($presets->all() as $key => $preset) {
+		$entries[] = [$preset->label(), $baseUrl . '&preset=' . urlencode($key), $key === $currentKey];
 	}
 
 	$links = [];

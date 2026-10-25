@@ -10,6 +10,7 @@ use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\SideNavListenerTrait;
+use function Kokonotsuba\libraries\html\getBoardStyleSet;
 
 /** The side navigation: a home link, then each group's links, rendered into every page. */
 class moduleMain extends abstractModuleMain {
@@ -20,6 +21,11 @@ class moduleMain extends abstractModuleMain {
 	private const HIDE_SCRIPT = '<script>(function(){var v=null;try{v=localStorage.getItem("sidenav")}catch(e){}'
 		. 'var d=window.KOKO_DEFAULT_SETTINGS||{};'
 		. 'if(v!==null?v==="false":d.sidenav===false)document.body.classList.add("sideNavHidden")})();</script>';
+
+	/** Closes the groups the reader collapsed, right after the nav is parsed so they never paint open. */
+	private const COLLAPSE_SCRIPT = '<script>(function(){var c=[];try{c=JSON.parse(localStorage.getItem("sideNavCollapsed"))||[]}catch(e){}'
+		. 'document.querySelectorAll(".sideNav .sideNavGroup").forEach(function(g){'
+		. 'if(c.indexOf(g.getAttribute("data-group"))!==-1)g.open=false})})();</script>';
 
 	private sideNavRepository $sideNavRepository;
 	private ?string $html = null;
@@ -60,8 +66,9 @@ class moduleMain extends abstractModuleMain {
 			$this->moduleContext->adminPageRenderer,
 			$this->moduleContext->boardService->getAllListedBoards() ?? [],
 			(string) $this->getConfig('HOME'),
-			$this->moduleContext->board->getBoardURL(true) . '?mode=overboard'
+			$this->moduleContext->board->getBoardURL(true) . '?mode=overboard',
+			array_keys(getBoardStyleSet($this->moduleContext->board->loadBoardConfig())[1])
 		);
-		return self::HIDE_SCRIPT . $renderer->render($this->sideNavRepository->getLayout());
+		return self::HIDE_SCRIPT . $renderer->render($this->sideNavRepository->getLayout()) . self::COLLAPSE_SCRIPT;
 	}
 }
