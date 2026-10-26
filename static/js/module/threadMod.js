@@ -245,6 +245,9 @@
 		var isOp = postEl.classList.contains('op');
 
 		if (isOp) {
+			// the menu is open, so the click on "Thread tools" is likely: ask for the window's state now
+			if (document.querySelector('#threadModToolsTemplate')) toolsState(threadUidOf(postEl));
+
 			items.push({
 				href: moduleUrl + '&threadUid=' + encodeURIComponent(threadUidOf(postEl)),
 				action: 'threadMod_tools',
@@ -294,6 +297,7 @@
 			if (!res.ok) throw await PostActionUtils.responseError(res);
 			return res.json();
 		}).then(function (data) {
+			forgetToolsState(threadUidOf(postEl));
 			if (data && data.html) replacePost(postEl, data.html);
 			showMessage((data && data.message) || 'Done.', true);
 		}).catch(function (err) {
@@ -328,6 +332,33 @@
 
 	// ---- the tools window ----
 
+	/** thread uid => {at, promise}: the state asked for when the OP's menu opened, ahead of the click */
+	var stateCache = {};
+	var STATE_TTL = 30000;
+
+	function toolsState(threadUid) {
+		var cached = stateCache[threadUid];
+		if (cached && Date.now() - cached.at < STATE_TTL) return cached.promise;
+
+		var promise = fetch(moduleUrl + '&pageName=state&threadUid=' + encodeURIComponent(threadUid), {
+			credentials: 'same-origin',
+			headers: { 'X-Requested-With': 'XMLHttpRequest' }
+		}).then(async function (res) {
+			if (!res.ok) throw await PostActionUtils.responseError(res);
+			return res.json();
+		});
+
+		// a failure is not kept, so the next open asks again
+		promise.catch(function () { forgetToolsState(threadUid); });
+
+		stateCache[threadUid] = { at: Date.now(), promise: promise };
+		return promise;
+	}
+
+	function forgetToolsState(threadUid) {
+		delete stateCache[threadUid];
+	}
+
 	/**
 	 * The tools form, cloned from the blank <template> in the page head and filled from
 	 * pageName=state: the page itself may be static html, so it carries nothing about the reader.
@@ -336,18 +367,14 @@
 		var threadUid = threadUidOf(opEl);
 		if (!threadUid || !document.querySelector('#threadModToolsTemplate')) return;
 
-		var state = fetch(moduleUrl + '&pageName=state&threadUid=' + encodeURIComponent(threadUid), {
-			credentials: 'same-origin',
-			headers: { 'X-Requested-With': 'XMLHttpRequest' }
-		}).then(async function (res) {
-			if (!res.ok) throw await PostActionUtils.responseError(res);
-			return res.json();
-		});
+		var state = toolsState(threadUid);
+		forgetToolsState(threadUid);
 
 		PostActionUtils.openWindow({
 			templateId: '#threadModToolsTemplate',
 			title: 'Thread tools',
 			postEl: opEl,
+			keepOpen: true,
 			onOpen: function (opened) {
 				var form = opened.form;
 				var win = opened.win;
@@ -380,6 +407,7 @@
 			},
 			onSuccess: function (ctx) {
 				var data = ctx.res || {};
+				forgetToolsState(threadUid);
 
 				// a hidden or revealed post is swapped on the page when it is drawn here
 				var postEl = data.postUid ? document.querySelector('.post[data-post-uid="' + data.postUid + '"]') : null;
@@ -389,6 +417,16 @@
 
 				// a hand-over or a revoke changes what this browser may do
 				discover();
+
+				// the window stays for the next action, reset to what the thread looks like now
+				var fresh = toolsState(threadUid);
+				forgetToolsState(threadUid);
+				fresh.then(function (state) {
+					fillTools(ctx.form, ctx.win, state);
+				}).catch(function () {
+					// no longer this thread's mod
+					ctx.win.remove();
+				});
 			},
 			onFail: function (ctx) {
 				showMessage(PostActionUtils.errorMessage(ctx.err, 'That could not be done.'), false);
@@ -396,11 +434,13 @@
 		});
 	}
 
+	/** Fill the form from a state answer, replacing whatever an earlier one put there. */
 	function fillTools(form, win, data) {
 		var name = win.div.querySelector('.winname');
 		if (name && data.title) name.textContent = data.title;
 
 		var picker = form.querySelector('select[name="postNumber"]');
+		picker.querySelectorAll('option[data-post-uid]').forEach(function (option) { option.remove(); });
 		(data.replies || []).forEach(function (reply) {
 			var option = document.createElement('option');
 			option.value = reply.no;
@@ -408,21 +448,28 @@
 			option.textContent = reply.label;
 			picker.appendChild(option);
 		});
+		picker.value = '';
+
+		var previewRow = form.querySelector('.threadModPreviewRow');
+		previewRow.hidden = true;
+		previewRow.querySelector('.threadModPreview').textContent = '';
 
 		var count = form.querySelector('.threadModCount');
 		if (count) count.textContent = data.countText || '';
 
-		if (data.role !== 'owner') return;
-
-		form.querySelector('.threadModOwnerButtons').hidden = false;
-
+		// a hand-over leaves the old owner a mod, without these
+		var isOwner = data.role === 'owner';
 		var section = form.querySelector('.threadModRosterSection');
 		var table = section.querySelector('.threadModRoster');
-		var roster = data.roster || [];
+		var roster = isOwner ? (data.roster || []) : [];
 
-		section.hidden = false;
+		form.querySelector('.threadModOwnerButtons').hidden = !isOwner;
+		section.hidden = !isOwner;
 		section.querySelector('.threadModRosterEmpty').hidden = roster.length > 0;
 		table.hidden = roster.length === 0;
+
+		// the first row is the header
+		while (table.rows.length > 1) table.deleteRow(1);
 
 		roster.forEach(function (entry) {
 			var row = table.insertRow();
