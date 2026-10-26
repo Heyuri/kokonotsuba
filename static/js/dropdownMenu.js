@@ -40,13 +40,19 @@
 			subMenus = [];
 			buildContent(menu, subMenus);
 
-			// position below the toggle
 			var rect = toggle.getBoundingClientRect();
 			menu.style.position = 'absolute';
-			menu.style.top = (window.scrollY + rect.bottom + 2) + 'px';
 
-			menu.hidden = false; // must be visible to measure width
+			menu.hidden = false; // must be visible to measure
 			var menuWidth = menu.offsetWidth;
+			var menuHeight = menu.offsetHeight;
+
+			// open below the toggle, or above when it would run past the viewport and there is more room up there
+			var spaceBelow = window.innerHeight - rect.bottom;
+			var openUp = spaceBelow < menuHeight + 2 && rect.top > spaceBelow;
+			var top = openUp ? rect.top - menuHeight - 2 : rect.bottom + 2;
+			menu.style.top = (window.scrollY + Math.max(top, 0)) + 'px';
+
 			var left = window.scrollX + rect.left;
 			var maxLeft = window.scrollX + window.innerWidth - menuWidth - 8;
 			menu.style.left = Math.min(left, maxLeft) + 'px';

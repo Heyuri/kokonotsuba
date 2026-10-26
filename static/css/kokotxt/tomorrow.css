@@ -19,6 +19,7 @@
   --color-fg-reply: var(--color-fg-main);
   --color-fg-link: #81a2be;
   --color-fg-link-hover: #5f89ac;
+  --color-fg-side-nav-link: var(--color-fg-link);
   --color-x-lo-contrast-border: #111314;
 	--color-lo-contrast-border: #27292c;
 	--color-hi-contrast-border: #656769;

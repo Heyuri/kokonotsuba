@@ -10,7 +10,6 @@ use Kokonotsuba\ban\banDuration;
 use Kokonotsuba\ban\banEntry;
 use Kokonotsuba\ban\banImage;
 use Kokonotsuba\ban\banImagePicker;
-use Kokonotsuba\ban\visitorTokenSigner;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
@@ -643,9 +642,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		$rows[] = $this->recordRow(_T('ban_th_filed_at'), $this->formatDate($ban->filedAt));
 		$rows[] = $this->recordRow(_T('ban_view_label_expires'), $this->describeExpiry($ban, $now));
 		$rows[] = $this->recordRow(_T('ban_th_seen'), $this->describeSeen($ban));
-		$rows[] = $this->recordRow(_T('ban_view_label_token'), sanitizeStr($ban->visitorTokenHash === null
-			? _T('ban_token_not_tied')
-			: _T('ban_token_tied', substr($ban->visitorTokenHash, 0, visitorTokenSigner::DISPLAY_LENGTH))));
+		$rows[] = $this->recordRow(_T('ban_view_label_token'), $ban->visitorTokenHash === null
+			? sanitizeStr(_T('ban_token_not_tied'))
+			: '<a href="' . sanitizeStr(managePostsLink::forVisitorToken($this->moduleContext->request->getCurrentUrlNoQuery(), $ban->visitorTokenHash))
+				. '" title="' . sanitizeStr(_T('view_posts_by_browser')) . '">' . sanitizeStr($ban->visitorTokenHash) . '</a>');
 		$rows[] = $this->recordRow(_T('ban_view_label_revoked'), $ban->isRevoked()
 			? sanitizeStr($ban->revokedByUsername ?? '') . ' — ' . $this->formatDate((int) $ban->revokedAt)
 			: '—');

@@ -132,8 +132,13 @@
 		return ' ## ' + capcodeTrigger;
 	}
 
+	/** "## OP" at the end of the name, with or without the space, as the server reads it */
+	function suffixPattern() {
+		return new RegExp('\\s*##\\s*' + capcodeTrigger.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$', 'i');
+	}
+
 	function hasSuffix(value) {
-		return new RegExp('\\s##\\s+' + capcodeTrigger.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$', 'i').test(value);
+		return suffixPattern().test(value);
 	}
 
 	function attachCapcodeBox(nameInput) {
@@ -159,13 +164,26 @@
 			if (box.checked) {
 				if (!hasSuffix(value)) nameInput.value = value.replace(/\s+$/, '') + suffix();
 			} else {
-				nameInput.value = value.replace(new RegExp('\\s*##\\s+' + capcodeTrigger + '\\s*$', 'i'), '');
+				nameInput.value = value.replace(suffixPattern(), '');
 			}
 			nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+			syncCapcodeBoxes();
 		});
 
+		// quick reply copies values between the two name fields without an input event, so the
+		// other field's box is refreshed too, after that copy has run
 		nameInput.addEventListener('input', function () {
-			box.checked = hasSuffix(nameInput.value);
+			setTimeout(syncCapcodeBoxes, 0);
+		});
+	}
+
+	/** Tick each box from its own name field. */
+	function syncCapcodeBoxes() {
+		['name', 'qrname'].forEach(function (id) {
+			var input = document.getElementById(id);
+			var label = input && input.nextElementSibling;
+			if (!label || !label.classList.contains('threadModCapcodeLabel')) return;
+			label.querySelector('.threadModCapcodeBox').checked = hasSuffix(input.value);
 		});
 	}
 

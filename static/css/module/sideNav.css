@@ -82,7 +82,7 @@ body:not(.sideNavHidden) {
 	white-space: nowrap;
 	outline: none;
 	text-decoration: none;
-	color: #550;
+	color: var(--color-fg-side-nav-link, #550);
 }
 
 @media screen and (max-width: 800px) {

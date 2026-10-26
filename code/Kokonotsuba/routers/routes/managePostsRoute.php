@@ -19,7 +19,6 @@ use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\policy\postRenderingPolicy;
 use Kokonotsuba\request\request;
-use Kokonotsuba\ban\visitorTokenSigner;
 use Kokonotsuba\error\BoardException;
 use function Puchiko\strings\sanitizeStr;
 use function Kokonotsuba\libraries\createAssocArrayFromBoardArray;
@@ -351,7 +350,7 @@ class managePostsRoute implements route {
 		$url = $managePostsUrl . '&visitor_token_hash=' . urlencode($hash) . '&board=' . $boardList;
 
 		return '<td class="colBrowser"><a href="' . sanitizeStr($url) . '" title="' . sanitizeStr(_T('view_posts_by_browser')) . '">'
-			. sanitizeStr(substr($hash, 0, visitorTokenSigner::DISPLAY_LENGTH)) . '</a></td>';
+			. sanitizeStr($hash) . '</a></td>';
 	}
 
 	private function renderAttachments(array $attachments): string {
