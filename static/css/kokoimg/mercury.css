@@ -14,6 +14,7 @@
   --color-fg-main: #d8d8d8;
   --color-fg-link: #d23b8f;
   --color-fg-link-hover: #c60a94;
+  --color-fg-side-nav-link: var(--color-fg-link);
   --color-x-lo-contrast-border: #111314;
   --color-lo-contrast-border: #5e3a6c;
   --color-hi-contrast-border: #bb8bbe;

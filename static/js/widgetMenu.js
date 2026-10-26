@@ -122,9 +122,12 @@
 				clearTimeout(hideTimeout);
 				var wrapperRect = wrapper.getBoundingClientRect();
 				var menuRect = menu.getBoundingClientRect();
-				subMenu.style.top = (window.scrollY + wrapperRect.top) + 'px';
-				subMenu.style.left = (window.scrollX + menuRect.right + 2) + 'px';
 				subMenu.hidden = false;
+
+				// shift up so the bottom stays inside the viewport, never past its top
+				var top = Math.min(wrapperRect.top, window.innerHeight - subMenu.offsetHeight);
+				subMenu.style.top = (window.scrollY + Math.max(top, 0)) + 'px';
+				subMenu.style.left = (window.scrollX + menuRect.right + 2) + 'px';
 			}
 
 			function scheduleHide() {

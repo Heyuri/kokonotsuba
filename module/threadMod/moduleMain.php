@@ -304,7 +304,10 @@ class moduleMain extends abstractModuleMain {
 		requirePostWithCsrf($request);
 		$this->assertNotBanned(self::CHECKPOINT);
 
-		$action = (string)$request->getParameter('action', 'POST', '');
+		// a roster Revoke button submits only its token hash
+		$action = $request->getParameter('tokenHash', 'POST', '') !== ''
+			? 'revoke'
+			: (string)$request->getParameter('action', 'POST', '');
 		$typedPassword = (string)$request->getParameter('pwd', 'POST', '');
 		$typedPassword = $typedPassword === '' ? null : $typedPassword;
 
@@ -577,28 +580,22 @@ class moduleMain extends abstractModuleMain {
 		if (!$role->isAtLeastMod() && !$stripped && (bool)$this->getModuleConfig('ALLOW_PASSWORD_OWNERSHIP', true)) {
 			$claim = $renderer->ParseBlock('THREAD_MOD_CLAIM', $common + [
 				'{$PASSWORD_LABEL}' => sanitizeStr(_T('threadmod_password_label')),
+				'{$PASSWORD_DESC}' => sanitizeStr(_T('threadmod_password_desc')),
 				'{$CLAIM_LABEL}' => sanitizeStr(_T('threadmod_claim_button')),
 			]);
 		}
 
-		$modForms = '';
-		if ($active) {
-			$max = (int)$this->getModuleConfig('MAX_DELETIONS_PER_THREAD', 0);
-			$count = $this->service->deletionCount($threadUid);
-			$modForms = $renderer->ParseBlock('THREAD_MOD_MOD_FORMS', $common + [
-				'{$DELETE_LABEL}' => sanitizeStr(_T('threadmod_form_delete')),
-				'{$DELETE_BUTTON}' => sanitizeStr(_T('threadmod_delete')),
-				'{$UNDO_LABEL}' => sanitizeStr(_T('threadmod_form_undo')),
-				'{$UNDO_BUTTON}' => sanitizeStr(_T('threadmod_undo')),
-				'{$COUNT_TEXT}' => sanitizeStr($max > 0 ? _T('threadmod_count_capped', $count, $max) : _T('threadmod_count', $count)),
-			]);
-		}
-
-		$ownerForms = '';
+		$ownerButtons = '';
+		$roster = '';
 		if ($active && $role->isOwner()) {
+			$ownerButtons = $renderer->ParseBlock('THREAD_MOD_OWNER_FORMS', [
+				'{$GRANT_BUTTON}' => sanitizeStr(_T('threadmod_grant')),
+				'{$TRANSFER_BUTTON}' => sanitizeStr(_T('threadmod_transfer')),
+			]);
+
 			$rows = '';
 			foreach ($this->service->repository()->listActive($threadUid) as $row) {
-				$rows .= $renderer->ParseBlock('THREAD_MOD_ROSTER_ROW', $common + [
+				$rows .= $renderer->ParseBlock('THREAD_MOD_ROSTER_ROW', [
 					'{$ROLE}' => sanitizeStr(threadRole::fromStored($row['role'])->isOwner() ? _T('threadmod_role_owner') : _T('threadmod_role_mod')),
 					'{$GRANTED_FROM}' => $row['granted_from_no'] ? 'No.' . (int)$row['granted_from_no'] : '',
 					'{$GRANTED_AT}' => sanitizeStr((string)$row['granted_at']),
@@ -609,31 +606,41 @@ class moduleMain extends abstractModuleMain {
 			}
 
 			$roster = $rows === ''
-				? '<p>' . sanitizeStr(_T('threadmod_roster_empty')) . '</p>'
+				? '<h4>' . sanitizeStr(_T('threadmod_roster_title')) . '</h4><p>' . sanitizeStr(_T('threadmod_roster_empty')) . '</p>'
 				: $renderer->ParseBlock('THREAD_MOD_ROSTER', [
+					'{$ROSTER_TITLE}' => sanitizeStr(_T('threadmod_roster_title')),
 					'{$TH_ROLE}' => sanitizeStr(_T('threadmod_th_role')),
 					'{$TH_FROM}' => sanitizeStr(_T('threadmod_th_from')),
 					'{$TH_SINCE}' => sanitizeStr(_T('threadmod_th_since')),
 					'{$TH_BROWSER}' => sanitizeStr(_T('threadmod_th_browser')),
 					'{$ROSTER_ROWS}' => $rows,
 				]);
+		}
 
-			$ownerForms = $renderer->ParseBlock('THREAD_MOD_OWNER_FORMS', $common + [
-				'{$GRANT_LABEL}' => sanitizeStr(_T('threadmod_form_grant')),
-				'{$GRANT_BUTTON}' => sanitizeStr(_T('threadmod_grant')),
-				'{$TRANSFER_LABEL}' => sanitizeStr(_T('threadmod_form_transfer')),
-				'{$TRANSFER_BUTTON}' => sanitizeStr(_T('threadmod_transfer')),
-				'{$ROSTER_TITLE}' => sanitizeStr(_T('threadmod_roster_title')),
-				'{$ROSTER_HTML}' => $roster,
+		$modForms = '';
+		if ($active) {
+			$max = (int)$this->getModuleConfig('MAX_DELETIONS_PER_THREAD', 0);
+			$count = $this->service->deletionCount($threadUid);
+			$modForms = $renderer->ParseBlock('THREAD_MOD_MOD_FORMS', [
+				'{$POST_LABEL}' => sanitizeStr(_T('threadmod_form_post')),
+				'{$ACTION_LABEL}' => sanitizeStr(_T('threadmod_form_action')),
+				'{$DELETE_BUTTON}' => sanitizeStr(_T('threadmod_delete')),
+				'{$UNDO_BUTTON}' => sanitizeStr(_T('threadmod_undo')),
+				'{$OWNER_BUTTONS}' => $ownerButtons,
+				'{$COUNT_TEXT}' => sanitizeStr($max > 0 ? _T('threadmod_count_capped', $count, $max) : _T('threadmod_count', $count)),
 			]);
 		}
+
+		$formRows = $claim . $modForms;
+		$form = $formRows === '' ? '' : $renderer->ParseBlock('THREAD_MOD_FORM', $common + [
+			'{$FORM_ROWS}' => $formRows,
+			'{$ROSTER_SECTION}' => $roster,
+		]);
 
 		$this->drawPage('THREAD_MOD_TOOLS', [
 			'{$TITLE}' => sanitizeStr(_T('threadmod_tools_title', $op->getNumber())),
 			'{$ROLE_TEXT}' => sanitizeStr($this->roleText($role, $stripped)),
-			'{$CLAIM_SECTION}' => $claim,
-			'{$MOD_SECTION}' => $modForms,
-			'{$OWNER_SECTION}' => $ownerForms,
+			'{$FORM_SECTION}' => $form,
 			'{$BACK_URL}' => sanitizeStr($this->moduleContext->board->getBoardThreadURL($op->getNumber())),
 			'{$BACK_LABEL}' => sanitizeStr(_T('threadmod_back')),
 		]);
@@ -668,7 +675,8 @@ class moduleMain extends abstractModuleMain {
 			'{$ACTION}' => sanitizeStr($action),
 			'{$POST_UID}' => $post->getUid(),
 			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
-			'{$PASSWORD_LABEL}' => sanitizeStr(_T('threadmod_password_optional')),
+			'{$PASSWORD_LABEL}' => sanitizeStr(_T('threadmod_password_label')),
+			'{$PASSWORD_DESC}' => sanitizeStr(_T('threadmod_password_optional')),
 			'{$SUBMIT_LABEL}' => sanitizeStr(_T('threadmod_confirm_button')),
 			'{$BACK_LABEL}' => sanitizeStr(_T('threadmod_back')),
 			'{$BACK_URL}' => sanitizeStr($this->moduleContext->board->getBoardThreadURL($post->getOpNumber() ?: $post->getNumber())),

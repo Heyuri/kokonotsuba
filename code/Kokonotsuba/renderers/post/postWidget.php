@@ -21,7 +21,7 @@ final class postWidget {
 
 	/** Staff entries: the thread's or reply's moderation menu, then the ones every post gets. */
 	public function addModerateWidgets(postMenu $menu, postRenderContext $ctx): void {
-		$this->addEntries($menu, $ctx, 'ModerateThreadWidget', 'ModerateReplyWidget', 'ModeratePostWidget');
+		$this->addEntries($menu, $ctx, 'ModerateThreadWidget', 'ModerateReplyWidget', 'ModeratePostWidget', _T('widget_submenu_thread'));
 	}
 
 	/** Everyone's entries, in the same order as the moderation ones. */
@@ -29,9 +29,21 @@ final class postWidget {
 		$this->addEntries($menu, $ctx, 'ThreadWidget', 'ReplyWidget', 'PostWidget');
 	}
 
-	private function addEntries(postMenu $menu, postRenderContext $ctx, string $threadHook, string $replyHook, string $postHook): void {
+	/** @param string $threadSubMenu Submenu for thread entries that don't name their own, '' to leave them inline */
+	private function addEntries(postMenu $menu, postRenderContext $ctx, string $threadHook, string $replyHook, string $postHook, string $threadSubMenu = ''): void {
 		if ($ctx->isOp) {
-			$menu->append($this->collect($threadHook, [$ctx->post, $ctx->threadPosts, $ctx->thread]));
+			$widgets = $this->collect($threadHook, [$ctx->post, $ctx->threadPosts, $ctx->thread]);
+
+			if ($threadSubMenu !== '') {
+				foreach ($widgets as &$widget) {
+					if (($widget['subMenu'] ?? '') === '') {
+						$widget['subMenu'] = $threadSubMenu;
+					}
+				}
+				unset($widget);
+			}
+
+			$menu->append($widgets);
 		} else {
 			$menu->append($this->collect($replyHook, [$ctx->post]));
 		}
