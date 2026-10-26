@@ -39,7 +39,9 @@
 			onSuccess,
 			onFail,
 			onOpen,
-			fields = []
+			fields = [],
+			// leave the window up after a successful submit, for a form that is used more than once
+			keepOpen = false
 		}) {
 			const tmpl = document.querySelector(templateId);
 			if (!tmpl) {
@@ -155,8 +157,8 @@
         				data = await res.json();
         			}
 
-					win.remove();
-					if (onSuccess) onSuccess({ res: data, form, postEl });
+					if (!keepOpen) win.remove();
+					if (onSuccess) onSuccess({ res: data, form, postEl, win });
 				} catch (err) {
 					console.error('Form submission error:', err);
 					if (onFail) onFail({ err, form, postEl });
