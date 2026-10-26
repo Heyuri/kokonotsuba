@@ -74,7 +74,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			new threadModRepository(
 				databaseConnection::getInstance(),
 				$this->moduleContext->getTableName('THREAD_MOD_TABLE'),
-				$this->moduleContext->getTableName('POST_TABLE')
+				$this->moduleContext->getTableName('POST_TABLE'),
+				$this->moduleContext->getTableName('DELETED_POSTS_TABLE')
 			),
 			$this->moduleContext->postRepository,
 			$this->moduleContext->threadRepository,

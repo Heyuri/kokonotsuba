@@ -1,6 +1,15 @@
 					<tr>
 						<td class="postblock"><label for="threadModNumber">{$POST_LABEL}</label></td>
-						<td>No.<input type="number" id="threadModNumber" name="postNumber" min="1" class="inputtext threadModNumberField"></td>
+						<td>
+							<select id="threadModNumber" name="postNumber" class="threadModNumberField">
+								<option value="">{$PICK_LABEL}</option>
+								{$POST_OPTIONS}
+							</select>
+						</td>
+					</tr>
+					<tr class="threadModPreviewRow" hidden>
+						<td class="postblock">{$PREVIEW_LABEL}</td>
+						<td class="threadModPreview"></td>
 					</tr>
 					<tr>
 						<td class="postblock">{$ACTION_LABEL}</td>

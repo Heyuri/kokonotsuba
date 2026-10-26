@@ -157,7 +157,7 @@ $insert->execute([4, 4, 0, '', 'cookieless reply', '', '']);
 
 $postRepository = new postRepository($db, $t('POST_TABLE'), $t('THREAD_TABLE'), $t('DELETED_POSTS_TABLE'), $t('FILE_TABLE'), $t('SOUDANE_TABLE'), $t('NOTE_TABLE'), $t('ACCOUNT_TABLE'), $t('COUNTRY_FLAG_TABLE'), $t('DISPLAY_IP_TABLE'), $t('REPORT_TABLE'), $t('BOARD_TABLE'));
 $threadRepository = new threadRepository($db, $t('POST_TABLE'), $t('THREAD_TABLE'), $t('THREAD_THEMES_TABLE'), $t('DELETED_POSTS_TABLE'), $t('FILE_TABLE'), $t('ACCOUNT_TABLE'), $t('SOUDANE_TABLE'), $t('NOTE_TABLE'), $t('COUNTRY_FLAG_TABLE'), $t('DISPLAY_IP_TABLE'), $t('REPORT_TABLE'));
-$repository = new threadModRepository($db, $t('THREAD_MOD_TABLE'), $t('POST_TABLE'));
+$repository = new threadModRepository($db, $t('THREAD_MOD_TABLE'), $t('POST_TABLE'), $t('DELETED_POSTS_TABLE'));
 
 /** A service seeing the world as one browser, with the cookies it carries. */
 $serviceAs = static function (string $hash, array $cookies = [], bool $passwordOwnership = true) use ($repository, $postRepository, $threadRepository): threadModService {
@@ -292,6 +292,15 @@ testCase('a stripped thread answers no role to anyone', function () use ($servic
 });
 
 echo "\nCookie\n";
+
+testCase('the tools page picker lists live replies only', function () use ($repository, $pdo, $t) {
+	$numbers = static fn(): array => array_map(static fn(array $row): int => (int)$row['no'], $repository->listReplies(THREAD));
+	assertSameValue([2, 3, 4], $numbers(), 'every reply, oldest first, without the opening post');
+
+	$pdo->exec("INSERT INTO `{$t('DELETED_POSTS_TABLE')}` (post_uid, deleted_by, file_only, by_proxy) VALUES (3, NULL, 0, 0)");
+	assertSameValue([2, 4], $numbers(), 'a staff-deleted reply is left out');
+	$pdo->exec("DELETE FROM `{$t('DELETED_POSTS_TABLE')}` WHERE post_uid = 3");
+});
 
 testCase('the hint cookie round-trips roles', function () use ($serviceAs) {
 	$service = $serviceAs(OP_HASH, [threadModService::COOKIE => 'abcd:o,ef01:m,bogus,zz:x']);

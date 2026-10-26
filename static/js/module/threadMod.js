@@ -10,6 +10,8 @@
 	var moduleUrl = meta ? meta.getAttribute('content') : '';
 	var triggerMeta = document.querySelector('meta[name="threadModCapcodeTrigger"]');
 	var capcodeTrigger = triggerMeta ? triggerMeta.getAttribute('content') : 'OP';
+	var modTriggerMeta = document.querySelector('meta[name="threadModModCapcodeTrigger"]');
+	var modCapcodeTrigger = modTriggerMeta ? modTriggerMeta.getAttribute('content') : 'Thread Mod';
 
 	if (!moduleUrl) return;
 
@@ -119,7 +121,7 @@
 		updateCapcodeBoxes();
 	}
 
-	// ---- the "## OP" checkbox ----
+	// ---- the "## OP" / "## Thread Mod" checkbox ----
 
 	/** The thread the reply form posts to, on a thread page. */
 	function currentThreadUid() {
@@ -128,13 +130,18 @@
 		return op ? op.dataset.threadUid : '';
 	}
 
-	function suffix() {
-		return ' ## ' + capcodeTrigger;
+	/** What this reader types after "## " in the current thread: the owner's trigger or a mod's. */
+	function currentTrigger() {
+		return roles[currentThreadUid()] === 'mod' ? modCapcodeTrigger : capcodeTrigger;
 	}
 
-	/** "## OP" at the end of the name, with or without the space, as the server reads it */
+	function escapeRegExp(text) {
+		return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	}
+
+	/** " ## OP" or " ## Thread Mod" ending the name, spaced the way the server reads a capcode */
 	function suffixPattern() {
-		return new RegExp('\\s*##\\s*' + capcodeTrigger.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$', 'i');
+		return new RegExp('(?:^|\\s+)##\\s+(?:' + escapeRegExp(capcodeTrigger) + '|' + escapeRegExp(modCapcodeTrigger) + ')\\s*$', 'i');
 	}
 
 	function hasSuffix(value) {
@@ -147,7 +154,6 @@
 
 		var label = document.createElement('label');
 		label.className = 'threadModCapcodeLabel';
-		label.title = 'Sign this post as the thread OP';
 
 		var box = document.createElement('input');
 		box.type = 'checkbox';
@@ -156,47 +162,52 @@
 		box.checked = hasSuffix(nameInput.value);
 
 		label.appendChild(box);
-		label.appendChild(document.createTextNode(' ##' + capcodeTrigger));
+		label.appendChild(document.createElement('span'));
 		nameInput.insertAdjacentElement('afterend', label);
+
+		function sync() {
+			box.checked = hasSuffix(nameInput.value);
+		}
 
 		box.addEventListener('change', function () {
 			var value = nameInput.value;
 			if (box.checked) {
-				if (!hasSuffix(value)) nameInput.value = value.replace(/\s+$/, '') + suffix();
+				if (!hasSuffix(value)) nameInput.value = value.replace(/\s+$/, '') + ' ## ' + currentTrigger();
 			} else {
 				nameInput.value = value.replace(suffixPattern(), '');
 			}
 			nameInput.dispatchEvent(new Event('input', { bubbles: true }));
-			syncCapcodeBoxes();
 		});
 
-		// quick reply copies values between the two name fields without an input event, so the
-		// other field's box is refreshed too, after that copy has run
-		nameInput.addEventListener('input', function () {
-			setTimeout(syncCapcodeBoxes, 0);
-		});
-	}
+		nameInput.addEventListener('input', sync);
+		if (nameInput.form) nameInput.form.addEventListener('reset', function () { setTimeout(sync, 0); });
 
-	/** Tick each box from its own name field. */
-	function syncCapcodeBoxes() {
-		['name', 'qrname'].forEach(function (id) {
-			var input = document.getElementById(id);
-			var label = input && input.nextElementSibling;
-			if (!label || !label.classList.contains('threadModCapcodeLabel')) return;
-			label.querySelector('.threadModCapcodeBox').checked = hasSuffix(input.value);
+		// the name cookie and quick reply's copying set the value from script, which fires no event
+		var native = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+		Object.defineProperty(nameInput, 'value', {
+			configurable: true,
+			get: function () { return native.get.call(this); },
+			set: function (value) { native.set.call(this, value); sync(); }
 		});
 	}
 
 	function updateCapcodeBoxes() {
 		var uid = currentThreadUid();
 		var show = !!(uid && roles[uid]);
+		var trigger = currentTrigger();
 
 		['name', 'qrname'].forEach(function (id) {
 			var input = document.getElementById(id);
 			if (!input) return;
 			attachCapcodeBox(input);
 			var label = input.nextElementSibling;
-			if (label && label.classList.contains('threadModCapcodeLabel')) label.hidden = !show;
+			if (!label || !label.classList.contains('threadModCapcodeLabel')) return;
+
+			// a hidden box would still be submitted, and the server refuses it from a stranger
+			label.hidden = !show;
+			label.querySelector('input').disabled = !show;
+			label.querySelector('span').textContent = ' ## ' + trigger;
+			label.title = roles[uid] === 'mod' ? 'Sign this post as a thread mod' : 'Sign this post as the thread OP';
 		});
 	}
 
@@ -234,6 +245,9 @@
 		var isOp = postEl.classList.contains('op');
 
 		if (isOp) {
+			// the menu is open, so the click on "Thread tools" is likely: ask for the window's state now
+			if (document.querySelector('#threadModToolsTemplate')) toolsState(threadUidOf(postEl));
+
 			items.push({
 				href: moduleUrl + '&threadUid=' + encodeURIComponent(threadUidOf(postEl)),
 				action: 'threadMod_tools',
@@ -283,6 +297,7 @@
 			if (!res.ok) throw await PostActionUtils.responseError(res);
 			return res.json();
 		}).then(function (data) {
+			forgetToolsState(threadUidOf(postEl));
 			if (data && data.html) replacePost(postEl, data.html);
 			showMessage((data && data.message) || 'Done.', true);
 		}).catch(function (err) {
@@ -315,11 +330,231 @@
 		document.dispatchEvent(new CustomEvent('threadMod:replaced', { detail: { post: fresh.matches('.post') ? fresh : fresh.querySelector('.post') } }));
 	}
 
+	// ---- the tools window ----
+
+	/** thread uid => {at, promise}: the state asked for when the OP's menu opened, ahead of the click */
+	var stateCache = {};
+	var STATE_TTL = 30000;
+
+	function toolsState(threadUid) {
+		var cached = stateCache[threadUid];
+		if (cached && Date.now() - cached.at < STATE_TTL) return cached.promise;
+
+		var promise = fetch(moduleUrl + '&pageName=state&threadUid=' + encodeURIComponent(threadUid), {
+			credentials: 'same-origin',
+			headers: { 'X-Requested-With': 'XMLHttpRequest' }
+		}).then(async function (res) {
+			if (!res.ok) throw await PostActionUtils.responseError(res);
+			return res.json();
+		});
+
+		// a failure is not kept, so the next open asks again
+		promise.catch(function () { forgetToolsState(threadUid); });
+
+		stateCache[threadUid] = { at: Date.now(), promise: promise };
+		return promise;
+	}
+
+	function forgetToolsState(threadUid) {
+		delete stateCache[threadUid];
+	}
+
+	/**
+	 * The tools form, cloned from the blank <template> in the page head and filled from
+	 * pageName=state: the page itself may be static html, so it carries nothing about the reader.
+	 */
+	function openTools(opEl) {
+		var threadUid = threadUidOf(opEl);
+		if (!threadUid || !document.querySelector('#threadModToolsTemplate')) return;
+
+		var state = toolsState(threadUid);
+		forgetToolsState(threadUid);
+
+		PostActionUtils.openWindow({
+			templateId: '#threadModToolsTemplate',
+			title: 'Thread tools',
+			postEl: opEl,
+			keepOpen: true,
+			onOpen: function (opened) {
+				var form = opened.form;
+				var win = opened.win;
+				if (!form) return;
+
+				form.querySelector('[name="threadUid"]').value = threadUid;
+
+				var picker = form.querySelector('select[name="postNumber"]');
+				if (picker) picker.addEventListener('change', function () { showPreview(form, picker); });
+
+				state.then(function (data) {
+					fillTools(form, win, data);
+				}).catch(function (err) {
+					win.remove();
+					showMessage(PostActionUtils.errorMessage(err, 'The thread tools could not be opened.'), false);
+				});
+			},
+			onSubmit: async function (ctx) {
+				var action = ctx.formData.has('rosterKey') ? 'revoke' : String(ctx.formData.get('action') || '');
+				if (CONFIRM[action] && !window.confirm(CONFIRM[action])) return false;
+
+				try {
+					ctx.formData.set('csrf_token', await csrfToken());
+				} catch (err) {
+					showMessage('That could not be done.', false);
+					return false;
+				}
+
+				ctx.formData.append('threadView', isThreadView() ? '1' : '0');
+			},
+			onSuccess: function (ctx) {
+				var data = ctx.res || {};
+				forgetToolsState(threadUid);
+
+				// a hidden or revealed post is swapped on the page when it is drawn here
+				var postEl = data.postUid ? document.querySelector('.post[data-post-uid="' + data.postUid + '"]') : null;
+				if (postEl && data.html) replacePost(postEl, data.html);
+
+				showMessage(data.message || 'Done.', true);
+
+				// a hand-over or a revoke changes what this browser may do
+				discover();
+
+				// the window stays for the next action, reset to what the thread looks like now
+				var fresh = toolsState(threadUid);
+				forgetToolsState(threadUid);
+				fresh.then(function (state) {
+					fillTools(ctx.form, ctx.win, state);
+				}).catch(function () {
+					// no longer this thread's mod
+					ctx.win.remove();
+				});
+			},
+			onFail: function (ctx) {
+				showMessage(PostActionUtils.errorMessage(ctx.err, 'That could not be done.'), false);
+			}
+		});
+	}
+
+	/** Fill the form from a state answer, replacing whatever an earlier one put there. */
+	function fillTools(form, win, data) {
+		var name = win.div.querySelector('.winname');
+		if (name && data.title) name.textContent = data.title;
+
+		var picker = form.querySelector('select[name="postNumber"]');
+		picker.querySelectorAll('option[data-post-uid]').forEach(function (option) { option.remove(); });
+		(data.replies || []).forEach(function (reply) {
+			var option = document.createElement('option');
+			option.value = reply.no;
+			option.dataset.postUid = reply.uid;
+			option.textContent = reply.label;
+			picker.appendChild(option);
+		});
+		picker.value = '';
+
+		var previewRow = form.querySelector('.threadModPreviewRow');
+		previewRow.hidden = true;
+		previewRow.querySelector('.threadModPreview').textContent = '';
+
+		var count = form.querySelector('.threadModCount');
+		if (count) count.textContent = data.countText || '';
+
+		// a hand-over leaves the old owner a mod, without these
+		var isOwner = data.role === 'owner';
+		var section = form.querySelector('.threadModRosterSection');
+		var table = section.querySelector('.threadModRoster');
+		var roster = isOwner ? (data.roster || []) : [];
+
+		form.querySelector('.threadModOwnerButtons').hidden = !isOwner;
+		section.hidden = !isOwner;
+		section.querySelector('.threadModRosterEmpty').hidden = roster.length > 0;
+		table.hidden = roster.length === 0;
+
+		// the first row is the header
+		while (table.rows.length > 1) table.deleteRow(1);
+
+		roster.forEach(function (entry) {
+			var row = table.insertRow();
+			[entry.role, entry.from, entry.since].forEach(function (text) {
+				row.insertCell().textContent = text;
+			});
+
+			var code = document.createElement('code');
+			code.textContent = entry.keyLabel;
+			row.insertCell().appendChild(code);
+
+			var revoke = document.createElement('button');
+			revoke.type = 'submit';
+			revoke.name = 'rosterKey';
+			revoke.value = entry.rosterKey;
+			revoke.textContent = table.dataset.revokeLabel || 'Revoke';
+			row.insertCell().appendChild(revoke);
+		});
+	}
+
+	/** The picked reply, from the page when it is drawn there, else from the post API. */
+	function showPreview(form, picker) {
+		var row = form.querySelector('.threadModPreviewRow');
+		var cell = row ? row.querySelector('.threadModPreview') : null;
+		if (!cell) return;
+
+		var option = picker.selectedOptions[0];
+		var postUid = option ? option.dataset.postUid : '';
+		cell.textContent = '';
+		row.hidden = !postUid;
+		if (!postUid) return;
+
+		var onPage = document.querySelector('.post[data-post-uid="' + CSS.escape(postUid) + '"]');
+		if (onPage) {
+			fillPreview(cell, onPage.cloneNode(true));
+			return;
+		}
+
+		var apiMeta = document.querySelector('meta[name="postApiUrl"]');
+		if (!apiMeta) {
+			row.hidden = true;
+			return;
+		}
+
+		var apiUrl = apiMeta.content;
+		var staff = !!document.querySelector('meta[name="postApiStaff"]');
+		fetch(apiUrl + (apiUrl.indexOf('?') === -1 ? '?' : '&') + 'post_uid=' + encodeURIComponent(postUid), { credentials: staff ? 'include' : 'omit' })
+			.then(function (res) { return res.ok ? res.json() : null; })
+			.then(function (data) {
+				// the reader may have picked another reply meanwhile
+				if (picker.selectedOptions[0] !== option) return;
+
+				var temp = document.createElement('div');
+				temp.innerHTML = (data && data.html) || '';
+				var post = temp.querySelector('.post');
+				if (post) fillPreview(cell, post);
+				else row.hidden = true;
+			})
+			.catch(function () { row.hidden = true; });
+	}
+
+	function fillPreview(cell, post) {
+		// a copy must not share ids or controls with the real post
+		post.removeAttribute('id');
+		post.querySelectorAll('[id]').forEach(function (el) { el.removeAttribute('id'); });
+		post.querySelectorAll('.deletionCheckbox, input, button').forEach(function (el) { el.remove(); });
+		post.classList.add('threadModPreviewPost');
+
+		// a reply the OP deleted is shown in full, so the undo is an informed one
+		post.classList.remove('opDeleted');
+		post.querySelectorAll('.opDeletedDetails').forEach(function (el) { el.remove(); });
+
+		cell.appendChild(post);
+	}
+
 	['delete', 'undo', 'grant', 'transfer'].forEach(function (action) {
 		window.postWidget.registerActionHandler('threadMod_' + action, function (ctx) {
 			var postEl = ctx && ctx.post;
 			if (postEl) send(action, postEl);
 		});
+	});
+
+	window.postWidget.registerActionHandler('threadMod_tools', function (ctx) {
+		var postEl = ctx && ctx.post;
+		if (postEl) openTools(postEl);
 	});
 
 	if (document.readyState === 'loading') {

@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\threadMod;
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
+use function Kokonotsuba\libraries\openDeletionExistsCondition;
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
 /**
@@ -15,10 +16,15 @@ final class threadModRepository extends baseRepository {
 	public function __construct(
 		databaseConnection $databaseConnection,
 		string $threadModTable,
-		private readonly string $postTable
+		private readonly string $postTable,
+		private readonly string $deletedPostsTable = ''
 	) {
 		parent::__construct($databaseConnection, $threadModTable);
 		self::validateTableName($postTable);
+
+		if ($deletedPostsTable !== '') {
+			self::validateTableName($deletedPostsTable);
+		}
 	}
 
 	/** Timestamps are written on PHP's clock, like the ban tables. */
@@ -172,6 +178,24 @@ final class threadModRepository extends baseRepository {
 		return (int)$this->queryValue(
 			"SELECT COUNT(*) FROM {$this->postTable} WHERE thread_uid = :thread_uid AND status LIKE :flag",
 			[':thread_uid' => $threadUid, ':flag' => '%\_' . threadModService::DELETED_FLAG . ':%']
+		);
+	}
+
+	/**
+	 * The thread's live replies, oldest first, for the tools page's post picker.
+	 *
+	 * @return array<int, array{post_uid: int, no: int, status: string}>
+	 */
+	public function listReplies(string $threadUid): array {
+		$visible = $this->deletedPostsTable !== ''
+			? ' AND NOT ' . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid')
+			: '';
+
+		return $this->queryAll(
+			"SELECT p.post_uid, p.no, p.status FROM {$this->postTable} p
+				WHERE p.thread_uid = :thread_uid AND p.is_op = 0{$visible}
+				ORDER BY p.post_uid ASC",
+			[':thread_uid' => $threadUid]
 		);
 	}
 

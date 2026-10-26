@@ -39,7 +39,9 @@
 			onSuccess,
 			onFail,
 			onOpen,
-			fields = []
+			fields = [],
+			// leave the window up after a successful submit, for a form that is used more than once
+			keepOpen = false
 		}) {
 			const tmpl = document.querySelector(templateId);
 			if (!tmpl) {
@@ -109,21 +111,7 @@
                 onOpen({ form, win, postEl });
             }
 
-			requestAnimationFrame(() => {
-				const rectWidth = win.div.offsetWidth;
-				const rectHeight = win.div.offsetHeight;
-				const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-				const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-				const margin = 20;
-				let x = viewportWidth - rectWidth - margin;
-				let y = parseInt(win.div.style.top, 10) || 0;
-				if (y + rectHeight > viewportHeight - margin) {
-					y = viewportHeight - rectHeight - margin;
-				}
-				if (y < margin) y = margin;
-				win.div.style.left = `${x}px`;
-				win.div.style.top = `${y}px`;
-			});
+			// kkwmWindow centres it on its real size once the content is in, and keeps it on screen
 
 			if (!form) return win;
 
@@ -169,8 +157,8 @@
         				data = await res.json();
         			}
 
-					win.remove();
-					if (onSuccess) onSuccess({ res: data, form, postEl });
+					if (!keepOpen) win.remove();
+					if (onSuccess) onSuccess({ res: data, form, postEl, win });
 				} catch (err) {
 					console.error('Form submission error:', err);
 					if (onFail) onFail({ err, form, postEl });

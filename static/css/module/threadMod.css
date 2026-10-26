@@ -71,3 +71,13 @@
 	color: var(--color-fg-capcode-thread, #1a5fb4);
 	font-weight: bold;
 }
+
+.threadModPreview {
+	max-width: 480px;
+}
+
+.threadModPreview .post {
+	max-height: 260px;
+	overflow: auto;
+	margin: 0;
+}
