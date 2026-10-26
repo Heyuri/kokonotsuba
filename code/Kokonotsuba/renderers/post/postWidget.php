@@ -5,6 +5,8 @@ namespace Kokonotsuba\renderers\post;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\renderers\widgetMenuPolicy;
 
+use function Kokonotsuba\libraries\_T;
+
 /**
  * Collects the entries modules put on a post's dropdown menu.
  *
