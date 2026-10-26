@@ -123,6 +123,15 @@ final class threadModRepository extends baseRepository {
 		);
 	}
 
+	/** Write a browser's token onto a post that has none; false when it already had one. */
+	public function stampTokenIfMissing(int $postUid, string $tokenHash): bool {
+		return $this->queryAffected(
+			"UPDATE {$this->postTable} SET visitor_token_hash = :hash
+				WHERE post_uid = :post_uid AND (visitor_token_hash IS NULL OR visitor_token_hash = '')",
+			[':hash' => $tokenHash, ':post_uid' => $postUid]
+		) > 0;
+	}
+
 	/** @return int Rows closed, 0 when there was no live grant. */
 	public function revoke(string $threadUid, string $tokenHash, ?string $byHash, ?int $byAccount): int {
 		return $this->queryAffected(

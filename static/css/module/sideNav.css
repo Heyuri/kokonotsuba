@@ -16,6 +16,13 @@ body:not(.sideNavHidden) {
 	body:not(.sideNavHidden) {
 		margin-left: 0;
 	}
+
+	/* Center threads: centre the 1200px column on the viewport, never under the nav. */
+	body.centerthreads:not(.sideNavHidden) {
+		max-width: none;
+		padding-left: max(var(--side-nav-gutter), calc((100% - 1200px) / 2));
+		padding-right: max(8px, calc((100% - 1200px) / 2));
+	}
 }
 
 .sideNavHidden .sideNav {

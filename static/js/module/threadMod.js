@@ -239,7 +239,18 @@
 		if (!postEl) return [];
 
 		var role = roleFor(postEl);
-		if (!role) return [];
+
+		// an OP from before browser tokens is only known by its password, which has to be asked for
+		if (!role) {
+			if (!postEl.classList.contains('op') || !document.querySelector('#threadModClaimTemplate')) return [];
+			return [{
+				href: moduleUrl + '&threadUid=' + encodeURIComponent(threadUidOf(postEl)),
+				action: 'threadMod_claim',
+				label: 'Claim thread',
+				subMenu: '',
+				params: {}
+			}];
+		}
 
 		var items = [];
 		var isOp = postEl.classList.contains('op');
@@ -434,6 +445,44 @@
 		});
 	}
 
+	/** The password claim; once the thread knows this browser, its tools open in its place. */
+	function openClaim(opEl) {
+		var threadUid = threadUidOf(opEl);
+		if (!threadUid || !document.querySelector('#threadModClaimTemplate')) return;
+
+		PostActionUtils.openWindow({
+			templateId: '#threadModClaimTemplate',
+			title: 'Claim thread',
+			postEl: opEl,
+			onOpen: function (opened) {
+				if (!opened.form) return;
+				opened.form.querySelector('[name="threadUid"]').value = threadUid;
+				var pwd = opened.form.querySelector('[name="pwd"]');
+				if (pwd) pwd.focus();
+			},
+			onSubmit: async function (ctx) {
+				try {
+					ctx.formData.set('csrf_token', await csrfToken());
+				} catch (err) {
+					showMessage('That could not be done.', false);
+					return false;
+				}
+			},
+			onSuccess: function (ctx) {
+				showMessage((ctx.res && ctx.res.message) || 'Done.', true);
+
+				// the answer set the hint cookie, which discover() reads back into the roles
+				discover();
+				if (roles[threadUid]) openTools(opEl);
+			},
+			onFail: function (ctx) {
+				showMessage(PostActionUtils.errorMessage(ctx.err, 'That could not be done.'), false);
+				var pwd = ctx.form.querySelector('[name="pwd"]');
+				if (pwd) pwd.select();
+			}
+		});
+	}
+
 	/** Fill the form from a state answer, replacing whatever an earlier one put there. */
 	function fillTools(form, win, data) {
 		var name = win.div.querySelector('.winname');
@@ -555,6 +604,11 @@
 	window.postWidget.registerActionHandler('threadMod_tools', function (ctx) {
 		var postEl = ctx && ctx.post;
 		if (postEl) openTools(postEl);
+	});
+
+	window.postWidget.registerActionHandler('threadMod_claim', function (ctx) {
+		var postEl = ctx && ctx.post;
+		if (postEl) openClaim(postEl);
 	});
 
 	if (document.readyState === 'loading') {
