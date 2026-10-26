@@ -101,6 +101,8 @@ class registRoute implements route {
 		$newPostsHtml = [];
 		$thread = false;
 
+		$nextPostUid = 0;
+
 		// Begin transaction
 		$this->transactionManager->run(function () use (
 			&$postData,
@@ -109,6 +111,7 @@ class registRoute implements route {
 			&$emailForInsertion,
 			&$redirect,
 			&$thread,
+			&$nextPostUid,
 			$imgDir,
 			$thumbnailCreator,
 			$defaultTextFiller,
@@ -218,15 +221,6 @@ class registRoute implements route {
 			// after-commit hook point
 			$this->moduleEngine->dispatch('RegistAfterCommit', [$this->board->getLastPostNoFromBoard(), $postData['thread_uid'], $postData['name'], $postData['email'], $postData['sub'], $postData['comment']]);
 			
-			// get post-insert post data
-			$afterInsertPost = $this->postRepository->getPostByUid($nextPostUid);
-			
-			// get post-insert attachments
-			$attachments = $afterInsertPost->getAttachments() ?? [];
-			
-			// run attachments after insert hook point
-			$this->moduleEngine->dispatch('AttachmentsAfterInsert', [&$attachments]);
-			
 			// Handle quote links
 			$this->handlePostQuoteLink($computedPostInfo['no'], $postData['comment']);
 
@@ -249,6 +243,11 @@ class registRoute implements route {
 			// save attachment + thumbnail 
 			$this->saveUploadedPostFiles($entry['postFileUploadController'], $file->getExtention());
 		}
+
+		// run attachments after insert hook point once the files are on disk,
+		// since listeners such as animatedGif read the file itself
+		$attachments = $this->postRepository->getPostByUid($nextPostUid)->getAttachments() ?? [];
+		$this->moduleEngine->dispatch('AttachmentsAfterInsert', [&$attachments]);
 
 		// Render new replies to HTML for instant client-side insertion (noko/dump)
 		// Done after file saving so images/thumbnails exist on disk when HTML is served
