@@ -302,6 +302,17 @@ testCase('the tools page picker lists live replies only', function () use ($repo
 	$pdo->exec("DELETE FROM `{$t('DELETED_POSTS_TABLE')}` WHERE post_uid = 3");
 });
 
+testCase('a claim stamps the browser token onto a post that has none, and only then', function () use ($serviceAs, $postRepository, $pdo, $t) {
+	$cookieless = $postRepository->getPostByUid(4);
+	assertTrueValue(!$serviceAs('')->adoptOpeningPost($cookieless), 'a browser without a token stamps nothing');
+	assertTrueValue($serviceAs(OTHER_HASH)->adoptOpeningPost($cookieless), 'the claiming browser\'s token is written');
+	assertSameValue(OTHER_HASH, $postRepository->getPostByUid(4)->getVisitorTokenHash(), 'the post now carries it');
+	assertTrueValue(!$serviceAs(MOD_HASH)->adoptOpeningPost($postRepository->getPostByUid(4)), 'an existing token is never replaced');
+	assertTrueValue(!$serviceAs(MOD_HASH)->adoptOpeningPost($cookieless), 'nor by a caller holding a stale copy of the post');
+	assertSameValue(OTHER_HASH, $postRepository->getPostByUid(4)->getVisitorTokenHash(), 'still the first claimant\'s');
+	$pdo->exec("UPDATE `{$t('POST_TABLE')}` SET visitor_token_hash = '' WHERE post_uid = 4");
+});
+
 testCase('the hint cookie round-trips roles', function () use ($serviceAs) {
 	$service = $serviceAs(OP_HASH, [threadModService::COOKIE => 'abcd:o,ef01:m,bogus,zz:x']);
 	assertSameValue(['abcd' => threadRole::OWNER, 'ef01' => threadRole::MOD], $service->rememberedThreads(), 'parsed, junk dropped');

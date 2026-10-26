@@ -60,6 +60,7 @@ class moduleMain extends abstractModuleMain {
 	public const ACTION_GRANT = 'threadMod.grant';
 	public const ACTION_REVOKE = 'threadMod.revoke';
 	public const ACTION_TRANSFER = 'threadMod.transfer';
+	public const ACTION_CLAIM = 'threadMod.claim';
 
 	private threadModService $service;
 	private threadModPolicy $policy;
@@ -104,6 +105,7 @@ class moduleMain extends abstractModuleMain {
 			self::ACTION_GRANT => _T('threadmod_log_type_grant'),
 			self::ACTION_REVOKE => _T('threadmod_log_type_revoke'),
 			self::ACTION_TRANSFER => _T('threadmod_log_type_transfer'),
+			self::ACTION_CLAIM => _T('threadmod_log_type_claim'),
 		] as $key => $label) {
 			$this->registerActionType($key, $label, 'post');
 		}
@@ -143,6 +145,10 @@ class moduleMain extends abstractModuleMain {
 		$moduleHeader .= '<meta name="threadModCapcodeTrigger" content="' . sanitizeStr(self::CAPCODE_TRIGGER) . '">';
 		$moduleHeader .= '<meta name="threadModModCapcodeTrigger" content="' . sanitizeStr(self::MOD_CAPCODE_TRIGGER) . '">';
 		$moduleHeader .= $this->generateTemplate('threadModToolsTemplate', $this->renderWindowForm());
+
+		if ((bool)$this->getModuleConfig('ALLOW_PASSWORD_OWNERSHIP', true)) {
+			$moduleHeader .= $this->generateTemplate('threadModClaimTemplate', $this->renderClaimWindowForm());
+		}
 		$this->includeScript('threadMod.js', $moduleHeader);
 	}
 
@@ -500,6 +506,11 @@ class moduleMain extends abstractModuleMain {
 			$this->fail(_T('threadmod_wrong_password'), 403);
 		}
 
+		// the password proves it for this request only; the post's token keeps it for the next ones
+		if ($role->isOwner() && $this->service->adoptOpeningPost($op)) {
+			$this->logAction(_T('threadmod_log_claim', $op->getNumber()), $op->getBoardUID(), self::ACTION_CLAIM, true);
+		}
+
 		$this->service->rememberThreads([$threadUid => $role]);
 
 		$this->finish(_T('threadmod_claimed'), $this->getToolsUrl($threadUid));
@@ -732,6 +743,23 @@ class moduleMain extends abstractModuleMain {
 			'{$TH_SINCE}' => sanitizeStr(_T('threadmod_th_since')),
 			'{$TH_BROWSER}' => sanitizeStr(_T('threadmod_th_browser')),
 			'{$REVOKE_LABEL}' => sanitizeStr(_T('threadmod_revoke')),
+		]);
+	}
+
+	/** The password claim, blank in the same way, for a thread whose opening post predates its browser token. */
+	private function renderClaimWindowForm(): string {
+		$renderer = $this->moduleContext->adminPageRenderer;
+
+		return $renderer->ParseBlock('THREAD_MOD_FORM', [
+			'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
+			'{$CSRF_TOKEN}' => '<input type="hidden" name="csrf_token" value="">',
+			'{$THREAD_UID}' => '',
+			'{$FORM_ROWS}' => $renderer->ParseBlock('THREAD_MOD_CLAIM', [
+				'{$PASSWORD_LABEL}' => sanitizeStr(_T('threadmod_password_label')),
+				'{$PASSWORD_DESC}' => sanitizeStr(_T('threadmod_password_desc')),
+				'{$CLAIM_LABEL}' => sanitizeStr(_T('threadmod_claim_button')),
+			]),
+			'{$ROSTER_SECTION}' => '',
 		]);
 	}
 

@@ -253,6 +253,20 @@ final class threadModService {
 		return hash('sha256', 'threadMod.roster|' . $threadUid . '|' . $tokenHash);
 	}
 
+	/**
+	 * An opening post from before browser tokens, claimed with its password, takes this browser's
+	 * token, so the claim outlives the request. The password keeps working from other browsers.
+	 */
+	public function adoptOpeningPost(Post $op): bool {
+		$hash = $this->actorHash();
+
+		if ($hash === '' || $op->getVisitorTokenHash() !== '') {
+			return false;
+		}
+
+		return $this->repository->stampTokenIfMissing($op->getUid(), $hash);
+	}
+
 	/** The token hash behind a roster key, among the thread's live grants. */
 	public function tokenHashForRosterKey(string $threadUid, string $rosterKey): ?string {
 		foreach ($this->repository->listActive($threadUid) as $row) {
