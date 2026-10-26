@@ -455,6 +455,9 @@ const kkwm = {
 				if (wintop) wintop.id = "";
 			}
 		});
+		window.addEventListener("resize", function () {
+			kkwm.windows.forEach(function (win) { win.fit(); });
+		});
 		//kkwm.demo();
 	},
 	reset: function () {
@@ -556,22 +559,32 @@ class kkwmWindow {
 		// this.div.style.width = rect.w+"px"; // commented out to fix windows not fitting to contents on resize
 		// this.div.style.height = rect.h+"px";
 		var fontpointfive = FONTSIZE*3.5;
-		var storedPos = localStorage.getItem("kkwm_pos_" + name);
-		if (storedPos) {
-			var pos = JSON.parse(storedPos);
-			if (typeof pos.xPct === 'number' && typeof pos.yPct === 'number') {
-				rect.x = pos.xPct * d.clientWidth;
-				rect.y = pos.yPct * d.clientHeight;
-			}
+		var storedPos = null;
+		try { storedPos = JSON.parse(localStorage.getItem("kkwm_pos_" + name)); } catch (e) {}
+		if (storedPos && typeof storedPos.xPct === 'number' && typeof storedPos.yPct === 'number') {
+			rect.x = storedPos.xPct * d.clientWidth;
+			rect.y = storedPos.yPct * d.clientHeight;
 		}
-		if (!rect.x) {
+		// an axis with no position of its own is centred on the window's real size by fit(), which
+		// only exists once the caller has filled it, and stays centred until the window is moved
+		var autoX = !rect.x, autoY = !rect.y;
+		// the cascade only steps aside from windows that are still open
+		if (!kkwm.windows.length) {
+			kkwm.w_spawnoffx = kkwm.w_spawnoffy = 0;
+			kkwm.w_spawnoffbouncex = kkwm.w_spawnoffbouncey = false;
+		}
+		this.spawnOffX = 0;
+		this.spawnOffY = 0;
+		if (autoX) {
+			this.spawnOffX = kkwm.w_spawnoffx;
 			rect.x = Math.floor(d.clientWidth/2-rect.w/2)+kkwm.w_spawnoffx;
 			if (rect.x+rect.w+fontpointfive>d.clientWidth) kkwm.w_spawnoffbouncex = true;
 			else if (rect.x<fontpointfive) kkwm.w_spawnoffbouncex = false;
 			if (kkwm.w_spawnoffbouncex) kkwm.w_spawnoffx-= 40;
 			else kkwm.w_spawnoffx+= 40;
 		}
-		if (!rect.y) {
+		if (autoY) {
+			this.spawnOffY = kkwm.w_spawnoffy;
 			rect.y = Math.floor(d.clientHeight/2-rect.h/2)+kkwm.w_spawnoffy;
 			if (rect.y+rect.h+fontpointfive>d.clientHeight) kkwm.w_spawnoffbouncey = true;
 			else if (rect.y<fontpointfive) kkwm.w_spawnoffbouncey = false;
@@ -579,6 +592,8 @@ class kkwmWindow {
 			else kkwm.w_spawnoffy+= 40;
 		}
 		this.move(rect.x, rect.y);
+		this.autoX = autoX;
+		this.autoY = autoY;
 		this.div.onmousedown = function () { kkwm.top(name); };
 		this.div.innerHTML = '<div class="winbar" data-name="'+name+'" onmousedown="if (!(event.target.closest(\'.winctrl\'))) kkwm.drag_start(\''+name+'\',event.clientX,event.clientY);">'+
 		'<div class="winname">'+name+'</div><div class="winctrl">'+
@@ -588,6 +603,37 @@ class kkwmWindow {
 		$doc.body.appendChild(this.div);
 		kkwm.windows.push(this);
 		kkwm.top(name);
+
+		// content usually arrives after construction, often from a request, so refit on every change
+		if (typeof ResizeObserver === 'function') {
+			var _this = this;
+			this._observer = new ResizeObserver(function () { _this.fit(); });
+			this._observer.observe(this.div);
+		}
+	}
+	/**
+	 * Keep the window whole and on screen. Its width is measured at left: 0, since a window placed
+	 * near the right edge would otherwise wrap its content into whatever room is left there.
+	 */
+	fit() {
+		if (!this.div || !this.div.isConnected || this.minimized) return;
+
+		var d = $doc.documentElement;
+		var style = this.div.style;
+		var left = style.left;
+		style.left = "0px";
+		var w = this.div.offsetWidth, h = this.div.offsetHeight;
+		style.left = left;
+
+		var x = this.autoX ? Math.floor((d.clientWidth - w) / 2) + this.spawnOffX : this.rect.x;
+		var y = this.autoY ? Math.floor((d.clientHeight - h) / 2) + this.spawnOffY : this.rect.y;
+		x = Math.max(0, Math.min(x, d.clientWidth - w));
+		y = Math.max(0, Math.min(y, d.clientHeight - h));
+
+		this.rect.x = Math.floor(x);
+		this.rect.y = Math.floor(y);
+		style.left = (this.rect.x/d.clientWidth*100)+"%";
+		style.top = (this.rect.y/d.clientHeight*100)+"%";
 	}
 	minimize() {
 		this.minimized = !this.minimized;
@@ -607,6 +653,7 @@ class kkwmWindow {
 				break;
 			}
 		}
+		if (this._observer) this._observer.disconnect();
 		this.div.classList.add("wclosing");
 		var that = this;
 		setTimeout( function () {
@@ -615,6 +662,9 @@ class kkwmWindow {
 		}, 99);
 	}
 	move(x, y) {
+		// a window that was moved keeps its place instead of following its size
+		this.autoX = false;
+		this.autoY = false;
 		var offs = this.div.getBoundingClientRect();
 		// clamp to other windows
 		var wm_innerclamp = localStorage.getItem("wm_innerclamp"); if (!wm_innerclamp) wm_innerclamp=10;

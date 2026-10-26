@@ -533,6 +533,8 @@ a.linkjs {
 .window {
 	position: fixed;
 	z-index: 1000;
+	display: flex;
+	flex-direction: column;
 	background-color: inherit;
 	border-width: 1px;
 	border-style: solid;
@@ -566,7 +568,15 @@ a.linkjs {
 	display: none;
 }
 
+/* A window taller than the screen scrolls its body; the title bar stays put. */
+
+.window > *:not(.winbar) {
+	min-height: 0;
+	overflow: auto;
+}
+
 .winbar {
+	flex-shrink: 0;
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: space-between;
