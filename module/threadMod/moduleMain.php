@@ -52,6 +52,9 @@ class moduleMain extends abstractModuleMain {
 	/** What is typed after "## " in the name field to ask for the thread capcode. */
 	public const CAPCODE_TRIGGER = 'OP';
 
+	/** The same for a thread mod; either trigger signs with the capcode the poster's role holds. */
+	public const MOD_CAPCODE_TRIGGER = 'Thread Mod';
+
 	public const ACTION_DELETE = 'threadMod.delete';
 	public const ACTION_UNDO = 'threadMod.undo';
 	public const ACTION_GRANT = 'threadMod.grant';
@@ -78,7 +81,8 @@ class moduleMain extends abstractModuleMain {
 			new threadModRepository(
 				databaseConnection::getInstance(),
 				$this->moduleContext->getTableName('THREAD_MOD_TABLE'),
-				$this->moduleContext->getTableName('POST_TABLE')
+				$this->moduleContext->getTableName('POST_TABLE'),
+				$this->moduleContext->getTableName('DELETED_POSTS_TABLE')
 			),
 			$this->moduleContext->postRepository,
 			$this->moduleContext->threadRepository,
@@ -137,6 +141,8 @@ class moduleMain extends abstractModuleMain {
 		$this->includeStylesheet('threadMod.css', $moduleHeader);
 		$moduleHeader .= '<meta name="threadModUrl" content="' . sanitizeStr($this->modulePageUrl) . '">';
 		$moduleHeader .= '<meta name="threadModCapcodeTrigger" content="' . sanitizeStr(self::CAPCODE_TRIGGER) . '">';
+		$moduleHeader .= '<meta name="threadModModCapcodeTrigger" content="' . sanitizeStr(self::MOD_CAPCODE_TRIGGER) . '">';
+		$moduleHeader .= $this->generateTemplate('threadModToolsTemplate', $this->renderWindowForm());
 		$this->includeScript('threadMod.js', $moduleHeader);
 	}
 
@@ -192,7 +198,7 @@ class moduleMain extends abstractModuleMain {
 	 * does not know is refused outright, like an unauthorised staff capcode.
 	 */
 	private function onRegistBegin(array &$registInfo): void {
-		$typed = strcasecmp(trim((string)($registInfo['capcode_input'] ?? '')), self::CAPCODE_TRIGGER) === 0;
+		$typed = self::isTrigger((string)($registInfo['capcode_input'] ?? ''));
 		$ticked = (string)$this->moduleContext->request->getParameter('opCapcode', 'POST', '') !== '';
 
 		if (!$typed && !$ticked) {
@@ -224,9 +230,15 @@ class moduleMain extends abstractModuleMain {
 		$registInfo['capcode_input'] = '';
 
 		// registRoute copies the "## X" text into the secure tripcode slot as well
-		if (strcasecmp(trim((string)$registInfo['secure_tripcode_input']), self::CAPCODE_TRIGGER) === 0) {
+		if (self::isTrigger((string)$registInfo['secure_tripcode_input'])) {
 			$registInfo['secure_tripcode_input'] = '';
 		}
+	}
+
+	private static function isTrigger(string $input): bool {
+		$input = trim($input);
+
+		return strcasecmp($input, self::CAPCODE_TRIGGER) === 0 || strcasecmp($input, self::MOD_CAPCODE_TRIGGER) === 0;
 	}
 
 	/** A new thread, or a reply in a thread this browser moderates, goes into the hint cookie. */
@@ -269,6 +281,7 @@ class moduleMain extends abstractModuleMain {
 		match ($pageName) {
 			'status' => $this->sendStatus(),
 			'token' => renderPrivateJsonPage(['token' => getOrCreateCsrfToken()]),
+			'state' => $this->sendToolsState(),
 			'confirm' => $this->drawConfirmPage(),
 			default => $this->drawToolsPage(),
 		};
@@ -304,8 +317,8 @@ class moduleMain extends abstractModuleMain {
 		requirePostWithCsrf($request);
 		$this->assertNotBanned(self::CHECKPOINT);
 
-		// a roster Revoke button submits only its token hash
-		$action = $request->getParameter('tokenHash', 'POST', '') !== ''
+		// a roster Revoke button submits only its roster key
+		$action = $request->getParameter('rosterKey', 'POST', '') !== ''
 			? 'revoke'
 			: (string)$request->getParameter('action', 'POST', '');
 		$typedPassword = (string)$request->getParameter('pwd', 'POST', '');
@@ -428,13 +441,18 @@ class moduleMain extends abstractModuleMain {
 	private function handleRevoke(?string $typedPassword): void {
 		$request = $this->moduleContext->request;
 		$threadUid = (string)$request->getParameter('threadUid', 'POST', '');
-		$targetHash = (string)$request->getParameter('tokenHash', 'POST', '');
+		$rosterKey = (string)$request->getParameter('rosterKey', 'POST', '');
 
-		if (!preg_match('/^[a-f0-9]{1,64}$/', $targetHash)) {
+		if (!preg_match('/^[a-f0-9]{64}$/', $rosterKey)) {
 			$this->fail(_T('threadmod_unknown_action'), 400);
 		}
 
 		[$op, $role, $stripped] = $this->situation($threadUid, $typedPassword);
+		$targetHash = $this->service->tokenHashForRosterKey($threadUid, $rosterKey);
+
+		if ($targetHash === null) {
+			$this->fail(_T('threadmod_not_a_mod'), 404);
+		}
 		$actorHash = $this->service->actorHash();
 
 		if (!$this->policy->canRevoke($role, $stripped, $targetHash, $actorHash)) {
@@ -595,12 +613,13 @@ class moduleMain extends abstractModuleMain {
 
 			$rows = '';
 			foreach ($this->service->repository()->listActive($threadUid) as $row) {
+				$key = threadModService::rosterKey($threadUid, (string)$row['visitor_token_hash']);
 				$rows .= $renderer->ParseBlock('THREAD_MOD_ROSTER_ROW', [
 					'{$ROLE}' => sanitizeStr(threadRole::fromStored($row['role'])->isOwner() ? _T('threadmod_role_owner') : _T('threadmod_role_mod')),
 					'{$GRANTED_FROM}' => $row['granted_from_no'] ? 'No.' . (int)$row['granted_from_no'] : '',
 					'{$GRANTED_AT}' => sanitizeStr((string)$row['granted_at']),
-					'{$TOKEN_HASH}' => sanitizeStr((string)$row['visitor_token_hash']),
-					'{$TOKEN_LABEL}' => sanitizeStr(substr((string)$row['visitor_token_hash'], 0, visitorTokenSigner::DISPLAY_LENGTH)),
+					'{$ROSTER_KEY}' => $key,
+					'{$KEY_LABEL}' => substr($key, 0, visitorTokenSigner::DISPLAY_LENGTH),
 					'{$REVOKE_LABEL}' => sanitizeStr(_T('threadmod_revoke')),
 				]);
 			}
@@ -619,15 +638,16 @@ class moduleMain extends abstractModuleMain {
 
 		$modForms = '';
 		if ($active) {
-			$max = (int)$this->getModuleConfig('MAX_DELETIONS_PER_THREAD', 0);
-			$count = $this->service->deletionCount($threadUid);
 			$modForms = $renderer->ParseBlock('THREAD_MOD_MOD_FORMS', [
 				'{$POST_LABEL}' => sanitizeStr(_T('threadmod_form_post')),
+				'{$PICK_LABEL}' => sanitizeStr(_T('threadmod_form_pick')),
+				'{$POST_OPTIONS}' => $this->replyOptions($threadUid),
+				'{$PREVIEW_LABEL}' => sanitizeStr(_T('threadmod_form_preview')),
 				'{$ACTION_LABEL}' => sanitizeStr(_T('threadmod_form_action')),
 				'{$DELETE_BUTTON}' => sanitizeStr(_T('threadmod_delete')),
 				'{$UNDO_BUTTON}' => sanitizeStr(_T('threadmod_undo')),
 				'{$OWNER_BUTTONS}' => $ownerButtons,
-				'{$COUNT_TEXT}' => sanitizeStr($max > 0 ? _T('threadmod_count_capped', $count, $max) : _T('threadmod_count', $count)),
+				'{$COUNT_TEXT}' => sanitizeStr($this->countText($threadUid)),
 			]);
 		}
 
@@ -643,6 +663,124 @@ class moduleMain extends abstractModuleMain {
 			'{$FORM_SECTION}' => $form,
 			'{$BACK_URL}' => sanitizeStr($this->moduleContext->board->getBoardThreadURL($op->getNumber())),
 			'{$BACK_LABEL}' => sanitizeStr(_T('threadmod_back')),
+		]);
+	}
+
+	/** @return array<int, array{no: int, uid: int, label: string}> The picker's replies, oldest first. */
+	private function replyChoices(string $threadUid): array {
+		$hidden = _T('threadmod_option_hidden');
+		$choices = [];
+
+		foreach ($this->service->repository()->listReplies($threadUid) as $row) {
+			$number = (int)$row['no'];
+			$choices[] = [
+				'no' => $number,
+				'uid' => (int)$row['post_uid'],
+				'label' => 'No.' . $number . (threadModService::isOpDeleted(new Post($row)) ? ' ' . $hidden : ''),
+			];
+		}
+
+		return $choices;
+	}
+
+	private function replyOptions(string $threadUid): string {
+		$html = '';
+
+		foreach ($this->replyChoices($threadUid) as $choice) {
+			$html .= '<option value="' . $choice['no'] . '" data-post-uid="' . $choice['uid'] . '">' . sanitizeStr($choice['label']) . '</option>';
+		}
+
+		return $html;
+	}
+
+	/** The deletion counter's line for a thread. */
+	private function countText(string $threadUid): string {
+		$max = (int)$this->getModuleConfig('MAX_DELETIONS_PER_THREAD', 0);
+		$count = $this->service->deletionCount($threadUid);
+
+		return $max > 0 ? _T('threadmod_count_capped', $count, $max) : _T('threadmod_count', $count);
+	}
+
+	/**
+	 * The blank form threadMod.js clones into its window. It goes out in the module header, which
+	 * static html carries too, so it holds nothing about the reader: no token, no replies, no
+	 * roster. The window asks for those (pageName=state) when it opens.
+	 */
+	private function renderWindowForm(): string {
+		$renderer = $this->moduleContext->adminPageRenderer;
+
+		return $renderer->ParseBlock('THREAD_MOD_WINDOW', [
+			'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
+			'{$FORM_ROWS}' => $renderer->ParseBlock('THREAD_MOD_MOD_FORMS', [
+				'{$POST_LABEL}' => sanitizeStr(_T('threadmod_form_post')),
+				'{$PICK_LABEL}' => sanitizeStr(_T('threadmod_form_pick')),
+				'{$POST_OPTIONS}' => '',
+				'{$PREVIEW_LABEL}' => sanitizeStr(_T('threadmod_form_preview')),
+				'{$ACTION_LABEL}' => sanitizeStr(_T('threadmod_form_action')),
+				'{$DELETE_BUTTON}' => sanitizeStr(_T('threadmod_delete')),
+				'{$UNDO_BUTTON}' => sanitizeStr(_T('threadmod_undo')),
+				'{$OWNER_BUTTONS}' => '<span class="threadModOwnerButtons" hidden>' . $renderer->ParseBlock('THREAD_MOD_OWNER_FORMS', [
+					'{$GRANT_BUTTON}' => sanitizeStr(_T('threadmod_grant')),
+					'{$TRANSFER_BUTTON}' => sanitizeStr(_T('threadmod_transfer')),
+				]) . '</span>',
+				'{$COUNT_TEXT}' => '',
+			]),
+			'{$ROSTER_TITLE}' => sanitizeStr(_T('threadmod_roster_title')),
+			'{$ROSTER_EMPTY}' => sanitizeStr(_T('threadmod_roster_empty')),
+			'{$TH_ROLE}' => sanitizeStr(_T('threadmod_th_role')),
+			'{$TH_FROM}' => sanitizeStr(_T('threadmod_th_from')),
+			'{$TH_SINCE}' => sanitizeStr(_T('threadmod_th_since')),
+			'{$TH_BROWSER}' => sanitizeStr(_T('threadmod_th_browser')),
+			'{$REVOKE_LABEL}' => sanitizeStr(_T('threadmod_revoke')),
+		]);
+	}
+
+	/**
+	 * What the tools window fills its blank form with: the replies to pick from, the counter,
+	 * and for the owner the roster.
+	 *   ?mode=module&load=threadMod&pageName=state&threadUid=uid
+	 */
+	private function sendToolsState(): void {
+		$threadUid = (string)$this->moduleContext->request->getParameter('threadUid', 'GET', '');
+		$op = $threadUid !== '' ? $this->service->openingPost($threadUid) : null;
+
+		if ($op === null) {
+			renderJsonErrorPage(_T('thread_not_found'), 404);
+			return;
+		}
+
+		$role = $this->service->resolveRole($threadUid, $op);
+
+		if ($this->service->isStripped($op)) {
+			renderJsonErrorPage(_T('threadmod_stripped'), 403);
+			return;
+		}
+
+		if (!$role->isAtLeastMod()) {
+			renderJsonErrorPage(_T('threadmod_not_a_mod_of_thread'), 403);
+			return;
+		}
+
+		$roster = [];
+		if ($role->isOwner()) {
+			foreach ($this->service->repository()->listActive($threadUid) as $row) {
+				$key = threadModService::rosterKey($threadUid, (string)$row['visitor_token_hash']);
+				$roster[] = [
+					'role' => threadRole::fromStored($row['role'])->isOwner() ? _T('threadmod_role_owner') : _T('threadmod_role_mod'),
+					'from' => $row['granted_from_no'] ? 'No.' . (int)$row['granted_from_no'] : '',
+					'since' => (string)$row['granted_at'],
+					'rosterKey' => $key,
+					'keyLabel' => substr($key, 0, visitorTokenSigner::DISPLAY_LENGTH),
+				];
+			}
+		}
+
+		renderPrivateJsonPage([
+			'title' => _T('threadmod_tools_title', $op->getNumber()),
+			'role' => $role->key(),
+			'countText' => $this->countText($threadUid),
+			'replies' => $this->replyChoices($threadUid),
+			'roster' => $roster,
 		]);
 	}
 

@@ -245,6 +245,25 @@ final class threadModService {
 		return array_keys($statuses);
 	}
 
+	/**
+	 * What the roster shows the OP for a browser instead of its token hash: one-way and different
+	 * per thread, so it cannot be matched to that browser's posts or grants anywhere else.
+	 */
+	public static function rosterKey(string $threadUid, string $tokenHash): string {
+		return hash('sha256', 'threadMod.roster|' . $threadUid . '|' . $tokenHash);
+	}
+
+	/** The token hash behind a roster key, among the thread's live grants. */
+	public function tokenHashForRosterKey(string $threadUid, string $rosterKey): ?string {
+		foreach ($this->repository->listActive($threadUid) as $row) {
+			if (hash_equals(self::rosterKey($threadUid, (string)$row['visitor_token_hash']), $rosterKey)) {
+				return (string)$row['visitor_token_hash'];
+			}
+		}
+
+		return null;
+	}
+
 	public function deletionCount(string $threadUid): int {
 		return $this->repository->countOpDeletions($threadUid);
 	}
