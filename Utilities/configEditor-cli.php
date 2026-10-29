@@ -69,7 +69,7 @@ $rootDir = dirname(__DIR__);
 require $rootDir . '/autoload.php';
 require $rootDir . '/code/Kokonotsuba/constants.php';
 require $rootDir . '/paths.php';
-require $rootDir . '/bootstrap/libraryIncludes.php';
+\Kokonotsuba\kernel\kernel::loadLibraries();
 
 // ── argument parsing ────────────────────────────────────────────────────────
 
@@ -96,7 +96,7 @@ if ($command === '' || $command === 'help' || isset($flags['help'])) {
 
 // ── wiring (only what a config edit needs; no full request lifecycle) ────────
 
-require $rootDir . '/bootstrap/database.php';
+\Kokonotsuba\kernel\kernel::connectDatabase();
 
 $databaseSettings = getDatabaseSettings();
 
@@ -107,7 +107,7 @@ $configRepository = new configRepository(
 $configService = new configService($configRepository);
 
 // A background rebuild dispatches the same 'rebuild_boards' task the panel uses; register it and
-// its context the way bootstrap/global.php would, so --rebuild works outside the web app.
+// its context the way kernel/providers/coreProvider.php would, so --rebuild works outside the web app.
 require_once $rootDir . '/code/Kokonotsuba/background/rebuildBoardsTask.php';
 BackgroundTaskDispatcher::setContext($rootDir . '/bootstrap/background.php');
 BackgroundTaskDispatcher::setAppRoot($rootDir . '/');
@@ -179,6 +179,10 @@ function commandList(array $positional, array $flags, configService $configServi
 		$dotpath = (string)$dotpath;
 		$isOverridden = array_key_exists($dotpath, $overrides);
 
+		// Site-wide settings belong to the global scope only.
+		if ($boardUid !== GLOBAL_BOARD_UID && $meta['global']) {
+			continue;
+		}
 		if (!$showAll && !$isOverridden) {
 			continue;
 		}

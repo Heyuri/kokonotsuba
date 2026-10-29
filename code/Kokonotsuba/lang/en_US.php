@@ -713,7 +713,6 @@ $language['anon_ip_schedule_every_label'] = 'Run every (days)';
 $language['anon_ip_schedule_every_desc'] = 'How often the anonymizer runs. 0 turns automatic runs off, leaving only the button above.';
 $language['anon_ip_schedule_submit'] = 'Save schedule';
 $language['anon_ip_schedule_saved'] = 'Schedule saved.';
-$language['anon_ip_schedule_board_override'] = 'This board overrides the interval in its own config, so it does not follow the value below. Clear the board-level override in the config editor for this to take effect here.';
 
 $language['config_label_modules.anonIp.AUTO_ANONYMIZE_DAYS'] = 'Anonymize automatically every (days)';
 $language['config_desc_modules.anonIp.AUTO_ANONYMIZE_DAYS'] = 'How often the anonymizer runs on its own, in days, over every record regardless of age. 0 turns automatic runs off and leaves it to the button on the anonymizer page. The run is a background task, so nothing waits on it. There is no cron: the interval is checked when a post is made and when staff open the anonymizer page, so a board with no traffic and nobody looking in does not run.';
@@ -795,7 +794,6 @@ $language['config_desc_RENZOKU2'] = 'Minimum seconds between image posts (0 = of
 
 // configs/misc.php
 $language['config_desc_TIME_ZONE'] = 'Offset from UTC, e.g. "-4" for New York or "9" for Japan.';
-$language['config_desc_TRUST_HTTP_X_FORWARDED_FOR'] = 'Use HTTP_X_FORWARDED_FOR to find the real IP behind a proxy (headers can be forged).';
 $language['config_desc_DISCORD_WH'] = 'Webhook URL for post notifications.';
 $language['config_desc_IRC_WH'] = 'Webhook URL for post notifications.';
 $language['config_desc_ACTIONLOG_MAX_PER_PAGE'] = 'Number of action-log entries shown per page.';
@@ -1033,7 +1031,6 @@ $language['config_label_RENZOKU2'] = 'Image post interval (s)';
 
 // configs/misc.php
 $language['config_label_TIME_ZONE'] = 'Time zone';
-$language['config_label_TRUST_HTTP_X_FORWARDED_FOR'] = 'Trust X-Forwarded-For';
 $language['config_label_DISCORD_WH'] = 'Discord webhook';
 $language['config_label_IRC_WH'] = 'IRC webhook';
 $language['config_label_ACTIONLOG_MAX_PER_PAGE'] = 'Action log per page';

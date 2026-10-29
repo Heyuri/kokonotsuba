@@ -16,7 +16,7 @@ $homeDefault = getGlobalConfig()['HOME'] ?? 'index.html';
 return [
 	'_group' => 'Appearance & pagination',
 
-	'HOME'               => stringField('config_label_HOME', $homeDefault, 'config_desc_HOME'),
+	'HOME'               => stringField('config_label_HOME', $homeDefault, 'config_desc_HOME', global: true),
 	'FOOTTEXT'           => textField('config_label_FOOTTEXT', '', 'config_desc_FOOTTEXT'),
 	'REF_URL'            => stringField('config_label_REF_URL', '', 'config_desc_REF_URL'),
 
@@ -38,7 +38,7 @@ return [
 	'MAX_AGE_TIME'       => intField('config_label_MAX_AGE_TIME', 0, 'config_desc_MAX_AGE_TIME'),
 
 	'STATIC_HTML_UNTIL'  => intField('config_label_STATIC_HTML_UNTIL', 10, 'config_desc_STATIC_HTML_UNTIL', min: -1),
-	'GZIP_COMPRESS_LEVEL'=> intField('config_label_GZIP_COMPRESS_LEVEL', 0, 'config_desc_GZIP_COMPRESS_LEVEL'),
+	'GZIP_COMPRESS_LEVEL'=> intField('config_label_GZIP_COMPRESS_LEVEL', 0, 'config_desc_GZIP_COMPRESS_LEVEL', global: true),
 	'MINIFY_HTML'        => boolField('config_label_MINIFY_HTML', false, 'config_desc_MINIFY_HTML'),
 	'AUTO_LINK'          => boolField('config_label_AUTO_LINK', true, 'config_desc_AUTO_LINK'),
 ];

@@ -19,11 +19,11 @@ return [
 	'SHOW_BOARD_BANNER' => boolField('config_label_modules.banner.SHOW_BOARD_BANNER', true, 'config_desc_modules.banner.SHOW_BOARD_BANNER'),
 
 	// Banner ad preset
-	'BANNER_AD_ALLOW_SUBMISSIONS' => boolField('config_label_modules.banner.BANNER_AD_ALLOW_SUBMISSIONS', true, 'config_desc_modules.banner.BANNER_AD_ALLOW_SUBMISSIONS'),
-	'BANNER_AD_SUBMISSION_COOLDOWN' => intField('config_label_modules.banner.BANNER_AD_SUBMISSION_COOLDOWN', 300, 'config_desc_modules.banner.BANNER_AD_SUBMISSION_COOLDOWN'),
-	'BANNER_AD_WIDTH' => intField('config_label_modules.banner.BANNER_AD_WIDTH', 468, 'config_desc_modules.banner.BANNER_AD_WIDTH'),
-	'BANNER_AD_HEIGHT' => intField('config_label_modules.banner.BANNER_AD_HEIGHT', 60, 'config_desc_modules.banner.BANNER_AD_HEIGHT'),
-	'BANNER_AD_MAX_FILE_SIZE' => intField('config_label_modules.banner.BANNER_AD_MAX_FILE_SIZE', 204800, 'config_desc_modules.banner.BANNER_AD_MAX_FILE_SIZE'),
+	'BANNER_AD_ALLOW_SUBMISSIONS' => boolField('config_label_modules.banner.BANNER_AD_ALLOW_SUBMISSIONS', true, 'config_desc_modules.banner.BANNER_AD_ALLOW_SUBMISSIONS', global: true),
+	'BANNER_AD_SUBMISSION_COOLDOWN' => intField('config_label_modules.banner.BANNER_AD_SUBMISSION_COOLDOWN', 300, 'config_desc_modules.banner.BANNER_AD_SUBMISSION_COOLDOWN', global: true),
+	'BANNER_AD_WIDTH' => intField('config_label_modules.banner.BANNER_AD_WIDTH', 468, 'config_desc_modules.banner.BANNER_AD_WIDTH', global: true),
+	'BANNER_AD_HEIGHT' => intField('config_label_modules.banner.BANNER_AD_HEIGHT', 60, 'config_desc_modules.banner.BANNER_AD_HEIGHT', global: true),
+	'BANNER_AD_MAX_FILE_SIZE' => intField('config_label_modules.banner.BANNER_AD_MAX_FILE_SIZE', 204800, 'config_desc_modules.banner.BANNER_AD_MAX_FILE_SIZE', global: true),
 
 	// Board banner preset
 	'BOARD_BANNER_ALLOW_SUBMISSIONS' => boolField('config_label_modules.banner.BOARD_BANNER_ALLOW_SUBMISSIONS', true, 'config_desc_modules.banner.BOARD_BANNER_ALLOW_SUBMISSIONS'),

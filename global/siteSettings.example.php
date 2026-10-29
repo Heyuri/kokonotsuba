@@ -18,9 +18,9 @@ return [
 	// Base URL every board URL is built on: {WEBSITE_URL}{board identifier}/
 	'WEBSITE_URL' => 'https://example.net/kokonotsuba/boards/',
 
-	// Where the "Home" link in each board's header points. This is the site-wide default; a board
-	// can still point its own header elsewhere from the board configuration editor. A full URL, an
-	// absolute path, or a file next to the board ('index.html') all work.
+	// Where the "Home" link in each board's header points. A site-wide setting: the global
+	// configuration editor can change it, a board cannot. A full URL, an absolute path, or a file
+	// next to the board ('index.html') all work.
 	'HOME' => 'https://example.net/',
 
 	// Where static/ is served from, and where it is on disk. Both end in a slash.

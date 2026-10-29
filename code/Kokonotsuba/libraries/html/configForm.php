@@ -30,7 +30,8 @@ function drawBoardConfigForm(templateEngine $tpl, configService $configService, 
 	$sections = renderConfigSections(
 		$tpl,
 		$configService->getEffectiveValues($boardUid),
-		$configService->getInheritedValues($boardUid)
+		$configService->getInheritedValues($boardUid),
+		true
 	);
 
 	if ($sections['groups'] === '') {
@@ -122,8 +123,8 @@ function drawGlobalConfigForm(templateEngine $tpl, configService $configService,
 
 /**
  * Render every schema group as a fieldset of field rows, together with the navigator that jumps
- * between them. Shared by both scopes: the only difference between the board and global editors
- * is which values they pass in.
+ * between them. Shared by both scopes: the board and global editors differ in the values they
+ * pass in, and the board editor leaves out site-wide fields.
  *
  * The navigator is built from the same walk that builds the fieldsets, so it can never list a
  * section the form does not actually render. All markup lives in the templates/admin/config/
@@ -133,15 +134,21 @@ function drawGlobalConfigForm(templateEngine $tpl, configService $configService,
  * @param array          $values    dot-path => the value to prefill each field with.
  * @param array          $inherited dot-path => the value this scope would show if it overrode
  *                                  nothing; a field differing from it is marked as overridden.
+ * @param bool           $boardScope True for a board's editor, which omits site-wide fields.
  * @return array{nav: string, groups: string} 'groups' is the fieldsets' HTML ('' if the schema
  *         declares no fields); 'nav' is the navigator listing them ('' along with it).
  */
-function renderConfigSections(templateEngine $tpl, array $values, array $inherited): array {
+function renderConfigSections(templateEngine $tpl, array $values, array $inherited, bool $boardScope = false): array {
 	$groupLabels = configSchema::getGroupLabels();
 	$groupsHtml = '';
 	$navItemsHtml = '';
 
 	foreach (configSchema::getGroups() as $groupName => $fields) {
+		// Site-wide settings are edited on the global scope only.
+		if ($boardScope) {
+			$fields = array_filter($fields, static fn(array $meta): bool => !$meta['global']);
+		}
+
 		if (empty($fields)) {
 			continue;
 		}

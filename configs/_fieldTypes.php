@@ -18,14 +18,17 @@
  * prefixed path, e.g. 'config_label_modules.ads.ADS_INLINE_COUNT'. A field with no description
  * passes '' for $desc.
  *
+ * $global marks a site-wide setting: it is set on the global scope only, hidden from the board
+ * editor, and a board override of it is never applied.
+ *
  * Files beginning with "_" are skipped by the schema loader, so this is never treated as a group.
  */
 
 namespace Kokonotsuba\config\fields;
 
 /** Build a boolean (checkbox) field definition. $desc is a language key - see the file header. */
-function boolField(string $label, bool $default, string $desc = ''): array {
-	return ['default' => $default, 'type' => 'bool', 'label' => $label, 'desc' => $desc];
+function boolField(string $label, bool $default, string $desc = '', bool $global = false): array {
+	return ['default' => $default, 'type' => 'bool', 'label' => $label, 'desc' => $desc, 'global' => $global];
 }
 
 /**
@@ -35,29 +38,29 @@ function boolField(string $label, bool $default, string $desc = ''): array {
  * null for no lower bound at all, e.g. intField('Static HTML pages', 10, '...', min: -1)).
  * The bound is both rendered as the input's min attribute and enforced when the value is saved.
  */
-function intField(string $label, int $default, string $desc = '', ?int $min = 0): array {
-	return ['default' => $default, 'type' => 'int', 'label' => $label, 'desc' => $desc, 'min' => $min];
+function intField(string $label, int $default, string $desc = '', ?int $min = 0, bool $global = false): array {
+	return ['default' => $default, 'type' => 'int', 'label' => $label, 'desc' => $desc, 'min' => $min, 'global' => $global];
 }
 
 /** Build a single-line string (text input) field definition. */
-function stringField(string $label, string $default, string $desc = ''): array {
-	return ['default' => $default, 'type' => 'string', 'label' => $label, 'desc' => $desc];
+function stringField(string $label, string $default, string $desc = '', bool $global = false): array {
+	return ['default' => $default, 'type' => 'string', 'label' => $label, 'desc' => $desc, 'global' => $global];
 }
 
 /** Build a multi-line text (textarea) field definition. */
-function textField(string $label, string $default, string $desc = ''): array {
-	return ['default' => $default, 'type' => 'text', 'label' => $label, 'desc' => $desc];
+function textField(string $label, string $default, string $desc = '', bool $global = false): array {
+	return ['default' => $default, 'type' => 'text', 'label' => $label, 'desc' => $desc, 'global' => $global];
 }
 
 /** Build an array (JSON textarea) field definition. */
-function arrayField(string $label, array $default, string $desc = ''): array {
-	return ['default' => $default, 'type' => 'array', 'label' => $label, 'desc' => $desc];
+function arrayField(string $label, array $default, string $desc = '', bool $global = false): array {
+	return ['default' => $default, 'type' => 'array', 'label' => $label, 'desc' => $desc, 'global' => $global];
 }
 
 /**
  * Build a template-directory field: a <select> populated with the directories under templates/.
  * Stored as the directory-name string; behaves like a string everywhere except the editor input.
  */
-function templateField(string $label, string $default, string $desc = ''): array {
-	return ['default' => $default, 'type' => 'template', 'label' => $label, 'desc' => $desc];
+function templateField(string $label, string $default, string $desc = '', bool $global = false): array {
+	return ['default' => $default, 'type' => 'template', 'label' => $label, 'desc' => $desc, 'global' => $global];
 }

@@ -12,5 +12,5 @@ return [
 	'_group'  => 'Moderation',
 	'_module' => 'Staff alerts',
 
-	'POLL_SECONDS' => intField('config_label_modules.staffAlerts.POLL_SECONDS', 60, 'config_desc_modules.staffAlerts.POLL_SECONDS', min: 10),
+	'POLL_SECONDS' => intField('config_label_modules.staffAlerts.POLL_SECONDS', 60, 'config_desc_modules.staffAlerts.POLL_SECONDS', min: 10, global: true),
 ];

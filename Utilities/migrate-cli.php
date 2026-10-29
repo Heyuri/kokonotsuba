@@ -35,7 +35,7 @@ $rootDir = dirname(__DIR__);
 require $rootDir.'/paths.php';
 require $rootDir.'/autoload.php';
 require $rootDir.'/code/Kokonotsuba/constants.php';
-require $rootDir.'/bootstrap/libraryIncludes.php';
+\Kokonotsuba\kernel\kernel::loadLibraries();
 
 // ─── Arguments ─────────────────────────────────────────────────────
 

@@ -13,7 +13,7 @@ return [
 	'_module' => 'Deleted posts',
 
 	'DELETED_POSTS_TEMPLATE' => templateField('config_label_modules.deletedPosts.DELETED_POSTS_TEMPLATE', 'kokoimg', 'config_desc_modules.deletedPosts.DELETED_POSTS_TEMPLATE'),
-	'PRUNE_TIME' => intField('config_label_modules.deletedPosts.PRUNE_TIME', 336, 'config_desc_modules.deletedPosts.PRUNE_TIME'),
+	'PRUNE_TIME' => intField('config_label_modules.deletedPosts.PRUNE_TIME', 336, 'config_desc_modules.deletedPosts.PRUNE_TIME', global: true),
 
 	// menu entries this module adds, see widgetMenuPolicy
 	'PostMenu.viewDeletedPost'             => boolField('config_label_modules.deletedPosts.PostMenu.viewDeletedPost', true),

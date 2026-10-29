@@ -169,6 +169,7 @@ class configSchema {
 			'desc'    => $meta['desc'] ?? '',
 			'module'  => $moduleLabel,
 			'min'     => $min,
+			'global'  => (bool)($meta['global'] ?? false),
 		];
 	}
 
@@ -263,6 +264,17 @@ class configSchema {
 	public static function hasField(string $dotpath): bool {
 		self::load();
 		return isset(self::$fields[$dotpath]);
+	}
+
+	/**
+	 * Whether a field is site-wide: set on the global scope only, never overridden by a board.
+	 *
+	 * @param string $dotpath Config dot-path key.
+	 * @return bool True for a declared field marked global.
+	 */
+	public static function isGlobalOnly(string $dotpath): bool {
+		self::load();
+		return !empty(self::$fields[$dotpath]['global']);
 	}
 
 	/**

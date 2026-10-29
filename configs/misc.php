@@ -13,20 +13,19 @@ return [
 
 	'TIME_ZONE'                 => stringField('config_label_TIME_ZONE', '0', 'config_desc_TIME_ZONE'),
 	'THREAD_FRAGMENT_CACHE'     => boolField('config_label_THREAD_FRAGMENT_CACHE', true, 'config_desc_THREAD_FRAGMENT_CACHE'),
-	'TRUST_HTTP_X_FORWARDED_FOR'=> boolField('config_label_TRUST_HTTP_X_FORWARDED_FOR', false, 'config_desc_TRUST_HTTP_X_FORWARDED_FOR'),
 
 	'DISCORD_WH' => stringField('config_label_DISCORD_WH', '', 'config_desc_DISCORD_WH'),
 	'IRC_WH'     => stringField('config_label_IRC_WH', '', 'config_desc_IRC_WH'),
 
-	'ACTIONLOG_MAX_PER_PAGE' => intField('config_label_ACTIONLOG_MAX_PER_PAGE', 50, 'config_desc_ACTIONLOG_MAX_PER_PAGE'),
-	'STAFF_LOGIN_TIMEOUT'    => intField('config_label_STAFF_LOGIN_TIMEOUT', 86400, 'config_desc_STAFF_LOGIN_TIMEOUT'),
+	'ACTIONLOG_MAX_PER_PAGE' => intField('config_label_ACTIONLOG_MAX_PER_PAGE', 50, 'config_desc_ACTIONLOG_MAX_PER_PAGE', global: true),
+	'STAFF_LOGIN_TIMEOUT'    => intField('config_label_STAFF_LOGIN_TIMEOUT', 86400, 'config_desc_STAFF_LOGIN_TIMEOUT', global: true),
 
-	'LOGIN_MAX_ATTEMPTS'           => intField('config_label_LOGIN_MAX_ATTEMPTS', 5, 'config_desc_LOGIN_MAX_ATTEMPTS', min: 1),
-	'LOGIN_MAX_ATTEMPTS_PER_IP'    => intField('config_label_LOGIN_MAX_ATTEMPTS_PER_IP', 15, 'config_desc_LOGIN_MAX_ATTEMPTS_PER_IP', min: 1),
-	'LOGIN_ATTEMPT_WINDOW'         => intField('config_label_LOGIN_ATTEMPT_WINDOW', 900, 'config_desc_LOGIN_ATTEMPT_WINDOW', min: 1),
-	'LOGIN_LOCKOUT_SECONDS'        => intField('config_label_LOGIN_LOCKOUT_SECONDS', 30, 'config_desc_LOGIN_LOCKOUT_SECONDS', min: 1),
-	'LOGIN_LOCKOUT_MAX_SECONDS'    => intField('config_label_LOGIN_LOCKOUT_MAX_SECONDS', 3600, 'config_desc_LOGIN_LOCKOUT_MAX_SECONDS', min: 1),
-	'LOGIN_ATTEMPT_RETENTION_DAYS' => intField('config_label_LOGIN_ATTEMPT_RETENTION_DAYS', 30, 'config_desc_LOGIN_ATTEMPT_RETENTION_DAYS', min: 1),
+	'LOGIN_MAX_ATTEMPTS'           => intField('config_label_LOGIN_MAX_ATTEMPTS', 5, 'config_desc_LOGIN_MAX_ATTEMPTS', min: 1, global: true),
+	'LOGIN_MAX_ATTEMPTS_PER_IP'    => intField('config_label_LOGIN_MAX_ATTEMPTS_PER_IP', 15, 'config_desc_LOGIN_MAX_ATTEMPTS_PER_IP', min: 1, global: true),
+	'LOGIN_ATTEMPT_WINDOW'         => intField('config_label_LOGIN_ATTEMPT_WINDOW', 900, 'config_desc_LOGIN_ATTEMPT_WINDOW', min: 1, global: true),
+	'LOGIN_LOCKOUT_SECONDS'        => intField('config_label_LOGIN_LOCKOUT_SECONDS', 30, 'config_desc_LOGIN_LOCKOUT_SECONDS', min: 1, global: true),
+	'LOGIN_LOCKOUT_MAX_SECONDS'    => intField('config_label_LOGIN_LOCKOUT_MAX_SECONDS', 3600, 'config_desc_LOGIN_LOCKOUT_MAX_SECONDS', min: 1, global: true),
+	'LOGIN_ATTEMPT_RETENTION_DAYS' => intField('config_label_LOGIN_ATTEMPT_RETENTION_DAYS', 30, 'config_desc_LOGIN_ATTEMPT_RETENTION_DAYS', min: 1, global: true),
 	'SYSTEMCHAN_NAME'        => stringField('config_label_SYSTEMCHAN_NAME', 'System-chan', 'config_desc_SYSTEMCHAN_NAME'),
 
 	'FORTUNES' => arrayField('config_label_FORTUNES', [

@@ -11,11 +11,8 @@
 use Kokonotsuba\board\boardCreator;
 use Kokonotsuba\board\import\vichanBoardImporter;
 use Kokonotsuba\cookie\cookieService;
+use Kokonotsuba\kernel\kernel;
 use Kokonotsuba\request\request;
-use Kokonotsuba\account\staffAccountFromSession;
-use Kokonotsuba\policy\postPolicy;
-use Kokonotsuba\policy\postRenderingPolicy;
-use Kokonotsuba\containers\appContainer;
 
 // ─── Resolve root directory ───
 $rootDir = __DIR__ . '/../';
@@ -24,50 +21,18 @@ $rootDir = __DIR__ . '/../';
 require $rootDir . 'autoload.php';
 require_once $rootDir . 'code/Kokonotsuba/constants.php';
 require $rootDir . 'paths.php';
-require $rootDir . 'bootstrap/libraryIncludes.php';
+\Kokonotsuba\kernel\kernel::loadLibraries();
 
-// ─── CLI-compatible request (no HTTP superglobals) ───
-$request = new request();
+// ─── Container: CLI request, no cookies, repositories and the board list ───
+$container = kernel::bootServices(new request(), new cookieService([]));
 
-// ─── Global config & policies ───
-$globalConfig = getGlobalConfig();
-$cookieService = new cookieService([]);
-$staffAccountFromSession = new staffAccountFromSession();
-$currentUserId = $staffAccountFromSession->getUID();
-$postPolicy = new postPolicy(
-	$globalConfig['AuthLevels'],
-	$staffAccountFromSession->getRoleLevel(),
-	$currentUserId
-);
-$postRenderingPolicy = new postRenderingPolicy(
-	$globalConfig['AuthLevels'],
-	$staffAccountFromSession->getRoleLevel(),
-	$currentUserId,
-	$cookieService
-);
-
-// ─── Database ───
-require $rootDir . 'bootstrap/database.php';
-
-/** @var \Kokonotsuba\database\databaseConnection $databaseConnection */
-/** @var \Kokonotsuba\database\transactionManager $transactionManager */
-/** @var array $dbSettings */
-
-// ─── Container ───
-$container = new appContainer();
-$container->set('request', $request);
-$container->set('cookieService', $cookieService);
-$container->set('staffAccountFromSession', $staffAccountFromSession);
-$container->set('currentUserId', $currentUserId);
-$container->set('postPolicy', $postPolicy);
-$container->set('postRenderingPolicy', $postRenderingPolicy);
-$container->set('globalConfig', $globalConfig);
-$container->set('databaseConnection', $databaseConnection);
-$container->set('transactionManager', $transactionManager);
-
-// ─── Repositories & Board ───
-require $rootDir . 'bootstrap/repositories.php';
-require $rootDir . 'bootstrap/board.php';
+$databaseConnection = $container->get('databaseConnection');
+$transactionManager = $container->get('transactionManager');
+$boardService = $container->get('boardService');
+$fileService = $container->get('fileService');
+$postRepository = $container->get('postRepository');
+$threadRepository = $container->get('threadRepository');
+$quoteLinkRepository = $container->get('quoteLinkRepository');
 
 // ─── Parse CLI arguments ───
 $sqlDump = $argv[1] ?? null;

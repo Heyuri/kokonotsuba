@@ -39,7 +39,7 @@ $rootDir = dirname(__DIR__);
 require $rootDir . '/autoload.php';
 require $rootDir . '/code/Kokonotsuba/constants.php';
 require $rootDir . '/paths.php';
-require $rootDir . '/bootstrap/libraryIncludes.php';
+\Kokonotsuba\kernel\kernel::loadLibraries();
 
 // ── argument parsing ────────────────────────────────────────────────────────
 
@@ -78,7 +78,7 @@ $dryRun = isset($flags['dry-run']);
 
 // ── wiring ──────────────────────────────────────────────────────────────────
 
-require $rootDir . '/bootstrap/database.php';
+\Kokonotsuba\kernel\kernel::connectDatabase();
 
 $databaseConnection = databaseConnection::getInstance();
 

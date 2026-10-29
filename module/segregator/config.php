@@ -12,7 +12,7 @@ return [
 	'_group'  => 'Content & formatting',
 	'_module' => 'Segregator',
 
-	'SEGREGATOR_SUB_DOMAIN' => stringField('config_label_modules.segregator.SEGREGATOR_SUB_DOMAIN', '', 'config_desc_modules.segregator.SEGREGATOR_SUB_DOMAIN'),
-	'SEGREGATOR_COOKIE_NAME' => stringField('config_label_modules.segregator.SEGREGATOR_COOKIE_NAME', 'viewAllContent', 'config_desc_modules.segregator.SEGREGATOR_COOKIE_NAME'),
-	'SEGREGATOR_COOKIE_DOMAIN' => stringField('config_label_modules.segregator.SEGREGATOR_COOKIE_DOMAIN', '', 'config_desc_modules.segregator.SEGREGATOR_COOKIE_DOMAIN'),
+	'SEGREGATOR_SUB_DOMAIN' => stringField('config_label_modules.segregator.SEGREGATOR_SUB_DOMAIN', '', 'config_desc_modules.segregator.SEGREGATOR_SUB_DOMAIN', global: true),
+	'SEGREGATOR_COOKIE_NAME' => stringField('config_label_modules.segregator.SEGREGATOR_COOKIE_NAME', 'viewAllContent', 'config_desc_modules.segregator.SEGREGATOR_COOKIE_NAME', global: true),
+	'SEGREGATOR_COOKIE_DOMAIN' => stringField('config_label_modules.segregator.SEGREGATOR_COOKIE_DOMAIN', '', 'config_desc_modules.segregator.SEGREGATOR_COOKIE_DOMAIN', global: true),
 ];
