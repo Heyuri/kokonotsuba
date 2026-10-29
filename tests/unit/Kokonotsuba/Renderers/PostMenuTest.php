@@ -47,6 +47,26 @@ final class PostMenuTest extends TestCase {
 		$this->assertTrue(strpos($html, 'data-action="a"') < strpos($html, 'data-action="b"'));
 	}
 
+	public function testGroupedEntriesJoinTheirGroupsFirstEntry(): void {
+		$menu = new postMenu();
+		$menu->append([
+			['href' => '/h', 'action' => 'history', 'label' => 'History', 'group' => 'edit'],
+			['href' => '/n', 'action' => 'note', 'label' => 'Note'],
+			['href' => '/d', 'action' => 'delete', 'label' => 'Delete', 'group' => 'deletion'],
+		]);
+		$menu->append([
+			['href' => '/r', 'action' => 'report', 'label' => 'Report'],
+			['href' => '/e', 'action' => 'edit', 'label' => 'Edit', 'group' => 'edit'],
+			['href' => '/m', 'action' => 'mute', 'label' => 'Mute', 'group' => 'deletion'],
+		]);
+
+		$html = $menu->toHtml();
+
+		$this->assertStringContains('[<a href="/h">History</a>] [<a href="/e">Edit</a>] [<a href="/n">Note</a>] [<a href="/d">Delete</a>] [<a href="/m">Mute</a>] [<a href="/r">Report</a>]', $html);
+		$this->assertTrue(strpos($html, 'data-action="edit"') < strpos($html, 'data-action="note"'));
+		$this->assertTrue(strpos($html, 'data-action="mute"') < strpos($html, 'data-action="report"'));
+	}
+
 	public function testRefAttributesAreEscaped(): void {
 		$menu = new postMenu();
 		$menu->append([['href' => '/x?a=1&b=2', 'action' => 'a', 'label' => '<b>', 'params' => ['q' => '"']]]);

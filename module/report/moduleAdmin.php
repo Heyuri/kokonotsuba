@@ -6,6 +6,7 @@ use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
+use Kokonotsuba\renderers\post\postMenu;
 use Kokonotsuba\module_classes\traits\IndicatorTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\module_classes\traits\listeners\StaffAlertsListenerTrait;
@@ -311,7 +312,9 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->getPostReportsUrl($post->getUid()),
 			'viewReports',
 			_T('report_widget_view_reports'),
-			''
+			'',
+			[],
+			postMenu::GROUP_REPORT
 		);
 	}
 

@@ -12,6 +12,7 @@ use Kokonotsuba\cache\thread_fragment\threadFragments;
 use Kokonotsuba\module_classes\traits\BanCheckpointTrait;
 use Kokonotsuba\module_classes\traits\listeners\MassModerateListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\renderers\post\postMenu;
 use Kokonotsuba\renderers\widgetMenuPolicy;
 use Kokonotsuba\userRole;
 
@@ -228,7 +229,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'delete', 
 			'Delete', 
 			'',
-			['post_uid' => $postUid, 'action' => 'del']
+			['post_uid' => $postUid, 'action' => 'del'],
+			postMenu::GROUP_DELETION
 		);
 
 		// build the widget entry for muting
@@ -237,7 +239,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'mute', 
 			'Delete & Mute', 
 			'',
-			['post_uid' => $postUid, 'action' => 'delmute']
+			['post_uid' => $postUid, 'action' => 'delmute'],
+			postMenu::GROUP_DELETION
 		);
 
 		if ($this->moduleContext->postPolicy->canStaffPurge()) {
@@ -250,7 +253,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	/** The post menu's "Delete & Purge" entry, shaped like the two before it. */
 	private function buildPurgeWidgetEntry(string $baseUrl, int|string $postUid): array {
-		return $this->buildWidgetEntry($baseUrl, 'deletePurge', 'Delete & Purge', '', ['post_uid' => $postUid, 'action' => 'delpurge']);
+		return $this->buildWidgetEntry($baseUrl, 'deletePurge', 'Delete & Purge', '', ['post_uid' => $postUid, 'action' => 'delpurge'], postMenu::GROUP_DELETION);
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {

@@ -7,6 +7,7 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\module_classes\traits\IndicatorTrait;
+use Kokonotsuba\renderers\post\postMenu;
 use Kokonotsuba\renderers\widgetMenuPolicy;
 
 use function Kokonotsuba\libraries\_T;
@@ -319,7 +320,8 @@ class deletedPostUIHooks {
 			'viewDeletedPost',
 			'View entry',
 			self::DELETION_SUBMENU,
-			['deletedPostId' => $deletedPostId]
+			['deletedPostId' => $deletedPostId],
+			postMenu::GROUP_DELETION
 		);
 
 		// Restore action (POST with CSRF) under the "Deletion" submenu
@@ -328,7 +330,8 @@ class deletedPostUIHooks {
 			'restoreDeletedPost',
 			'Restore post',
 			self::DELETION_SUBMENU,
-			['deletedPostId' => $deletedPostId, 'action' => 'restore']
+			['deletedPostId' => $deletedPostId, 'action' => 'restore'],
+			postMenu::GROUP_DELETION
 		);
 
 		// Purge action (POST with CSRF) under the "Deletion" submenu
@@ -337,7 +340,8 @@ class deletedPostUIHooks {
 			'purgeDeletedPost',
 			'Purge post',
 			self::DELETION_SUBMENU,
-			['deletedPostId' => $deletedPostId, 'action' => 'purge']
+			['deletedPostId' => $deletedPostId, 'action' => 'purge'],
+			postMenu::GROUP_DELETION
 		);
 	}
 

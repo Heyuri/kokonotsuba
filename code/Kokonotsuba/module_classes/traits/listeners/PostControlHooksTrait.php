@@ -62,8 +62,9 @@ trait PostControlHooksTrait {
 	 *        URL parameter name (e.g. 'postUid') to auto-generate via getModulePageURL.
 	 * @param string $action   Internal action identifier used by JavaScript.
 	 * @param string $label    Display text shown in the widget menu.
+	 * @param string $group    Feature group the entry is drawn with (postMenu::GROUP_*), '' for none.
 	 */
-	protected function registerSimplePostWidget(callable|string $urlGenerator, string $action, string $label): void {
+	protected function registerSimplePostWidget(callable|string $urlGenerator, string $action, string $label, string $group = ''): void {
 		if (is_string($urlGenerator)) {
 			$paramName = $urlGenerator;
 			$urlGenerator = fn(Post $post) => $this->getModulePageURL([$paramName => $post->getUid()], false, true);
@@ -72,8 +73,8 @@ trait PostControlHooksTrait {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModeratePostWidget',
-			function(array &$widgetArray, Post &$post) use ($urlGenerator, $action, $label) {
-				$widgetArray[] = $this->buildWidgetEntry($urlGenerator($post), $action, $label, '');
+			function(array &$widgetArray, Post &$post) use ($urlGenerator, $action, $label, $group) {
+				$widgetArray[] = $this->buildWidgetEntry($urlGenerator($post), $action, $label, '', [], $group);
 			}
 		);
 	}

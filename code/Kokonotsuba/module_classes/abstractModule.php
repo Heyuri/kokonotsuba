@@ -155,7 +155,8 @@ abstract class abstractModule {
 		string $action,
 		string $label,
 		string $subMenu,
-		array $params = []
+		array $params = [],
+		string $group = ''
 	): array {
 		// assemble the widget
 		$widget = [
@@ -172,7 +173,10 @@ abstract class abstractModule {
 			'subMenu' => $subMenu,
 
 			// POST parameters for JS to send
-			'params' => $params
+			'params' => $params,
+
+			// feature group, entries sharing one are drawn next to each other (postMenu::grouped())
+			'group' => $group
 		];
 
 		// return assembled widget

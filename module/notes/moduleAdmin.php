@@ -11,6 +11,7 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\renderers\post\postMenu;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
@@ -47,7 +48,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function initialize(): void {
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
-		$this->registerSimplePostWidget('postUid', 'leaveNote', _T('leave_note'));
+		$this->registerSimplePostWidget('postUid', 'leaveNote', _T('leave_note'), postMenu::GROUP_NOTES);
 
 		// noscript fallback: link to note form page
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(

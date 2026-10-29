@@ -9,10 +9,10 @@ use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\ban\banCheckpoint;
 use Kokonotsuba\module_classes\traits\BanCheckpointTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
-use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostWidgetListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\renderers\post\postMenu;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
@@ -42,7 +42,6 @@ require_once __DIR__ . '/reportActionType.php';
 class moduleMain extends abstractModuleMain {
 	use BanCheckpointTrait;
 	use ModuleHeaderListenerTrait;
-	use PostListenerTrait;
 	use PostWidgetListenerTrait;
 	use TopLinksListenerTrait;
 
@@ -103,7 +102,6 @@ class moduleMain extends abstractModuleMain {
 		);
 
 		$this->listenPostWidget('onRenderPostWidget');
-		$this->listenPost('onRenderPost');
 		$this->listenModuleHeader('onGenerateModuleHeader');
 
 		$this->addTopLink($this->myReportsUrl, _T('report_adminbar_link'));
@@ -130,7 +128,8 @@ class moduleMain extends abstractModuleMain {
 				'postuid' => $post->getUid(),
 				'postnumber' => $post->getNumber(),
 				'boardtitle' => $postBoard->getBoardTitle(),
-			]
+			],
+			postMenu::GROUP_REPORT
 		);
 	}
 
@@ -150,18 +149,6 @@ class moduleMain extends abstractModuleMain {
 			$accountId ?: null,
 			_T('report_auto_approved_reason')
 		);
-	}
-
-	/**
-	 * The post dropdown toggle is .js-only, so without JS there'd be no way to reach the form.
-	 * Mirror the entry as a plain link that only shows when scripting is off.
-	 */
-	private function onRenderPost(array &$templateValues, Post &$post, array &$threadPosts, board &$board, bool &$adminMode): void {
-		$reportUrl = $this->getReportFormUrl($post->getUid(), true);
-
-		$templateValues['{$POSTINFO_EXTRA}'] .= ' <span class="reportLinkContainer no-js-only">[<a href="'
-			. $reportUrl . '" title="' . sanitizeStr(_T('report_widget_title')) . '">'
-			. sanitizeStr(_T('report_widget_label')) . '</a>]</span>';
 	}
 
 	/**

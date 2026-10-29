@@ -86,6 +86,11 @@ trait ToggleActionTrait {
 		return 50;
 	}
 
+	/** Feature group of the post menu entry (postMenu::grouped()), '' for none. */
+	protected function getToggleWidgetGroup(): string {
+		return '';
+	}
+
 	/** All three thread toggles read as one area of moderation, so they share a heading. */
 	protected function getToggleMassGroup(): string {
 		return 'Thread';
@@ -245,7 +250,8 @@ trait ToggleActionTrait {
 			$this->getToggleActionName(),
 			$label,
 			'',
-			['post_uid' => $post->getUid()]
+			['post_uid' => $post->getUid()],
+			$this->getToggleWidgetGroup()
 		);
 	}
 

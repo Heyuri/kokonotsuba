@@ -10,6 +10,7 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\renderers\post\postMenu;
 use Kokonotsuba\userRole;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
@@ -87,7 +88,9 @@ class moduleAdmin extends abstractModuleAdmin {
 					$this->getRevisionsUrl($post->getUid(), false),
 					'viewPostRevisions',
 					_T('view_post_revisions'),
-					''
+					'',
+					[],
+					postMenu::GROUP_EDIT
 				);
 			}
 		);

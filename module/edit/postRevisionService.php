@@ -76,6 +76,14 @@ final class postRevisionService {
 		return $this->repository->getRevisionById($revisionId);
 	}
 
+	/**
+	 * @param int[] $postUids
+	 * @return array<int, array{edited_at: string, edited_by: ?int}> Each edited post's newest edit, by uid.
+	 */
+	public function getLatestEditsForPosts(array $postUids): array {
+		return $this->repository->getLatestEditsForPosts($postUids);
+	}
+
 	public function countRevisionsForPost(int $postUid): int {
 		return $this->repository->countRevisionsForPost($postUid);
 	}
