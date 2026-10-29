@@ -5,7 +5,8 @@
 			<input name="postUid" value="{$POST_UID}" type="hidden">
 			<input name="action" value="restoreRevision" type="hidden">
 			<div class="postRevisionList">
-				<!--&IF($REVISION_LIST,'{$REVISION_LIST}','<div class="postRevisionsEmpty">{$NO_REVISIONS_TEXT}</div>')-->
+				<!--&IF($NEVER_EDITED,'<div class="postRevisionsEmpty">{$NO_REVISIONS_TEXT}</div>','')-->
+				{$REVISION_LIST}
 			</div>
 		</form>
 	</div>

@@ -28,7 +28,7 @@
 	font-size: var(--font-size-small);
 }
 
-/* A post's edit history: one block per revision, oldest at the bottom. */
+/* A post's edit history: one block per version, the current one on top. */
 
 .postRevision {
 	border: 1px solid var(--color-border, rgba(128, 128, 128, 0.4));
@@ -40,8 +40,14 @@
 	font-weight: var(--font-weight-bold);
 }
 
+.postRevisionWhen,
 .postRevisionWho {
 	font-weight: normal;
+}
+
+.postRevisionCurrent {
+	font-weight: normal;
+	font-style: italic;
 }
 
 .postRevisionValue {

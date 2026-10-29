@@ -116,11 +116,12 @@ class moduleAdmin extends abstractModuleAdmin {
 	// ─── Edit history ─────────────────────────────────────────────
 
 	/**
-	 * A post's edit history, newest first.
+	 * A post's edit history as numbered versions, newest (the current post) first.
 	 *
-	 * Each entry is the post as it stood before one edit, so restoring the newest undoes the last
-	 * edit. A restore is an edit of its own and records its own revision, which is what keeps the
-	 * history a record rather than a trap.
+	 * A stored revision is the post as it stood before one edit, so version #1 is the post as
+	 * first made, each later version was made by the edit before it, and the last is the post as
+	 * it stands. Restoring one is an edit of its own and records its own revision, which is what
+	 * keeps the history a record rather than a trap.
 	 */
 	private function drawRevisionsPage(int $postUid): void {
 		$this->assertRole($this->getViewRevisionsRole());
@@ -128,10 +129,29 @@ class moduleAdmin extends abstractModuleAdmin {
 		$post = $this->getPost($postUid);
 		$canRestore = $this->holdsRole($this->getRestoreRevisionsRole());
 
-		$listHtml = '';
-		foreach ($this->revisions->getRevisionsForPost($postUid) as $revision) {
-			$listHtml .= $this->renderRevision($revision, $canRestore);
+		// oldest first, so each revision's edit is what made the next version
+		$revisions = array_reverse($this->revisions->getRevisionsForPost($postUid));
+		$current = ['id' => 0] + $this->revisions->snapshot($post);
+
+		$versions = [...$revisions, $current];
+		$entries = [];
+
+		foreach ($versions as $index => $values) {
+			// made by the edit before it, or by the poster when it is the first
+			$madeBy = $revisions[$index - 1] ?? null;
+			$isCurrent = $index === count($revisions);
+
+			$entries[] = $this->renderRevision(
+				$index + 1,
+				$values,
+				$madeBy,
+				$madeBy === null ? $post->getRoot() : (string)$madeBy['edited_at'],
+				$canRestore && !$isCurrent,
+				$isCurrent
+			);
 		}
+
+		$listHtml = implode('', array_reverse($entries));
 
 		$pageContent = $this->moduleContext->adminPageRenderer->ParseBlock('POST_REVISIONS', [
 			'{$PAGE_TITLE}' => sanitizeStr(_T('post_revisions_title', (string)$post->getNumber())),
@@ -139,27 +159,40 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
 			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 			'{$REVISION_LIST}' => $listHtml,
+			'{$NEVER_EDITED}' => $revisions === [],
 			'{$NO_REVISIONS_TEXT}' => sanitizeStr(_T('post_revisions_none')),
 		]);
 
 		echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $pageContent], true);
 	}
 
-	/** One revision, with the values it holds and the button that puts them back. */
-	private function renderRevision(array $revision, bool $canRestore): string {
-		$editor = $revision['edited_by_username'] ?? null;
+	/**
+	 * One version, with the values it holds and the button that puts them back.
+	 *
+	 * @param array      $values  The version's stored fields, plus the revision 'id' restoring it uses.
+	 * @param array|null $madeBy  The revision row of the edit that made it, null for the original post.
+	 * @param string     $madeAt  When it was made, as a date string.
+	 */
+	private function renderRevision(int $number, array $values, ?array $madeBy, string $madeAt, bool $canRestore, bool $isCurrent): string {
+		if ($madeBy === null) {
+			$by = _T('post_revision_posted_by', _T('post_revision_by_poster'));
+		} elseif ($madeBy['edited_by'] === null) {
+			$by = _T('post_revision_by', _T('post_revision_by_poster'));
+		} else {
+			$by = _T('post_revision_by', $madeBy['edited_by_username'] ?: _T('post_revision_by_staff'));
+		}
 
 		return $this->moduleContext->adminPageRenderer->ParseBlock('POST_REVISION_ENTRY', [
-			'{$REVISION_ID}' => (int)$revision['id'],
-			'{$REVISION_HEADING}' => sanitizeStr(_T(
-				'post_revision_heading',
-				strip_tags($this->moduleContext->postDateFormatter->formatFromDateString((string)($revision['edited_at'] ?? '')))
-			)),
-			'{$REVISION_BY}' => sanitizeStr(_T('post_revision_by', $editor ?: _T('post_revision_by_poster'))),
+			'{$REVISION_ID}' => (int)$values['id'],
+			'{$REVISION_HEADING}' => sanitizeStr(_T('post_revision_heading', $number)),
+			'{$REVISION_TIME}' => sanitizeStr($madeAt === '' ? '' : $this->moduleContext->postDateFormatter->formatPlainFromDateString($madeAt)),
+			'{$REVISION_BY}' => sanitizeStr($by),
+			'{$IS_CURRENT}' => $isCurrent,
+			'{$CURRENT_LABEL}' => sanitizeStr(_T('post_revision_current')),
 			'{$CAN_RESTORE}' => $canRestore,
 			'{$RESTORE_LABEL}' => sanitizeStr(_T('post_revision_restore')),
 			'{$RESTORE_TITLE}' => sanitizeStr(_T('post_revision_restore_title')),
-			'{$REVISION_FIELDS}' => $this->renderRevisionFields($revision),
+			'{$REVISION_FIELDS}' => $this->renderRevisionFields($values),
 		]);
 	}
 
