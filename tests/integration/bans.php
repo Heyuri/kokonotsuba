@@ -886,6 +886,26 @@ testCase('approving an appeal lifts the ban', function () use ($makeService, $cl
 	assertSameValue(null, $service->findBlockingBan(banCheckpoint::POST), 'the lifted ban was still enforced');
 });
 
+testCase('decided appeals are listed under actioned and all', function () use ($makeService, $clearBans, $bans): void {
+	$clearBans();
+
+	$service = $makeService('203.0.113.25');
+	$approvedBan = $service->fileBan('203.0.113.25', GLOBAL_BOARD_UID, ['post'], time() + 3600, 'test', null);
+	$approvedId = $service->fileAppeal($bans->findById($approvedBan), 'let me back', 24);
+	$deniedBan = $service->fileBan('203.0.113.26', GLOBAL_BOARD_UID, ['post'], time() + 3600, 'test', null);
+	$deniedId = $service->fileAppeal($bans->findById($deniedBan), 'please', 24);
+
+	$service->approveAppeals([$approvedId], null, 'fine');
+	$service->denyAppeals([$deniedId], null, 'no');
+	$service->pruneExpiredAppeals();
+
+	$ids = static fn(array $list): array => array_map(fn($a) => $a->id, $list);
+	assertSameValue(0, $service->countAppeals('pending'), 'decided appeals still counted as pending');
+	assertSameValue(2, $service->countAppeals('actioned'), 'decided appeals missing from the actioned count');
+	assertSameValue(2, count($service->listAppeals('actioned', 50, 0)), 'decided appeals missing from the actioned list');
+	assertTrueValue(in_array($deniedId, $ids($service->listAppeals('all', 50, 0)), true), 'a denied appeal is missing from all');
+});
+
 testCase('an appeal is dropped once its ban has expired', function () use ($makeService, $clearBans, $bans, $appeals, $pdo, $tableNames): void {
 	$clearBans();
 
