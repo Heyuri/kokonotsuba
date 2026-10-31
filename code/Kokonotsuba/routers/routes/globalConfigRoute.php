@@ -5,6 +5,7 @@
 namespace Kokonotsuba\routers\routes;
 
 use Kokonotsuba\routers\route;
+use Kokonotsuba\front_pages\frontPageCache;
 use Exception;
 use Throwable;
 use Kokonotsuba\config\configArrayMove;
@@ -146,6 +147,9 @@ class globalConfigRoute implements route {
 	 * logged and left for the admin to run from the Rebuild page; it never fails the save.
 	 */
 	private function queueRebuildOfAllBoards(): void {
+		// the front page draws from the global config too, and is cheap to redraw in-request
+		frontPageCache::forSite()->forgetAll();
+
 		$boardUids = [];
 		foreach ($this->boardService->getAllRegularBoards() ?? [] as $board) {
 			$boardUids[] = (int)$board->getBoardUID();

@@ -308,6 +308,10 @@ function renderConfigInput(templateEngine $tpl, array $meta, string $inputKey, m
 		case configSchema::TYPE_ARRAY:
 			$arr = is_array($current) ? $current : [];
 			$shape = configArrayShape($arr);
+			// a map field keeps its key inputs while empty, or once PHP has turned its keys into ints
+			if (!empty($meta['map']) && $shape === 'list') {
+				$shape = 'map';
+			}
 
 			// Deeply-nested arrays (values that are themselves arrays) fall back to a JSON textarea.
 			if ($shape === 'nested') {

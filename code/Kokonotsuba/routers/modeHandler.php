@@ -3,6 +3,7 @@
 
 namespace Kokonotsuba\routers;
 
+use Closure;
 use Kokonotsuba\containers\appContainer;
 use Kokonotsuba\board\board;
 use Kokonotsuba\error\BoardException;
@@ -14,10 +15,30 @@ use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\_T;
 
+/** Dispatches the `mode` parameter to a route table: a board's, or the front page's. */
 class modeHandler {
+	/**
+	 * @param array<string, routeEntry>          $routes      Mode => route; '' is the default view.
+	 * @param (Closure(appContainer): void)|null $beforeRoute Run once the mode is accepted, before the route draws.
+	 */
 	public function __construct(
-		private appContainer $container	
+		private appContainer $container,
+		private array $routes,
+		private ?Closure $beforeRoute = null,
 	) {}
+
+	/** A board's koko.php modes. */
+	public static function forBoard(appContainer $container): self {
+		// before any route draws, so this request already sees threads that just hit the bump limit
+		return new self($container, routeTable::routes(), static function (appContainer $c): void {
+			(new bumpLimitSweeper($c->get('board'), $c->get('threadRepository')))->tick();
+		});
+	}
+
+	/** The front page's modes. */
+	public static function forFrontPage(appContainer $container): self {
+		return new self($container, frontPageRouteTable::routes());
+	}
 
 	/**
 	 * Determine the profiler category for the current request, or null if not profiled.
@@ -45,7 +66,7 @@ class modeHandler {
 	}
 
 	public function handle() {
-		if ($this->container->get('config')['GZIP_COMPRESS_LEVEL'] && ($Encoding = CheckSupportGZip($this->container->get('request')))) {
+		if ($this->gzipLevel() && ($Encoding = CheckSupportGZip($this->container->get('request')))) {
 			ob_start();
 			ob_implicit_flush(0);
 		}
@@ -63,7 +84,7 @@ class modeHandler {
 			!empty($globalConfig['USE_CDN']) ? (string) ($globalConfig['CDN_URL'] ?? '') : null
 		);
 
-		$entry = (is_string($mode) ? routeTable::routes()[$mode] ?? null : null)
+		$entry = (is_string($mode) ? $this->routes[$mode] ?? null : null)
 			?? throw new BoardException(_T('mode_not_found'), 404);
 
 		if ($entry->csrf === csrfRule::POST_ONLY || ($entry->csrf === csrfRule::ON_POST && $request->isPost())) {
@@ -81,11 +102,9 @@ class modeHandler {
 			}
 		}
 	
-		// before any route draws, so this request already sees threads that just hit the bump limit
-		(new bumpLimitSweeper(
-			$this->container->get('board'),
-			$this->container->get('threadRepository')
-		))->tick();
+		if ($this->beforeRoute !== null) {
+			($this->beforeRoute)($this->container);
+		}
 
 		($entry->factory)($this->container)->handle();
 
@@ -94,17 +113,22 @@ class modeHandler {
 			$profiler->stop();
 		}
 	
-		if ($this->container->get('config')['GZIP_COMPRESS_LEVEL'] && $Encoding) {
+		if ($this->gzipLevel() && $Encoding) {
 			$this->finalizeGzip($Encoding);
 		}
 	}	
 
+	/** Site-wide, so the same on every board and on the front page. */
+	private function gzipLevel(): int {
+		return (int)($this->container->get('siteConfig')['GZIP_COMPRESS_LEVEL'] ?? 0);
+	}
+
 	private function finalizeGzip($Encoding) {
 		if (!ob_get_length()) exit; // No content, no need to compress
 		header('Content-Encoding: ' . $Encoding);
-		header('X-Content-Encoding-Level: ' . $this->container->get('config')['GZIP_COMPRESS_LEVEL']);
+		header('X-Content-Encoding-Level: ' . $this->gzipLevel());
 		header('Vary: Accept-Encoding');
-		print gzencode(ob_get_clean(), $this->container->get('config')['GZIP_COMPRESS_LEVEL']); // Compressed content
+		print gzencode(ob_get_clean(), $this->gzipLevel()); // Compressed content
 	}
 
 }

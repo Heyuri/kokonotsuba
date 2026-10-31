@@ -8,6 +8,7 @@ require_once __DIR__ . '/blotterService.php';
 require_once __DIR__ . '/blotterActionType.php';
 
 use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\front_pages\frontPageCache;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
@@ -64,6 +65,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->logAction("Added new blotter entry", GLOBAL_BOARD_UID, blotterActionType::BLOTTER);
 
 			rebuildAllBoards(); //rebuild all pages so it takes effect immedietly
+			frontPageCache::forSite()->forgetAll();
 
 			redirect($this->getModulePageURL([], false));
 			return;
@@ -75,6 +77,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			if (!empty($editedIds)) {
 				$this->logAction("Edited blotter entries with IDs: " . implode(", ", $editedIds), GLOBAL_BOARD_UID, blotterActionType::BLOTTER);
 				rebuildAllBoards(); //rebuild all pages so it takes effect immedietly
+				frontPageCache::forSite()->forgetAll();
 			}
 
 			redirect($this->getModulePageURL([], false));
@@ -88,6 +91,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->logAction("Deleted blotter entries with IDs: " . implode(", ", $this->moduleContext->request->getParameter('entrydelete', 'POST')), GLOBAL_BOARD_UID, blotterActionType::BLOTTER);
 
 			rebuildAllBoards(); //rebuild all pages so it takes effect immedietly
+			frontPageCache::forSite()->forgetAll();
 
 			redirect($this->getModulePageURL([], false));
 			return;

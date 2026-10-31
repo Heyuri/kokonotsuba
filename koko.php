@@ -27,7 +27,7 @@ $container = kernel::bootWeb();
 kernel::bootBoard($container);
 
 kernel::run($container, static function (appContainer $container): void {
-	$modeHandler = new modeHandler($container);
+	$modeHandler = modeHandler::forBoard($container);
 
 	// validate the currently selected board
 	$modeHandler->validateBoard($container->get('board'));

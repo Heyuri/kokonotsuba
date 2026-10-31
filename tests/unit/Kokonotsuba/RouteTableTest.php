@@ -5,6 +5,7 @@ namespace Koko\Tests\Unit\Kokonotsuba;
 use Koko\Tests\Framework\TestCase;
 use Kokonotsuba\containers\appContainer;
 use Kokonotsuba\routers\csrfRule;
+use Kokonotsuba\routers\frontPageRouteTable;
 use Kokonotsuba\routers\route;
 use Kokonotsuba\routers\routeTable;
 
@@ -54,9 +55,23 @@ class RouteTableTest extends TestCase {
 	 * pair shows up as one id wanted as two types across the table.
 	 */
 	public function testEveryFactoryBuildsARoute(): void {
+		$this->assertEveryFactoryBuildsARoute(routeTable::routes());
+	}
+
+	public function testFrontPageModes(): void {
+		$routes = frontPageRouteTable::routes();
+		$this->assertSame(['', 'admin', 'logo', 'editNews', 'editPage'], array_keys($routes));
+		$this->assertSame(csrfRule::ON_POST, $routes['editNews']->csrf);
+		$this->assertSame(csrfRule::ON_POST, $routes['editPage']->csrf);
+		$this->assertSame(csrfRule::POST_ONLY, $routes['logo']->csrf);
+		$this->assertEveryFactoryBuildsARoute($routes);
+	}
+
+	/** @param array<string, \Kokonotsuba\routers\routeEntry> $routes */
+	private function assertEveryFactoryBuildsARoute(array $routes): void {
 		$wiring = [];
 		$typeOfId = [];
-		foreach (routeTable::routes() as $mode => $entry) {
+		foreach ($routes as $mode => $entry) {
 			$class = $this->builtClass($entry->factory);
 
 			// api passes its endpoints in an array, so its ids do not line up with constructor positions
@@ -125,6 +140,9 @@ class RouteTableTest extends TestCase {
 
 	private function stubFor(\ReflectionParameter $param): mixed {
 		$type = $param->getType();
+		if ($type !== null && $type->allowsNull()) {
+			return null;
+		}
 		$name = $type instanceof \ReflectionNamedType ? $type->getName() : 'mixed';
 
 		return match ($name) {

@@ -52,9 +52,9 @@ function textField(string $label, string $default, string $desc = '', bool $glob
 	return ['default' => $default, 'type' => 'text', 'label' => $label, 'desc' => $desc, 'global' => $global];
 }
 
-/** Build an array (JSON textarea) field definition. */
-function arrayField(string $label, array $default, string $desc = '', bool $global = false): array {
-	return ['default' => $default, 'type' => 'array', 'label' => $label, 'desc' => $desc, 'global' => $global];
+/** Build an array field definition; $map edits it as key => value rows even while it is empty. */
+function arrayField(string $label, array $default, string $desc = '', bool $global = false, bool $map = false): array {
+	return ['default' => $default, 'type' => 'array', 'label' => $label, 'desc' => $desc, 'global' => $global, 'map' => $map];
 }
 
 /**

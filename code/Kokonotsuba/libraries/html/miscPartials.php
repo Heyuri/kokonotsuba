@@ -2,7 +2,9 @@
 
 namespace Kokonotsuba\libraries\html;
 
+use Kokonotsuba\front_pages\frontPageLinks;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\policy\frontPagePolicy;
 use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
@@ -45,9 +47,10 @@ function generateUserNavBar(string $staticIndexFile, request $request): string {
  *
  * @param  bool $includeLiveFrontend Whether to lead with the link back to the live board.
  *              False where that link is already rendered separately.
+ * @param  array $frontAdminEntries The front page's entries, from getFrontAdminNavEntries(); appended as they are.
  * @return array<int, array{key: string, label: string, url: string, title: string, group: string, method: string}>
  */
-function getStaffNavCoreEntries(string $liveIndexFile, userRole $actionLogRole, bool $includeLiveFrontend = true): array {
+function getStaffNavCoreEntries(string $liveIndexFile, userRole $actionLogRole, bool $includeLiveFrontend = true, array $frontAdminEntries = []): array {
 	$roleLevel = getRoleLevelFromSession();
 
 	$destinations = [
@@ -80,23 +83,53 @@ function getStaffNavCoreEntries(string $liveIndexFile, userRole $actionLogRole, 
 		];
 	}
 
+	return array_merge($entries, $frontAdminEntries);
+}
+
+/**
+ * The front page's News, Pages and Logo as the staff nav's 'frontPage' group, each only for whoever
+ * may edit it. Shared by the board staff navs and the front page's own so both list the same.
+ *
+ * @return array<int, array{key: string, label: string, url: string, title: string, group: string, method: string}>
+ */
+function getFrontAdminNavEntries(frontPagePolicy $policy, frontPageLinks $links): array {
+	$sections = [
+		['frontNews', 'frontAdminNews', 'front_admin_news', $policy->canEditNews()],
+		['frontPages', 'frontAdminPages', 'front_admin_pages', $policy->canEditPages()],
+		['frontLogo', 'frontAdminLogo', 'front_admin_logo', $policy->canEditSite()],
+	];
+
+	$entries = [];
+	foreach ($sections as [$key, $anchor, $label, $allowed]) {
+		if ($allowed) {
+			$entries[] = ['key' => $key, 'label' => _T($label), 'url' => $links->admin($anchor), 'title' => _T('front_admin_manage'), 'group' => 'frontPage', 'method' => 'get'];
+		}
+	}
+
 	return $entries;
+}
+
+/** getFrontAdminNavEntries() for a board page: the front page on HOME, judged by the board's AuthLevels. */
+function getFrontAdminNavEntriesFromConfig(array $config): array {
+	$policy = new frontPagePolicy((array)($config['AuthLevels'] ?? []), getRoleLevelFromSession(), null);
+
+	return getFrontAdminNavEntries($policy, new frontPageLinks((string)($config['HOME'] ?? '')));
 }
 
 /** One core nav entry as the list item the admin nav bar is built from. */
 function renderStaffNavCoreEntry(array $entry): string {
-	$titleHtml = ($entry['title'] ?? '') !== '' ? ' title="' . htmlspecialchars($entry['title']) . '"' : '';
+	$titleHtml = ($entry['title'] ?? '') !== '' ? ' title="' . sanitizeStr($entry['title']) . '"' : '';
 
 	// state-changing destinations post with the token instead of linking
 	if (($entry['method'] ?? 'get') === 'post') {
-		return '<li class="adminNavLink"><form method="POST" action="' . htmlspecialchars($entry['url']) . '" style="display:inline">'
+		return '<li class="adminNavLink"><form method="POST" action="' . sanitizeStr($entry['url']) . '" style="display:inline">'
 			. getCsrfHiddenInput()
-			. '<button type="submit" class="buttonLink"' . $titleHtml . '>' . htmlspecialchars($entry['label']) . '</button>'
+			. '<button type="submit" class="buttonLink"' . $titleHtml . '>' . sanitizeStr($entry['label']) . '</button>'
 			. '</form></li>';
 	}
 
-	return '<li class="adminNavLink"><a' . $titleHtml . ' href="' . htmlspecialchars($entry['url']) . '">'
-		. htmlspecialchars($entry['label']) . '</a></li>';
+	return '<li class="adminNavLink"><a' . $titleHtml . ' href="' . sanitizeStr($entry['url']) . '">'
+		. sanitizeStr($entry['label']) . '</a></li>';
 }
 
 function drawAccountTable(string $liveIndexFile, array $accounts, string $csrfHiddenInput) {

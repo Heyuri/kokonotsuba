@@ -12,6 +12,8 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\kernel\providers\boardListProvider;
 use Kokonotsuba\kernel\providers\boardProvider;
 use Kokonotsuba\kernel\providers\coreProvider;
+use Kokonotsuba\kernel\providers\frontContentProvider;
+use Kokonotsuba\kernel\providers\frontPageProvider;
 use Kokonotsuba\kernel\providers\repositoryProvider;
 use Kokonotsuba\kernel\providers\siteProvider;
 use Kokonotsuba\kokoLibrary;
@@ -70,23 +72,40 @@ final class kernel {
 		return new databaseHandles($databaseConnection, new transactionManager($databaseConnection), $dbSettings, $tableNames);
 	}
 
-	/** Global config, policies, database, repositories and the board list. No session, no board. */
+	/** Global config, policies, database, repositories, the board list and front page content. No session, no board. */
 	public static function bootServices(request $request, cookieService $cookieService, ?databaseHandles $db = null): appContainer {
+		// require all libs
 		self::loadLibraries();
 
+		// start container class
 		$container = new appContainer();
 
+		//
+		// below we'll initialize classes and other structures that koko uses and all them to the container
+		//
+
+		// core systems (cookies, request object, global config, and database connection)
 		coreProvider::register($container, $request, $cookieService, $db ?? self::connectDatabase());
+
+		// koko's repository and service classes 
 		repositoryProvider::register($container);
+
+		// board list (contains all boards in the database)
 		boardListProvider::register($container);
 
+		// init front 
+		frontContentProvider::register($container);
+
+		// return the container class
 		return $container;
 	}
 
 	/** Everything a web request shares: bootServices plus the session and the site-scope services. */
 	public static function bootWeb(): appContainer {
+		// require libraries
 		self::loadLibraries();
 
+		// build request object from super global
 		$request = request::fromGlobals();
 
 		// Timings for the debug bar, and the request sampler when a profile was asked for. Both are
@@ -114,6 +133,11 @@ final class kernel {
 		boardProvider::register($container);
 	}
 
+	/** The front page layer: its renderer and error page, from the site config. */
+	public static function bootFrontPage(appContainer $container): void {
+		frontPageProvider::register($container);
+	}
+
 	/**
 	 * Run a request handler. A BoardException is the client's refusal, served as JSON to scripts
 	 * and as the error page otherwise; any other Throwable is logged and served as a 500.
@@ -122,8 +146,10 @@ final class kernel {
 		$request = $container->get('request');
 
 		try {
+			// update account session values to whats in the database so account db changes take effect immedietly  
 			updateAccountSession($container->get('accountRepository'), $container->get('loginSessionHandler'));
 
+			// run the handler with container context 
 			$handler($container);
 		} catch (BoardException $boardException) {
 			$errorMessage = $boardException->getMessage();
@@ -148,18 +174,25 @@ final class kernel {
 		clearstatcache();
 	}
 
+	/**
+	 * Start the PHP session with a cookie shared by every board and the front page: path '/' and,
+	 * on a real domain, the apex domain so subdomain boards share the login too.
+	 */
 	private static function startSession(request $request): void {
 		// Named after the bootstrap directory, as it always has been, so existing sessions survive.
 		session_name('kokonotsuba_session_id_' . substr(md5(getBackendDir() . 'bootstrap'), 0, 5));
 
+		// bare host name: drop the port, then the brackets around an IPv6 address
 		$host = $request->getHttpHost();
 		$host = preg_replace('/:\d+$/', '', $host);
 		$host = trim($host, '[]');
 
+		// hosts a cookie domain can't (or shouldn't) be widened for
 		$isIp = filter_var($host, FILTER_VALIDATE_IP) !== false;
 		$isLocalhost = $host === 'localhost';
 		$isOnion = strtolower(substr($host, -6)) === '.onion';
 
+		// widen sub.example.net to example.net (last two labels only, so not suited to co.uk style suffixes)
 		if (!$isIp && !$isLocalhost && !$isOnion) {
 			$parts = explode('.', $host);
 			if (count($parts) > 2) {
@@ -167,6 +200,7 @@ final class kernel {
 			}
 		}
 
+		// browser session cookie, sent over https only when the request came in on it, hidden from js
 		$params = [
 			'lifetime' => 0,
 			'path'     => '/',
@@ -175,6 +209,7 @@ final class kernel {
 			'samesite' => 'Lax'
 		];
 
+		// no domain attribute leaves the cookie host-only, the only option for ips, localhost and onions
 		if (!$isIp && !$isLocalhost && !$isOnion && $host !== '') {
 			$params['domain'] = $host; // applies to apex + all subdomains
 		}

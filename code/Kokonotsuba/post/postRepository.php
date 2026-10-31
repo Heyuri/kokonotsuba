@@ -872,4 +872,81 @@ class postRepository extends baseRepository {
 
 		return $threadNumbers;
 	}
+
+	/**
+	 * Count live posts on the given boards made since two UTC times, in one pass over idx_post_root.
+	 *
+	 * @param int[]  $boardUids Boards to count.
+	 * @param string $hourSince UTC 'Y-m-d H:i:s'; posts at or after it count toward 'hour'.
+	 * @param string $daySince  UTC 'Y-m-d H:i:s', earlier than $hourSince; the 'day' window.
+	 * @return array{hour: int, day: int}
+	 */
+	public function countRecentPosts(array $boardUids, string $hourSince, string $daySince): array {
+		if ($boardUids === []) {
+			return ['hour' => 0, 'day' => 0];
+		}
+
+		$query = "
+			SELECT COALESCE(SUM(p.root >= ?), 0) AS hour_count, COUNT(*) AS day_count
+			FROM {$this->table} p
+			WHERE p.root >= ?
+			AND p.boardUID IN " . $this->buildInClause($boardUids) . "
+			AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid');
+
+		$row = $this->queryOne($query, [$hourSince, $daySince, ...array_map('intval', $boardUids)]);
+
+		return ['hour' => (int)($row['hour_count'] ?? 0), 'day' => (int)($row['day_count'] ?? 0)];
+	}
+
+	/**
+	 * Per-board activity for the front page board list, counting live posts only.
+	 * A user is a distinct visitor token fingerprint, or the address for a post without one.
+	 *
+	 * @param int[]  $boardUids  Boards to count.
+	 * @param string $hourSince  UTC 'Y-m-d H:i:s' start of the 'hour' window.
+	 * @param string $daySince   UTC 'Y-m-d H:i:s' start of the 'day' window.
+	 * @param string $usersSince UTC 'Y-m-d H:i:s' start of the 'users' window.
+	 * @return array<int, array{hour: int, day: int, users: int, posts: int}> Keyed by board uid; boards without posts are missing.
+	 */
+	public function boardActivity(array $boardUids, string $hourSince, string $daySince, string $usersSince): array {
+		if ($boardUids === []) {
+			return [];
+		}
+
+		$in = $this->buildInClause($boardUids);
+		$uids = array_map('intval', $boardUids);
+		$notDeleted = 'NOT ' . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid');
+
+		// totals stay on the board index; reading root or host for every row is several times slower
+		$totals = $this->queryAll("
+			SELECT p.boardUID, COUNT(*) AS post_count
+			FROM {$this->table} p
+			WHERE p.boardUID IN $in AND $notDeleted
+			GROUP BY p.boardUID", $uids);
+
+		$recent = $this->queryAll("
+			SELECT p.boardUID,
+				COALESCE(SUM(p.root >= ?), 0) AS hour_count,
+				COALESCE(SUM(p.root >= ?), 0) AS day_count,
+				COUNT(DISTINCT COALESCE(CONCAT('t:', p.visitor_token_hash), CONCAT('i:', p.host))) AS user_count
+			FROM {$this->table} p
+			WHERE p.boardUID IN $in AND p.root >= ? AND $notDeleted
+			GROUP BY p.boardUID", [$hourSince, $daySince, ...$uids, $usersSince]);
+
+		$activity = [];
+		foreach ($totals as $row) {
+			$activity[(int)$row['boardUID']] = ['hour' => 0, 'day' => 0, 'users' => 0, 'posts' => (int)$row['post_count']];
+		}
+		foreach ($recent as $row) {
+			$uid = (int)$row['boardUID'];
+			$activity[$uid] = [
+				'hour'  => (int)$row['hour_count'],
+				'day'   => (int)$row['day_count'],
+				'users' => (int)$row['user_count'],
+				'posts' => $activity[$uid]['posts'] ?? 0,
+			];
+		}
+
+		return $activity;
+	}
 }

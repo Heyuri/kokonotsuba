@@ -140,6 +140,18 @@ class ConfigSchemaTest extends TestCase {
 		}
 	}
 
+	/** An empty map field would otherwise be edited as a plain list, with no key inputs. */
+	public function testMapFlagIsKeptOnlyForArrayFields(): void {
+		$this->assertTrue(configSchema::getFieldMeta('SITE.NAV_LINKS')['map']);
+		$this->assertFalse(configSchema::getFieldMeta('SITE.SUBTITLES')['map']);
+
+		foreach (configSchema::getAllFields() as $dotpath => $meta) {
+			if ($meta['type'] !== configSchema::TYPE_ARRAY) {
+				$this->assertFalse($meta['map'], "{$dotpath} is not an array but declares map");
+			}
+		}
+	}
+
 	/** A default below its own minimum would be clamped away the first time the form is saved. */
 	public function testIntDefaultsSatisfyTheirOwnMinimum(): void {
 		foreach (configSchema::getAllFields() as $dotpath => $meta) {

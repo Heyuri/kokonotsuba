@@ -8,6 +8,7 @@ require_once __DIR__ . '/sideNavActionType.php';
 
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\front_pages\frontPageCache;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
@@ -76,6 +77,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$links = array_sum(array_map(fn(array $group) => count($group['links']), $layout));
 		$this->logAction("Saved side nav ($verb): " . count($layout) . " groups, $links links", GLOBAL_BOARD_UID, sideNavActionType::SIDE_NAV);
 		rebuildAllBoards();
+		frontPageCache::forSite()->forgetAll();
 
 		redirect($this->modulePage);
 	}

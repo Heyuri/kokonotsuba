@@ -7,6 +7,8 @@
   --color-bg-op-deleted: #1f3d5a;
   /* Dark theme: declared so colour-scheme-aware CSS (light-dark()) picks its dark values. */
   color-scheme: dark;
+  /* no front page background image on dark styles */
+  --front-page-bg: none;
 
   /* Global */
   --font-family-main: var(--font-family-serif);
