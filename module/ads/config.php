@@ -1,7 +1,7 @@
 <?php
 /**
  * Config schema for the ads module (namespace: modules.ads.*).
- * Read via $this->getModuleConfig('KEY'). Folds into the "Overboard, ads & banners" editor group.
+ * Read via $this->getModuleConfig('KEY'). Folds into the "Counters, ads & banners" editor group.
  */
 
 require_once __DIR__ . '/../../configs/_fieldTypes.php';
@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../configs/_fieldTypes.php';
 use function Kokonotsuba\config\fields\{arrayField, intField};
 
 return [
-	'_group'  => 'Overboard, ads & banners',
+	'_group'  => 'Counters, ads & banners',
 	'_module' => 'Ads',
 
 	'ADS_STICKY_ROTATE_SECONDS' => intField('config_label_modules.ads.ADS_STICKY_ROTATE_SECONDS', 45, 'config_desc_modules.ads.ADS_STICKY_ROTATE_SECONDS'),
