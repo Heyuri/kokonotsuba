@@ -907,7 +907,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$DEFAULT_BAN_MESSAGE}' => sanitizeStr($publicReason !== '' ? $publicReason : $this->defaultBanMessage),
 			'{$PERMANENT_CHECKED}' => ($isEdit && $ban->isPermanent()) ? ' checked' : '',
 			'{$PUBLIC_CHECKED}' => ($isEdit && $publicReason !== '') ? ' checked' : '',
-			'{$TOKEN_CHECKED}' => ($isEdit && $ban->visitorTokenHash !== null) ? ' checked' : '',
+			// a new ban ties the browser by default; an edit keeps what the ban has
+			'{$TOKEN_CHECKED}' => ($isEdit ? $ban->visitorTokenHash !== null : true) ? ' checked' : '',
 			// The browser is read off the post, so with no post there is nothing to tie to.
 			'{$TOKEN_DISABLED}' => $postUid > 0 ? '' : ' disabled',
 			'{$REJECT_APPEALS_CHECKED}' => ($isEdit && $ban->rejectsAppeals) ? ' checked' : '',
