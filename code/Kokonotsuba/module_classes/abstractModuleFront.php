@@ -74,9 +74,6 @@ abstract class abstractModuleFront {
 
 	/** The first listed board, for links into board-only modes (overboard, admin pages). */
 	protected function firstBoardUrl(): string {
-		$boards = $this->context->container->get('boardService')->getAllListedBoards() ?? [];
-		$firstBoard = reset($boards);
-
-		return $firstBoard ? $firstBoard->getBoardURL(true) : '';
+		return $this->context->container->get('boardService')->getFirstListedBoardUrl();
 	}
 }

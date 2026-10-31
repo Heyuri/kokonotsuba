@@ -59,13 +59,12 @@ final class frontAdminRoute implements route {
 	}
 
 	private function redirectToLogin(): never {
-		$boards = $this->boardService->getAllListedBoards() ?? [];
-		$firstBoard = reset($boards);
-		if (!$firstBoard) {
+		$boardUrl = $this->boardService->getFirstListedBoardUrl();
+		if ($boardUrl === '') {
 			throw new BoardException(_T('front_admin_denied'), 403);
 		}
 
-		redirect($firstBoard->getBoardURL(true) . '?mode=admin');
+		redirect($boardUrl . '?mode=admin');
 		exit;
 	}
 }

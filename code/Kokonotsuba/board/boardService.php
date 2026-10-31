@@ -312,6 +312,14 @@ class boardService {
 		return $boards;
 	}
 
+	/** The first listed board's URL, where the front page sends staff to log in; '' when none is listed. */
+	public function getFirstListedBoardUrl(): string {
+		$boards = $this->getAllListedBoards() ?? [];
+		$firstBoard = reset($boards);
+
+		return $firstBoard ? $firstBoard->getBoardURL(true) : '';
+	}
+
 	/**
 	 * Assemble and return all boards.
 	 *
