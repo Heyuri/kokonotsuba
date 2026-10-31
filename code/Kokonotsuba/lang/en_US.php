@@ -769,7 +769,7 @@ $language['poststats_segment']          = '%1$s: %2$s posts';
 // One entry per schema field (see configs/*.php and module/{name}/config.php).
 
 // configs/appearance.php
-$language['config_desc_HOME'] = 'What the [Home] button links to.';
+$language['config_desc_HOME'] = 'The site front page: the [Home] button and the staff nav\'s front page entries link here. Defaults to the backend directory, where index.php serves the front page.';
 $language['config_desc_FOOTTEXT'] = 'HTML shown at the bottom of the page.';
 $language['config_desc_REF_URL'] = 'URL prefix for outbound links (e.g. https://jump.example.net).';
 $language['config_desc_TEMPLATE_FILE'] = 'Template directory for the index page.';
@@ -1022,7 +1022,7 @@ $language['config_desc_modules.wordFilter.FILTERS'] = 'JSON object of regex patt
 // One entry per schema field (see configs/*.php and module/{name}/config.php).
 
 // configs/appearance.php
-$language['config_label_HOME'] = 'Home link target';
+$language['config_label_HOME'] = 'Front page / home URL';
 $language['config_label_FOOTTEXT'] = 'Footer text';
 $language['config_label_REF_URL'] = 'Referrer URL prefix';
 $language['config_label_TEMPLATE_FILE'] = 'Index template';

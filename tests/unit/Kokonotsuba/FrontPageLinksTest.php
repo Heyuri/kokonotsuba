@@ -6,7 +6,7 @@ use Koko\Tests\Framework\TestCase;
 use Kokonotsuba\front_pages\frontPageLinks;
 use Kokonotsuba\front_pages\frontPageService;
 
-/** Front page URLs built on HOME, and the page slug rules. */
+/** Front page URLs, and the page slug rules. */
 final class FrontPageLinksTest extends TestCase {
 	public function testLinksAppendToHome(): void {
 		$links = new frontPageLinks('https://example.net/');
@@ -23,6 +23,17 @@ final class FrontPageLinksTest extends TestCase {
 	public function testAHomeWithAQueryOrFragmentStillWorks(): void {
 		$this->assertSame('/index.php?lang=en&p=faq', (new frontPageLinks('/index.php?lang=en'))->page('faq'));
 		$this->assertSame('/?news=4', (new frontPageLinks('/#top'))->news(4));
+	}
+
+	public function testForSiteDefaultsToTheBackendDirectory(): void {
+		$links = frontPageLinks::forSite('', 'https://example.net/kokonotsuba/boards/');
+
+		$this->assertSame('https://example.net/kokonotsuba/?mode=admin#frontAdminNews', $links->admin('frontAdminNews'));
+		$this->assertSame('/', frontPageLinks::forSite('', '/')->home());
+	}
+
+	public function testForSitePrefersHome(): void {
+		$this->assertSame('https://example.net/?news=2', frontPageLinks::forSite(' https://example.net/ ', 'https://example.net/kokonotsuba/boards/')->news(2));
 	}
 
 	public function testSlugsAreEncoded(): void {

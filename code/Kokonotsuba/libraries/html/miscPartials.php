@@ -109,11 +109,12 @@ function getFrontAdminNavEntries(frontPagePolicy $policy, frontPageLinks $links)
 	return $entries;
 }
 
-/** getFrontAdminNavEntries() for a board page: the front page on HOME, judged by the board's AuthLevels. */
+/** getFrontAdminNavEntries() for a board page: linked straight to the front page, judged by the board's AuthLevels. */
 function getFrontAdminNavEntriesFromConfig(array $config): array {
 	$policy = new frontPagePolicy((array)($config['AuthLevels'] ?? []), getRoleLevelFromSession(), null);
+	$links = frontPageLinks::forSite((string)($config['HOME'] ?? ''), (string)(getGlobalConfig()['WEBSITE_URL'] ?? ''));
 
-	return getFrontAdminNavEntries($policy, new frontPageLinks((string)($config['HOME'] ?? '')));
+	return getFrontAdminNavEntries($policy, $links);
 }
 
 /** One core nav entry as the list item the admin nav bar is built from. */

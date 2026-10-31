@@ -2,9 +2,26 @@
 
 namespace Kokonotsuba\front_pages;
 
-/** URLs into the front page, built on HOME (where the front page is served). */
+/** URLs into the front page, built on where it is served. */
 final class frontPageLinks {
 	public function __construct(private readonly string $home) {}
+
+	/**
+	 * Links from outside the front page (boards, the action log): HOME, or when that is empty
+	 * the backend directory.
+	 *
+	 * @param string $websiteUrl The site-wide WEBSITE_URL, not a subdomain board's rewritten one.
+	 */
+	public static function forSite(string $home, string $websiteUrl): self {
+		$home = trim($home);
+
+		return new self($home !== '' ? $home : self::defaultHome($websiteUrl));
+	}
+
+	/** The backend directory index.php is served from: WEBSITE_URL without its trailing 'boards/'. */
+	public static function defaultHome(string $websiteUrl): string {
+		return str_ends_with($websiteUrl, 'boards/') ? substr($websiteUrl, 0, -strlen('boards/')) : $websiteUrl;
+	}
 
 	public function home(): string {
 		return $this->home;

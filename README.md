@@ -166,8 +166,9 @@ run if the web server hands any of them out.
    - **First board** - its identifier (the directory name under `boards/`, such as `b`), title and
      sub-title.
    - **URLs** - filled in from the address you are reading the page on, so leave them alone unless
-     the site is served from somewhere else. The one to look at is the home link: it defaults to the
-     site root and is where the "Home" link in every board's header goes.
+     the site is served from somewhere else. The one to look at is the front page / home URL: it
+     defaults to the backend directory (where `index.php` serves the front page), and is where every
+     board's "Home" link and the staff nav's front page entries go.
 
 4. Click the install button at the bottom of the installation page.
 

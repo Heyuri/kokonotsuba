@@ -48,7 +48,11 @@ final class frontContentProvider {
 
 		// Resolved only when a log line with a reference is drawn, so HOME is read then.
 		$configService = $container->get('configService');
-		$links = static fn(): frontPageLinks => new frontPageLinks((string)$configService->getEffectiveConfig(GLOBAL_BOARD_UID)['HOME']);
+		$websiteUrl = (string)($container->get('globalConfig')['WEBSITE_URL'] ?? '');
+		$links = static fn(): frontPageLinks => frontPageLinks::forSite(
+			(string)($configService->getEffectiveConfig(GLOBAL_BOARD_UID)['HOME'] ?? ''),
+			$websiteUrl
+		);
 
 		$actionLoggerService->registerTypes(newsActionType::class);
 		$actionLoggerService->registerTypes(frontPageActionType::class);

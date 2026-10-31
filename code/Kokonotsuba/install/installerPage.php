@@ -162,7 +162,7 @@ final class installerPage {
 			'<table class="fields">';
 
 		$this->field($values, $errors, 'website_url', 'Board base URL', 'text', 'https://example.net/kokonotsuba/boards/');
-		$this->field($values, $errors, 'home_url', 'Home link', 'text', 'https://example.net/');
+		$this->field($values, $errors, 'home_url', 'Front page / home URL', 'text', 'https://example.net/kokonotsuba/');
 		$this->field($values, $errors, 'static_url', 'Static URL', 'text', 'https://example.net/kokonotsuba/static/');
 		$this->field($values, $errors, 'static_path', 'Static path on disk', 'text', '/var/www/html/kokonotsuba/static/');
 
