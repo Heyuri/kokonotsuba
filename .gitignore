@@ -14,3 +14,9 @@ global/.installed
 
 # Runtime log, written by the app
 global/error.log
+global/front-page-cache/
+
+# Per-board storage (thread cache, online counter, ...) written at runtime; the example keeps the directory
+global/board-storages/*
+!global/board-storages/dat-example/
+global/attachments/
