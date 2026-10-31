@@ -86,9 +86,9 @@ class moduleAdmin extends abstractModuleAdmin {
 			$rows = [];
 			foreach ($files as $fileInfo) {
 				$rows[] = [
-					'{$FILENAME}' => htmlspecialchars($fileInfo['name']),
+					'{$FILENAME}' => sanitizeStr($fileInfo['name']),
 					'{$SIZE}' => $this->formatFileSize($fileInfo['size']),
-					'{$DATE}' => htmlspecialchars($fileInfo['date']),
+					'{$DATE}' => sanitizeStr($fileInfo['date']),
 					'{$DOWNLOAD_URL}' => $this->getModulePageURL([
 						'action' => 'download',
 						'category' => $category,
@@ -98,7 +98,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			}
 
 			$categories[] = [
-				'{$CATEGORY_NAME}' => htmlspecialchars($category),
+				'{$CATEGORY_NAME}' => sanitizeStr($category),
 				'{$PROFILE_COUNT}' => count($files),
 				'{$ROWS}' => $rows,
 			];

@@ -12,6 +12,7 @@ use Kokonotsuba\template\pageRenderer;
 use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
+use function Puchiko\strings\sanitizeStr;
 
 class capcodeModuleRenderer {
 	public function __construct(
@@ -140,7 +141,7 @@ class capcodeModuleRenderer {
 
 		// build staff capcode entry placeholders
 		$staffCapcodePlaceholder = [
-			'{$STAFF_CAPCODE_LABEL}' => htmlspecialchars($capcodeKey),
+			'{$STAFF_CAPCODE_LABEL}' => sanitizeStr($capcodeKey),
 			'{$STAFF_CAPCODE_PREVIEW}' => $staffCapcodePreview,
 			'{$STAFF_CAPCODE_REQUIRED_ROLE}' => $requiredRole,
 		];
@@ -234,17 +235,17 @@ class capcodeModuleRenderer {
 
 		// build placeholder array
 		$capcodePlaceholders = [
-			'{$ID}' => htmlspecialchars($id),
-			'{$ADDED_BY_USERNAME}' => htmlspecialchars($addedByUsername),
-			'{$DATE_ADDED}' => htmlspecialchars($dateAdded),
+			'{$ID}' => sanitizeStr($id),
+			'{$ADDED_BY_USERNAME}' => sanitizeStr($addedByUsername),
+			'{$DATE_ADDED}' => sanitizeStr($dateAdded),
 			'{$IS_SECURE}' => $isSecure === 1,
-			'{$TRIP_KEY}' => htmlspecialchars($tripKey),
-			'{$TRIPCODE}' => htmlspecialchars($tripcode),
-			'{$CAPCODE_COLOR}' => htmlspecialchars($capcodeColor),
-			'{$CAPCODE_TEXT}' => htmlspecialchars($capcodeText),
+			'{$TRIP_KEY}' => sanitizeStr($tripKey),
+			'{$TRIPCODE}' => sanitizeStr($tripcode),
+			'{$CAPCODE_COLOR}' => sanitizeStr($capcodeColor),
+			'{$CAPCODE_TEXT}' => sanitizeStr($capcodeText),
 			'{$IS_ENABLED}' => $isEnabled,
 			'{$PREVIEW}' => $capcodePreviewHtml, // premade html - dont sanitize or it'll break the html 
-			'{$VIEW_ENTRY_URL}' => htmlspecialchars($viewUrl),
+			'{$VIEW_ENTRY_URL}' => sanitizeStr($viewUrl),
 			'{$MODULE_URL}' => $this->modulePageUrl,
 			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 		];

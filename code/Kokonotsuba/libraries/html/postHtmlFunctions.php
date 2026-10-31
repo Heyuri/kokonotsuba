@@ -219,9 +219,7 @@ function generateQuoteLinkHtml(
 				$targetRepliesPerPage = $target['board']->getConfigValue('REPLIES_PER_PAGE', 200);
 				$page = getPageForPostPosition($postPosition, $targetRepliesPerPage);
 
-				$url = htmlspecialchars(
-					$target['board']->getBoardThreadURL($target['threadNo'], $postNumber, false, $page)
-				);
+				$url = sanitizeStr($target['board']->getBoardThreadURL($target['threadNo'], $postNumber, false, $page));
 
 				$linkClass = 'quotelink crossBoardLink';
 				$uidAttr = isset($target['uid'])
@@ -236,9 +234,7 @@ function generateQuoteLinkHtml(
 				$postPosition = $targetPostToPosition[$postNumber] ?? 0;
 				$page = getPageForPostPosition($postPosition, $repliesPerPage);
 
-				$url = htmlspecialchars(
-					$board->getBoardThreadURL($targetThreadNumber, $postNumber, false, $page)
-				);
+				$url = sanitizeStr($board->getBoardThreadURL($targetThreadNumber, $postNumber, false, $page));
 
 				$linkClass = 'quotelink crossBoardLink' . ($isCrossThread ? ' crossThreadLink' : '');
 				$uidAttr = isset($targetPostToUid[$postNumber])
@@ -284,9 +280,7 @@ function generateQuoteLinkHtml(
 			$page = getPageForPostPosition($postPosition, $repliesPerPage);
 
 			// Build the final quoted post URL including the "&page=X" parameter.
-			$url = htmlspecialchars(
-				$board->getBoardThreadURL($targetThreadNumber, $postNumber, false, $page)
-			);
+			$url = sanitizeStr($board->getBoardThreadURL($targetThreadNumber, $postNumber, false, $page));
 
 			// Assign CSS classes — add crossThreadLink if needed.
 			$linkClass = 'quotelink' . ($isCrossThread ? ' crossThreadLink' : '');

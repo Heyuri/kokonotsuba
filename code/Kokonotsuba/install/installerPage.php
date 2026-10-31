@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\install;
 
+use function Puchiko\strings\sanitizeStr;
+
 /** Renders the installer's pages. All output goes through here; nothing else echoes. */
 final class installerPage {
 	private const STATUS_MARK = [
@@ -248,7 +250,7 @@ final class installerPage {
 	}
 
 	private static function escape(string $value): string {
-		return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+		return sanitizeStr($value);
 	}
 
 	private function style(): string {

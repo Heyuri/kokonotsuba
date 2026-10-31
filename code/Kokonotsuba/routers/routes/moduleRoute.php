@@ -12,6 +12,7 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\request\request;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\requirePostWithCsrf;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleRoute implements route {
 	public function __construct(
@@ -57,7 +58,7 @@ class moduleRoute implements route {
 			}
 
 		} else {
-			$this->softErrorHandler->errorAndExit("Module Not Found(" . htmlspecialchars($load) . ")", 404);
+			$this->softErrorHandler->errorAndExit("Module Not Found(" . sanitizeStr($load) . ")", 404);
 		}
 	}
 

@@ -171,7 +171,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				'{$PM_RECIPIENT}' => sanitizeStr($message['recipient_tripcode']),
 				'{$PM_SUBJECT}' => sanitizeStr($message['message_subject'] ?? ''),
 				'{$PM_BODY}' => $this->messageRenderer->formatPreviewComment($message['message_body'] ?? '', 100),
-				'{$PM_VIEW_URL}' => htmlspecialchars($viewUrl),
+				'{$PM_VIEW_URL}' => sanitizeStr($viewUrl),
 				'{$PM_IP}' => sanitizeStr($message['ip_address'] ?? ''),
 				'{$PM_DATE}' => $this->moduleContext->postDateFormatter->formatFromDateString($message['date_sent']),
 			];

@@ -16,6 +16,7 @@ use Kokonotsuba\install\installerPage;
 use Kokonotsuba\install\installInput;
 use Kokonotsuba\install\pathRequirements;
 use Kokonotsuba\install\systemRequirements;
+use function Puchiko\strings\sanitizeStr;
 
 // Details belong on the page, not in the response of a half-rendered one.
 ini_set('display_errors', '0');
@@ -121,7 +122,7 @@ try {
 	http_response_code(500);
 	$page->header();
 	echo '<div class="panel fail"><h2>The installer itself failed</h2><p>',
-		htmlspecialchars($e->getMessage(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+		sanitizeStr($e->getMessage()),
 		'</p><p>The full trace is in the PHP error log.</p></div>';
 	$page->footer();
 }

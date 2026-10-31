@@ -6,6 +6,7 @@ use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\listeners\PostFormAdminListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 use Kokonotsuba\userRole;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use PostFormAdminListenerTrait, RegistBeginListenerTrait;
@@ -38,7 +39,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// checkbox html
 		$adminPostFormCheckbox .= '
 			<span class="postFormAdminFunc showModId">
-				<label title="If enabled, your post\'s ID will show your staff rank instead of a normally generated hash"><input name="formShowModId" type="checkbox" value="on" ' . htmlspecialchars($checked) . '>Show mod ID</label>
+				<label title="If enabled, your post\'s ID will show your staff rank instead of a normally generated hash"><input name="formShowModId" type="checkbox" value="on" ' . sanitizeStr($checked) . '>Show mod ID</label>
 			</span>';
 	}
 

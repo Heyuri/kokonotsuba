@@ -158,12 +158,12 @@ function generateUid(int $length = 64): string {
  * There is deliberately no way to opt out: the one path that emits unescaped post text is a
  * post flagged textFormat::RAW_HTML, handled by commentFormatter.
  *
- * @param string $str             Text to escape.
+ * @param string|int|float|bool|null $str Text to escape; scalars are cast and null is '', as htmlspecialchars() did.
  * @param bool   $convertNewLines Whether newlines become <br>.
  */
-function sanitizeStr(string $str, bool $convertNewLines = false): string {
+function sanitizeStr(string|int|float|bool|null $str, bool $convertNewLines = false): string {
 	// Trim whitespace from both ends of the string
-	$str = trim($str);
+	$str = trim((string)$str);
 
 	// Remove potentially problematic characters (e.g., control characters not allowed in XML 1.1)
 	// Reference: http://www.w3.org/TR/2006/REC-xml11-20060816/#charsets

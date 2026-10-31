@@ -31,7 +31,7 @@ function generateAdminLinkButtons(string $liveIndexFile, string $staticIndexFile
  * board, so this is just the Return link, carrying the same cache-busting query string.
  */
 function generateUserNavBar(string $staticIndexFile, request $request): string {
-	return '<div class="userNavBar">[<a href="' . htmlspecialchars($staticIndexFile) . '?' . $request->getRequestTime() . '">'
+	return '<div class="userNavBar">[<a href="' . sanitizeStr($staticIndexFile) . '?' . $request->getRequestTime() . '">'
 		. _T('return') . '</a>]</div>';
 }
 
@@ -105,12 +105,12 @@ function drawAccountTable(string $liveIndexFile, array $accounts, string $csrfHi
 	
 	foreach ($accounts as $account) {
 			$accountID = $account->getId();
-			$accountUsername = htmlspecialchars($account->getUsername());
+			$accountUsername = sanitizeStr($account->getUsername());
 			$accountRoleLevel = $account->getRoleLevel();
 			$accountNumberOfActions = $account->getNumberOfActions();
 			$accountLastLogin = $account->getLastLogin() ?? '<i>Never</i>';
 	
-			$viewHTML = '[<a title="View account" href="' . htmlspecialchars($liveIndexFile) . '?mode=viewStaffAccount&amp;id=' . (int)$accountID . '">View</a>]';
+			$viewHTML = '[<a title="View account" href="' . sanitizeStr($liveIndexFile) . '?mode=viewStaffAccount&amp;id=' . (int)$accountID . '">View</a>]';
 
 			$accountsHTML .= '<tr> 
 					<td class="colSelect"><input type="checkbox" name="del_ids[]" value="' . (int)$accountID . '"></td>
@@ -200,13 +200,13 @@ function buildThreadNavButtons(array $threadList, int $threadInnerIterator): str
 	// Up arrow (previous thread on this page)
 	if ($threadInnerIterator > 0 && isset($threadList[$threadInnerIterator - 1])) {
 		$aboveThread = $threadList[$threadInnerIterator - 1]->getThread();
-		$upArrow = '<a title="Go to above thread" href="#t' . htmlspecialchars($aboveThread->getBoardUID()) . '_' . htmlspecialchars($aboveThread->getOpNumber()) . '">&#9650;</a>';
+		$upArrow = '<a title="Go to above thread" href="#t' . sanitizeStr($aboveThread->getBoardUID()) . '_' . sanitizeStr($aboveThread->getOpNumber()) . '">&#9650;</a>';
 	}
 	
 	// Down arrow (next thread on this page)
 	if ($threadInnerIterator < count($threadList) - 1 && isset($threadList[$threadInnerIterator + 1])) {
 		$belowThread = $threadList[$threadInnerIterator + 1]->getThread();
-		$downArrow = '<a title="Go to below thread" href="#t' . htmlspecialchars($belowThread->getBoardUID()) . '_' . htmlspecialchars($belowThread->getOpNumber()) . '">&#9660;</a>';
+		$downArrow = '<a title="Go to below thread" href="#t' . sanitizeStr($belowThread->getBoardUID()) . '_' . sanitizeStr($belowThread->getOpNumber()) . '">&#9660;</a>';
 	}
 	
 	return $postFormButton . $upArrow . $downArrow;
@@ -246,7 +246,7 @@ function drawAdminTheading(&$dat, $staffSession) {
 function drawPushPostForm(&$dat, $pushPostCharacterLimit, $url, $postNumber, $post_uid) {		
 	$dat .= '<form id="push-post-form" method="POST" action="'.$url.'">
 				<input type="hidden" name="">
-				<input type="hidden" name="push-post-post-uid" value="'.htmlspecialchars($post_uid).'">
+				<input type="hidden" name="push-post-post-uid" value="'.sanitizeStr($post_uid).'">
 				<table>
 					<tbody>
 						<tr>
@@ -271,5 +271,5 @@ function drawPushPostForm(&$dat, $pushPostCharacterLimit, $url, $postNumber, $po
 }
 
 function getThreadTitle(string $boardUrl, string $boardTitle): string {
-	return '<span class="overboardThreadBoardTitle"><a href="' . htmlspecialchars($boardUrl).'">' . $boardTitle . '</a></span>';
+	return '<span class="overboardThreadBoardTitle"><a href="' . sanitizeStr($boardUrl).'">' . $boardTitle . '</a></span>';
 }

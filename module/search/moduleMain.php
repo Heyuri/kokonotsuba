@@ -22,6 +22,7 @@ use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\generateFooterHtml;
 use function Kokonotsuba\libraries\html\generateHeadHtml;
 use function Kokonotsuba\libraries\isActiveStaffSession;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use ModuleHeaderListenerTrait;
@@ -261,8 +262,8 @@ class moduleMain extends abstractModuleMain {
 		if (!empty($tags)) {
 			$tagSelectHTML = '<select name="searchTag" id="searchTag" class="inputtext"><option value="">' . _T('search_tag_all') . '</option>';
 			foreach ($tags as $abbr => $label) {
-				$safeAbbr = htmlspecialchars($abbr);
-				$safeLabel = htmlspecialchars($label);
+				$safeAbbr = sanitizeStr($abbr);
+				$safeLabel = sanitizeStr($label);
 				$selected = ($searchTag === $abbr) ? ' selected' : '';
 				$tagSelectHTML .= '<option value="' . $safeAbbr . '"' . $selected . '>' . $safeLabel . '</option>';
 			}
@@ -271,7 +272,7 @@ class moduleMain extends abstractModuleMain {
 
 		// render the form
 		return '
-			<form action="' . htmlspecialchars($cleanUrl) . '" method="GET">
+			<form action="' . sanitizeStr($cleanUrl) . '" method="GET">
 				<input type="hidden" name="mode" value="module">
 				<input type="hidden" name="load" value="search">
 				<input type="hidden" name="filterSubmissionFlag" value="1">
@@ -282,55 +283,55 @@ class moduleMain extends abstractModuleMain {
 							<tr>
 								<td class="postblock"><label for="searchGeneral">' . _T('search_target_general') . '</label></td>
 								<td>
-									<input id="searchGeneral" class="inputtext" name="searchGeneral" value="' . htmlspecialchars($searchGeneral) . '">
+									<input id="searchGeneral" class="inputtext" name="searchGeneral" value="' . sanitizeStr($searchGeneral) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchComment">' . _T('search_target_comment') . '</label></td>
 								<td>
-									<input id="searchComment" class="inputtext" name="searchComment" value="' . htmlspecialchars($searchComment) . '">
+									<input id="searchComment" class="inputtext" name="searchComment" value="' . sanitizeStr($searchComment) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchName">' . _T('search_target_name') . '</label></td>
 								<td>
-									<input id="searchName" class="inputtext" name="searchName" value="' . htmlspecialchars($searchName) . '">
+									<input id="searchName" class="inputtext" name="searchName" value="' . sanitizeStr($searchName) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchEmail">' . _T('search_target_email') . '</label></td>
 								<td>
-									<input id="searchEmail" class="inputtext" name="searchEmail" value="' . htmlspecialchars($searchEmail) . '">
+									<input id="searchEmail" class="inputtext" name="searchEmail" value="' . sanitizeStr($searchEmail) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchSubject">' . _T('search_target_subject') . '</label></td>
 								<td>
-									<input id="searchSubject" class="inputtext" name="searchSubject" value="' . htmlspecialchars($searchSubject) . '">
+									<input id="searchSubject" class="inputtext" name="searchSubject" value="' . sanitizeStr($searchSubject) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchFileName">' . _T('search_target_file_name') . '</label></td>
 								<td>
-									<input id="searchFileName" class="inputtext" name="searchFileName" value="' . htmlspecialchars($searchFileName) . '">
+									<input id="searchFileName" class="inputtext" name="searchFileName" value="' . sanitizeStr($searchFileName) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchPostNumber">' . _T('search_target_number') . '</label></td>
 								<td>
-									<input type="number" min="1" id="searchPostNumber" name="searchPostNumber" value="' . htmlspecialchars($searchPostNumber) . '">
+									<input type="number" min="1" id="searchPostNumber" name="searchPostNumber" value="' . sanitizeStr($searchPostNumber) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchDateAfter">' . _T('search_target_date_from') . '</label></td>
 								<td>
-									<input type="date" class="inputtext" id="searchDateAfter" name="searchDateAfter" value="' . htmlspecialchars($searchDateAfter) . '">
+									<input type="date" class="inputtext" id="searchDateAfter" name="searchDateAfter" value="' . sanitizeStr($searchDateAfter) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchDateBefore">' . _T('search_target_date_to') . '</label></td>
 								<td>
-									<input type="date" class="inputtext" id="searchDateBefore" name="searchDateBefore" value="' . htmlspecialchars($searchDateBefore) . '">
+									<input type="date" class="inputtext" id="searchDateBefore" name="searchDateBefore" value="' . sanitizeStr($searchDateBefore) . '">
 								</td>
 							</tr>
 							<tr>

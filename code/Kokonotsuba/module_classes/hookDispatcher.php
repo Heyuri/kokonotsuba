@@ -4,6 +4,7 @@ namespace Kokonotsuba\module_classes;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\userRole;
+use function Puchiko\strings\sanitizeStr;
 
 class hookDispatcher {
 	private array $listeners = [];
@@ -21,7 +22,7 @@ class hookDispatcher {
 			if ($currentRole->isLessThan($requiredRole)) {
 				// throwing an exception is optional in case you want to have it silently fail / skip
 				if($throwException) {
-					throw new BoardException('Insufficient role: ' . htmlspecialchars($currentRole->displayRoleName()));
+					throw new BoardException('Insufficient role: ' . sanitizeStr($currentRole->displayRoleName()));
 				} else {
 					return;
 				}

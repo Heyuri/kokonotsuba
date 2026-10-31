@@ -216,7 +216,7 @@ class messageRenderer {
 		$bodyHtml = $this->applyCommentHooks($bodyHtml);
 
 		return $this->adminPageRenderer->ParseBlock('PM_VIEW_MESSAGE', [
-			'{$MODULE_PAGE_URL}' => htmlspecialchars($backUrl),
+			'{$MODULE_PAGE_URL}' => sanitizeStr($backUrl),
 			'{$BACK_LABEL}' => _T('pm_admin_back'),
 			'{$SHOW_REPLY}' => '',
 			'{$REPLY_LABEL}' => '',

@@ -24,6 +24,7 @@ use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 use function Kokonotsuba\Modules\perceptualBan\getPerceptualBanService;
 use function Kokonotsuba\Modules\perceptualBan\getPerceptualHasher;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use AuditableTrait;
@@ -273,19 +274,19 @@ class moduleAdmin extends abstractModuleAdmin {
 		$templateRows = [];
 		foreach ($entries as $entry) {
 			$templateRows[] = [
-				'{$ID}' => htmlspecialchars($entry['id']),
-				'{$PHASH_HEX}' => htmlspecialchars($entry['phash_hex']),
-				'{$ADDED_BY}' => htmlspecialchars($entry['added_by_username'] ?? ''),
-				'{$CREATED_AT}' => htmlspecialchars($entry['created_at'] ?? ''),
+				'{$ID}' => sanitizeStr($entry['id']),
+				'{$PHASH_HEX}' => sanitizeStr($entry['phash_hex']),
+				'{$ADDED_BY}' => sanitizeStr($entry['added_by_username'] ?? ''),
+				'{$CREATED_AT}' => sanitizeStr($entry['created_at'] ?? ''),
 			];
 		}
 
 		$indexHtml = $this->moduleContext->adminPageRenderer->ParseBlock('PERCEPTUAL_BAN_INDEX', [
 			'{$ROWS}' => $templateRows,
-			'{$MODULE_URL}' => htmlspecialchars($this->moduleUrl),
+			'{$MODULE_URL}' => sanitizeStr($this->moduleUrl),
 			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 			'{$PHASH_VALUE}' => '',
-			'{$THRESHOLD}' => htmlspecialchars((string) $threshold),
+			'{$THRESHOLD}' => sanitizeStr((string) $threshold),
 			'{$PERCEPTUAL_BAN_INDEX_TITLE}' => _T('perceptual_ban_index_title'),
 			'{$PERCEPTUAL_BAN_HASH_LABEL}' => _T('perceptual_ban_hash_label'),
 			'{$PERCEPTUAL_BAN_ADDED_BY_LABEL}' => _T('perceptual_ban_added_by_label'),

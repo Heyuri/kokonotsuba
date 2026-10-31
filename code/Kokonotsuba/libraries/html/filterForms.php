@@ -6,6 +6,7 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\action_log\actionTypeRegistry;
 use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\html\generateBoardListCheckBoxHTML;
+use function Puchiko\strings\sanitizeStr;
 
 /**
  * @param actionTypeRegistry $actionTypes Every event type the log can be filtered on.
@@ -25,7 +26,7 @@ function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, a
 	$roleCheckboxHTML = '';
 	foreach (userRole::accountRoles() as $role) {
 		$checked = in_array($role->value, $filterRole) ? 'checked' : '';
-		$roleCheckboxHTML .= '<li><label><input name="role[]" type="checkbox" value="' . $role->value . '" ' . $checked . '>' . htmlspecialchars($role->displayRoleName()) . '</label></li>';
+		$roleCheckboxHTML .= '<li><label><input name="role[]" type="checkbox" value="' . $role->value . '" ' . $checked . '>' . sanitizeStr($role->displayRoleName()) . '</label></li>';
 	}
 
 	$typeCheckboxHTML = generateActionTypeCheckBoxHTML($filterTypes, $actionTypes);
@@ -43,27 +44,27 @@ function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, a
 						<tbody>
 							<tr>
 								<td class="postblock"><label for="ip">IP address</label></td>
-								<td><input class="inputtext" id="ip_address" name="ip_address" value="' . htmlspecialchars($filterIP) . '"></td>
+								<td><input class="inputtext" id="ip_address" name="ip_address" value="' . sanitizeStr($filterIP) . '"></td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="log_name">Name</label></td>
-								<td><input class="inputtext" id="log_name" name="log_name" value="' . htmlspecialchars($filterName) . '"></td>
+								<td><input class="inputtext" id="log_name" name="log_name" value="' . sanitizeStr($filterName) . '"></td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="log_action">Action text</label></td>
-								<td><input class="inputtext" id="log_action" name="log_action" value="' . htmlspecialchars($filterAction) . '"></td>
+								<td><input class="inputtext" id="log_action" name="log_action" value="' . sanitizeStr($filterAction) . '"></td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="entryid">Entry ID</label></td>
-								<td><input class="inputtext" type="number" min="1" id="entryid" name="id" value="' . htmlspecialchars((string)$filterId) . '"></td>
+								<td><input class="inputtext" type="number" min="1" id="entryid" name="id" value="' . sanitizeStr((string)$filterId) . '"></td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="date_after">From</label></td>
-								<td><input class="inputtext" type="date" id="date_after" name="date_after" value="' . htmlspecialchars($filterDateAfter) . '"></td>
+								<td><input class="inputtext" type="date" id="date_after" name="date_after" value="' . sanitizeStr($filterDateAfter) . '"></td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="date_before">To</label></td>
-								<td><input class="inputtext" type="date" id="date_before" name="date_before" value="' . htmlspecialchars($filterDateBefore) . '"></td>
+								<td><input class="inputtext" type="date" id="date_before" name="date_before" value="' . sanitizeStr($filterDateBefore) . '"></td>
 							</tr>
 							<tr id="actiontyperow">
 								<td class="postblock">Events <br> <div class="selectlinktextjs" id="actiontypeselectall">[<a>Select all</a>]</div></td>
@@ -113,14 +114,14 @@ function generateActionTypeCheckBoxHTML(array $selected, actionTypeRegistry $act
 
 		foreach ($group['entries'] as $entry) {
 			$checked = (empty($selected) || in_array($entry['key'], $selected, true)) ? 'checked' : '';
-			$items .= '<li><label><input name="action_type[]" type="checkbox" value="' . htmlspecialchars($entry['key']) . '" ' . $checked . '>' . htmlspecialchars($entry['label']) . '</label></li>';
+			$items .= '<li><label><input name="action_type[]" type="checkbox" value="' . sanitizeStr($entry['key']) . '" ' . $checked . '>' . sanitizeStr($entry['label']) . '</label></li>';
 		}
 
 		$rowId = 'actiontypegroup-' . $groupKey;
 
-		$html .= '<div class="actionTypeGroup" id="' . htmlspecialchars($rowId) . '">'
-			. '<div class="actionTypeGroupLabel">' . htmlspecialchars($group['label'])
-			. ' <span class="selectlinktextjs actionTypeGroupToggle" data-target="' . htmlspecialchars($rowId) . '">[<a>Select all</a>]</span></div>'
+		$html .= '<div class="actionTypeGroup" id="' . sanitizeStr($rowId) . '">'
+			. '<div class="actionTypeGroupLabel">' . sanitizeStr($group['label'])
+			. ' <span class="selectlinktextjs actionTypeGroupToggle" data-target="' . sanitizeStr($rowId) . '">[<a>Select all</a>]</span></div>'
 			. '<ul class="littlelist">' . $items . '</ul></div>';
 	}
 
@@ -148,13 +149,13 @@ function drawManagePostsFilterForm(string &$dat, string $formAction, array $hidd
 
 	$hiddenFieldHTML = '';
 	foreach ($hiddenFields as $hiddenName => $hiddenValue) {
-		$hiddenFieldHTML .= '<input type="hidden" name="' . htmlspecialchars($hiddenName) . '" value="' . htmlspecialchars($hiddenValue) . '">';
+		$hiddenFieldHTML .= '<input type="hidden" name="' . sanitizeStr($hiddenName) . '" value="' . sanitizeStr($hiddenValue) . '">';
 	}
 
 	$dat .= '
-	<form class="detailsboxForm formtable" action="' . htmlspecialchars($formAction) . '" method="get">
+	<form class="detailsboxForm formtable" action="' . sanitizeStr($formAction) . '" method="get">
 		<details id="filtercontainer" class="detailsbox">
-			<summary>' . htmlspecialchars($summaryLabel) . '</summary>
+			<summary>' . sanitizeStr($summaryLabel) . '</summary>
 			<div class="detailsboxContent">
 				' . $hiddenFieldHTML . '
 				<input type="hidden" name="filterSubmissionFlag" value="true">
@@ -163,31 +164,31 @@ function drawManagePostsFilterForm(string &$dat, string $formAction, array $hidd
 					<tbody>
 						' . ($canViewIp ? '<tr>
 							<td class="postblock"><label for="ip_address">IP address</label></td>
-							<td><input class="inputtext" id="ip_address" name="ip_address" value="'.htmlspecialchars($filterIP).'"></td>
+							<td><input class="inputtext" id="ip_address" name="ip_address" value="'.sanitizeStr($filterIP).'"></td>
 						</tr>
 						<tr>
 							<td class="postblock"><label for="visitor_token_hash">Browser</label></td>
-							<td><input class="inputtext" id="visitor_token_hash" name="visitor_token_hash" value="'.htmlspecialchars($filterTokenHash).'"></td>
+							<td><input class="inputtext" id="visitor_token_hash" name="visitor_token_hash" value="'.sanitizeStr($filterTokenHash).'"></td>
 						</tr>' : '') . '
 						<tr>
 							<td class="postblock"><label for="post_name">Name</label></td>
-							<td><input class="inputtext" id="post_name" name="post_name" value="'.htmlspecialchars($filterName).'"></td>
+							<td><input class="inputtext" id="post_name" name="post_name" value="'.sanitizeStr($filterName).'"></td>
 						</tr>
 						<tr>
 							<td class="postblock"><label for="tripcode">Tripcode</label></td>
-							<td><input class="inputtext" id="tripcode" name="tripcode" value="'.htmlspecialchars($filterTripcode).'"></td>
+							<td><input class="inputtext" id="tripcode" name="tripcode" value="'.sanitizeStr($filterTripcode).'"></td>
 						</tr>
 						<tr>
 							<td class="postblock"><label for="capcode">Capcode</label></td>
-							<td><input class="inputtext" id="capcode" name="capcode" value="'.htmlspecialchars($filterCapcode).'"></td>
+							<td><input class="inputtext" id="capcode" name="capcode" value="'.sanitizeStr($filterCapcode).'"></td>
 						</tr>
 						<tr>
 							<td class="postblock"><label for="subject">Subject</label></td>
-							<td><input class="inputtext" id="subject" name="subject" value="'.htmlspecialchars($filterSubject).'"></td>
+							<td><input class="inputtext" id="subject" name="subject" value="'.sanitizeStr($filterSubject).'"></td>
 						</tr>
 						<tr>
 							<td class="postblock"><label for="comment">Comment</label></td>
-							<td><input class="inputtext" id="comment" name="comment" value="'.htmlspecialchars($filterComment).'"></td>
+							<td><input class="inputtext" id="comment" name="comment" value="'.sanitizeStr($filterComment).'"></td>
 						</tr>
 						<tr id="boardrow">
 							<td class="postblock">
@@ -218,7 +219,7 @@ function drawDeletedPostsFilterForm(string &$dat, string $formAction, array $fil
 	$filterStaffUsername = $filters['staff_username'] ?? '';
 
 	$dat .= '
-	<form class="detailsboxForm formtable" action="' . htmlspecialchars($formAction) . '" method="get">
+	<form class="detailsboxForm formtable" action="' . sanitizeStr($formAction) . '" method="get">
 		<details id="filtercontainer" class="detailsbox">
 			<summary>Filter deleted posts</summary>
 			<div class="detailsboxContent">
@@ -226,7 +227,7 @@ function drawDeletedPostsFilterForm(string &$dat, string $formAction, array $fil
 				<input type="hidden" name="load" value="deletedPosts">
 				<input type="hidden" name="moduleMode" value="admin">
 				<input type="hidden" name="filterSubmissionFlag" value="true">
-				' . ($hiddenPageName ? '<input type="hidden" name="pageName" value="' . htmlspecialchars($hiddenPageName) . '">' : '') . '
+				' . ($hiddenPageName ? '<input type="hidden" name="pageName" value="' . sanitizeStr($hiddenPageName) . '">' : '') . '
 
 				<table class="centerBlock">
 					<tbody>
@@ -252,11 +253,11 @@ function drawDeletedPostsFilterForm(string &$dat, string $formAction, array $fil
 						</tr>
 						<tr>
 							<td class="postblock"><label for="staff_username">Staff username</label></td>
-							<td><input class="inputtext" id="staff_username" name="staff_username" value="' . htmlspecialchars($filterStaffUsername) . '"></td>
+							<td><input class="inputtext" id="staff_username" name="staff_username" value="' . sanitizeStr($filterStaffUsername) . '"></td>
 						</tr>
 						' . ($canViewIp ? '<tr>
 							<td class="postblock"><label for="ip_address">IP address</label></td>
-							<td><input class="inputtext" id="ip_address" name="ip_address" value="' . htmlspecialchars($filterIP) . '"></td>
+							<td><input class="inputtext" id="ip_address" name="ip_address" value="' . sanitizeStr($filterIP) . '"></td>
 						</tr>' : '') . '
 					</tbody>
 				</table>

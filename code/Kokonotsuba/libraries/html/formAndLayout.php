@@ -68,7 +68,7 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 	$pte_vals['{$MODULE_STYLESHEETS_HTML}'] = moduleStylesheets::html();
 
 	$pte_vals['{$PAGE_TITLE}'] = $pageTitle;
-	$pte_vals['{$ATTACHMENT_LIMIT}'] = htmlspecialchars($config['ATTACHMENT_UPLOAD_LIMIT'] ?? 1);
+	$pte_vals['{$ATTACHMENT_LIMIT}'] = sanitizeStr($config['ATTACHMENT_UPLOAD_LIMIT'] ?? 1);
 
 	// Generate stylesheet <link> tags from config styles.
 	$pte_vals['{$BOARD_STYLESHEETS}'] = getBoardStylesheetsFromConfig($config);
@@ -174,8 +174,8 @@ function generateBoardStylesheets(array $styles, string $staticUrl, string $cssD
 		// The first stylesheet is the default; subsequent ones are alternate
 		$rel = $first ? 'stylesheet' : 'stylesheet alternate';
 		$html .= "\t" . '<link class="linkstyle" rel="' . $rel . '" href="'
-			. htmlspecialchars($staticUrl . $cssDir . $filename)
-			. '" title="' . htmlspecialchars($title) . '">' . "\n";
+			. sanitizeStr($staticUrl . $cssDir . $filename)
+			. '" title="' . sanitizeStr($title) . '">' . "\n";
 		$first = false;
 	}
 
@@ -305,12 +305,12 @@ function generatePostFormHTML(int $resno,
 		
 		if ($attachmentUploadLimit > 1) {
 			$pte_vals['{$FORM_ATTECHMENT_FIELD}'] = $templateEngine->ParseBlock('DROPZONE', [
-				'{$ATTACHMENT_LIMIT}' => htmlspecialchars($attachmentUploadLimit),
+				'{$ATTACHMENT_LIMIT}' => sanitizeStr($attachmentUploadLimit),
 				'{$DROPZONE_ACCEPT}' => '',
 			]);
-			$pte_vals['{$FORM_ATTECHMENT_FIELD}'] .= '<noscript><input type="file" name="upfile[]" data-attachment-limit="' . htmlspecialchars($attachmentUploadLimit) . '" multiple></noscript>';
+			$pte_vals['{$FORM_ATTECHMENT_FIELD}'] .= '<noscript><input type="file" name="upfile[]" data-attachment-limit="' . sanitizeStr($attachmentUploadLimit) . '" multiple></noscript>';
 		} else {
-			$pte_vals['{$FORM_ATTECHMENT_FIELD}'] = '<input type="file" name="upfile[]" id="upfile" data-attachment-limit="' . htmlspecialchars($attachmentUploadLimit) . '">';
+			$pte_vals['{$FORM_ATTECHMENT_FIELD}'] = '<input type="file" name="upfile[]" id="upfile" data-attachment-limit="' . sanitizeStr($attachmentUploadLimit) . '">';
 		}
 
 		if (!$resno) {

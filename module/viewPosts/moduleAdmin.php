@@ -15,6 +15,7 @@ use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
 
 use function Puchiko\request\redirect;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
@@ -191,11 +192,11 @@ class moduleAdmin extends abstractModuleAdmin {
 			// Show raw IP for higher-privilege users. Wrapped so the "Show user
 			// IPs" toggle (viewPosts.js) can hide the IP and its brackets cleanly.
 			$postLink = $this->generateViewIpUrl($post->getIp());
-			$button = '<span class="ipAddressControl">[<a class="ipAddress" href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars($post->getIp()) . '</a>]' . $this->renderVisitorTokenHash($post) . '</span>';
+			$button = '<span class="ipAddressControl">[<a class="ipAddress" href="' . sanitizeStr($postLink) . '">' . sanitizeStr($post->getIp()) . '</a>]' . $this->renderVisitorTokenHash($post) . '</span>';
 		} else if($this->canViewHashedIp()) {
 			// Show hashed IP and user-based filter for lower-privilege users
 			$postLink = $this->generateViewPostsUrl($post->getUid());
-			$button = '[<a class="hashedIp" href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars(substr(md5($post->getIp()), 0, 8)) . '</a>]';
+			$button = '[<a class="hashedIp" href="' . sanitizeStr($postLink) . '">' . sanitizeStr(substr(md5($post->getIp()), 0, 8)) . '</a>]';
 		}
 		
 		// append the button to the hook point
@@ -219,7 +220,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			// NULL and '' both read as '' here, so only a post recorded as cookieless says so.
 			// Nothing to link to either: there is no browser to gather posts by.
 			return $post->hasVisitorTokenHash()
-				? ' <span class="visitorToken noCookies"><i>(' . htmlspecialchars(_T('view_posts_no_cookies')) . ')</i></span>'
+				? ' <span class="visitorToken noCookies"><i>(' . sanitizeStr(_T('view_posts_no_cookies')) . ')</i></span>'
 				: '';
 		}
 
@@ -227,9 +228,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		return ' <span class="visitorToken"><i>(<a class="visitorTokenLink" style="'
 			. $this->visitorTokenStyle($hash) . '" href="'
-			. htmlspecialchars($this->generateViewTokenUrl($hash)) . '" title="'
-			. htmlspecialchars(_T('view_posts_by_browser')) . '">'
-			. htmlspecialchars($label) . '</a>)</i></span>';
+			. sanitizeStr($this->generateViewTokenUrl($hash)) . '" title="'
+			. sanitizeStr(_T('view_posts_by_browser')) . '">'
+			. sanitizeStr($label) . '</a>)</i></span>';
 	}
 
 	/**

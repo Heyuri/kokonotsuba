@@ -3,6 +3,7 @@
 namespace Kokonotsuba\renderers\post;
 
 use Kokonotsuba\renderers\noscriptWidgetMenu;
+use function Puchiko\strings\sanitizeStr;
 
 /**
  * The dropdown menu on a post, collected as widget entries and drawn once at the end.
@@ -77,13 +78,13 @@ final class postMenu {
 			$paramAttrs = '';
 
 			foreach ($widget['params'] ?? [] as $key => $value) {
-				$paramAttrs .= ' data-param-' . htmlspecialchars($key) . '="' . htmlspecialchars((string)$value) . '"';
+				$paramAttrs .= ' data-param-' . sanitizeStr($key) . '="' . sanitizeStr((string)$value) . '"';
 			}
 
-			$html .= '<a href="' . htmlspecialchars($widget['href'] ?? '')
-				. '" data-action="' . htmlspecialchars($widget['action'] ?? '')
-				. '" data-label="' . htmlspecialchars($widget['label'] ?? '')
-				. '" data-subMenu="' . htmlspecialchars($widget['subMenu'] ?? '')
+			$html .= '<a href="' . sanitizeStr($widget['href'] ?? '')
+				. '" data-action="' . sanitizeStr($widget['action'] ?? '')
+				. '" data-label="' . sanitizeStr($widget['label'] ?? '')
+				. '" data-subMenu="' . sanitizeStr($widget['subMenu'] ?? '')
 				. '"' . $paramAttrs . '></a>';
 		}
 

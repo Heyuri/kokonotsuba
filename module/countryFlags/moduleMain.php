@@ -12,6 +12,7 @@ use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\RegistPostInsertedListenerTrait;
 use Kokonotsuba\post\Post;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use PostListenerTrait;
@@ -72,7 +73,7 @@ class moduleMain extends abstractModuleMain {
 		$countryCode = $post->getCountryCode();
 
 		if ($countryCode !== '' && $countryCode !== 'XX') {
-			$arrLabels['{$NAME}'] .= ' <img class="countryFlag" src="' . $this->staticUrl . 'image/flag/' . strtolower($countryCode) . '.png" title="' . htmlspecialchars($countryCode) . '" alt="' . htmlspecialchars($countryCode) . '">';
+			$arrLabels['{$NAME}'] .= ' <img class="countryFlag" src="' . $this->staticUrl . 'image/flag/' . strtolower($countryCode) . '.png" title="' . sanitizeStr($countryCode) . '" alt="' . sanitizeStr($countryCode) . '">';
 		} else {
 			$arrLabels['{$NAME}'] .= ' <img class="countryFlag" src="' . $this->staticUrl . 'image/flag/xx.png" title="Unknown" alt="XX">';
 		}

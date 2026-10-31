@@ -12,6 +12,7 @@ use Kokonotsuba\thread\ThreadData;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generatePostHash;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use PostListenerTrait;
@@ -68,13 +69,13 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		// bind the poster_hash to the placeholder
-		$templateValues['{$POSTER_HASH}'] = htmlspecialchars($post->getPosterHash());
+		$templateValues['{$POSTER_HASH}'] = sanitizeStr($post->getPosterHash());
 
 		// get count of posts by this poster hash
 		$posterHashCount = $this->getPosterHashCount($threadPosts, $post->getPosterHash());
 
 		// then bind the total amount of posts by that ID
-		$templateValues['{$POSTER_HASH_COUNT}'] = htmlspecialchars(_T('poster_hash_count', $posterHashCount, _T($posterHashCount === 1 ? 'post_singular' : 'post_multiple')));
+		$templateValues['{$POSTER_HASH_COUNT}'] = sanitizeStr(_T('poster_hash_count', $posterHashCount, _T($posterHashCount === 1 ? 'post_singular' : 'post_multiple')));
 	}
 
 	private function getPosterHashCount(array $threadPosts, string $posterHash): int {

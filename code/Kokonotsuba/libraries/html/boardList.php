@@ -3,6 +3,7 @@
 namespace Kokonotsuba\libraries\html;
 
 use Kokonotsuba\board\board;
+use function Puchiko\strings\sanitizeStr;
 
 //for the board filter form
 function generateBoardListCheckBoxHTML(array $filterBoard, array $boards, bool $selectAll = false) {
@@ -26,7 +27,7 @@ function generateRebuildListCheckboxHTML(array $boards) {
 
 	foreach($boards as $board) {
 		$boardTitle = $board->getBoardTitle();
-		$boardUID = htmlspecialchars($board->getBoardUID());
+		$boardUID = sanitizeStr($board->getBoardUID());
 		
 		$listHTML .= '<li><label class="filterSelectBoardItem"><input name="rebuildBoardUIDs[]" type="checkbox" value="' . $boardUID . '" checked>' . $boardTitle . '</label></li>';
 	}
@@ -44,7 +45,7 @@ function generateBoardListRadioHTML(board $currentBoard, array $boards) {
 		if($currentBoard && $board->getBoardUID() === $currentBoard->getBoardUID()) continue;
 			
 		$boardTitle = $board->getBoardTitle();
-		$boardUID = htmlspecialchars($board->getBoardUID());
+		$boardUID = sanitizeStr($board->getBoardUID());
 			
 		$listHTML .= '<label> <input name="radio-board-selection" type="radio" value="' . $boardUID . '">'.$boardTitle.'</label>  ';
 	}

@@ -29,6 +29,7 @@ use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
@@ -312,9 +313,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		foreach ($entries as $w) {
 			$paramAttrs = '';
 			foreach ($w['params'] as $k => $v) {
-				$paramAttrs .= ' data-param-' . htmlspecialchars($k) . '="' . htmlspecialchars((string)$v) . '"';
+				$paramAttrs .= ' data-param-' . sanitizeStr($k) . '="' . sanitizeStr((string)$v) . '"';
 			}
-			$html .= '<a href="' . htmlspecialchars($w['href']) . '" data-action="' . htmlspecialchars($w['action']) . '" data-label="' . htmlspecialchars($w['label']) . '" data-subMenu="' . htmlspecialchars($w['subMenu']) . '"' . $paramAttrs . '></a>';
+			$html .= '<a href="' . sanitizeStr($w['href']) . '" data-action="' . sanitizeStr($w['action']) . '" data-label="' . sanitizeStr($w['label']) . '" data-subMenu="' . sanitizeStr($w['subMenu']) . '"' . $paramAttrs . '></a>';
 		}
 
 		return $html;

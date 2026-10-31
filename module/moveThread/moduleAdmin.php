@@ -623,7 +623,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		});
 
 		// Log the action
-		$destinationBoardTitle = htmlspecialchars($destinationBoard->getBoardTitle());
+		$destinationBoardTitle = sanitizeStr($destinationBoard->getBoardTitle());
 		$this->moduleContext->actionLoggerService->logAction(
 			"Moved thread No.{$thread->getThread()->getOpNumber()} to board $destinationBoardTitle",
 			$hostBoard->getBoardUID(),
@@ -663,7 +663,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		return [
 			'{$FORM_ACTION}' => $this->modulePageUrl,
-			'{$THREAD_UID}' => htmlspecialchars($thread_uid),
+			'{$THREAD_UID}' => sanitizeStr($thread_uid),
 			'{$THREAD_NUMBER}' => $thread->getOpNumber(),
 			'{$THREAD_SUBJECT}' => $subject !== '' ? $subject : '(no subject)',
 			'{$THREAD_LIST_HTML}' => $this->generateThreadListHTML($board, $thread_uid),
@@ -854,10 +854,10 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		return [
 			'{$FORM_ACTION}' => $this->modulePageUrl,
-			'{$THREAD_UID}' => htmlspecialchars($thread_uid),
+			'{$THREAD_UID}' => sanitizeStr($thread_uid),
 			'{$THREAD_NUMBER}' => $threadNumber,
 			'{$CURRENT_BOARD_UID}' => $threadParentBoard->getBoardUID(),
-			'{$CURRENT_BOARD_NAME}' => htmlspecialchars($threadParentBoard->getBoardTitle()) . ' (' . $threadParentBoard->getBoardUID() . ')',
+			'{$CURRENT_BOARD_NAME}' => sanitizeStr($threadParentBoard->getBoardTitle()) . ' (' . $threadParentBoard->getBoardUID() . ')',
 			'{$BOARD_RADIO_HTML}' => $boardRadioHTML,
 			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 		];

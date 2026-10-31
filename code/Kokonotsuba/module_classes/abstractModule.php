@@ -17,6 +17,7 @@ namespace Kokonotsuba\module_classes;
 use Kokonotsuba\module_classes\moduleContext;
 use Kokonotsuba\renderers\widgetMenuPolicy;
 use Kokonotsuba\template\templateEngine;
+use function Puchiko\strings\sanitizeStr;
 
 abstract class abstractModule {
 	private ?widgetMenuPolicy $menuPolicy = null;
@@ -112,7 +113,7 @@ abstract class abstractModule {
 		}
 
 		// generate the script html element
-		$scriptHtml = '<script src="' . htmlspecialchars($url) . '" ' . htmlspecialchars($deferString) . '></script>';
+		$scriptHtml = '<script src="' . sanitizeStr($url) . '" ' . sanitizeStr($deferString) . '></script>';
 
 		// return the script html
 		return $scriptHtml;

@@ -6,6 +6,7 @@ use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\Post;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use ModuleHeaderListenerTrait;
@@ -69,7 +70,7 @@ class moduleMain extends abstractModuleMain {
 		$fontstyle = sprintf('color: rgb(%d, %d, %d);', $red6, $green6, $blue6);
 
 		// construct span
-		$span = '<span style="' . $bgstyle . ' ' . $fontstyle . '">' . htmlspecialchars($textContent) . '</span>';
+		$span = '<span style="' . $bgstyle . ' ' . $fontstyle . '">' . sanitizeStr($textContent) . '</span>';
 
 		// return the span html
 		return $span;

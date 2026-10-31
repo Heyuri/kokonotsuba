@@ -282,7 +282,7 @@ class templateEngine {
 				'{$BLOTTER}'           => '',
 				'{$GLOBAL_MESSAGE}'    => '',
 				'{$PAGE_TITLE}'        => strip_tags($this->boardData['title'] ?? ''),
-				'{$INPUT_MAX}'         => htmlspecialchars($this->config['INPUT_MAX']),
+				'{$INPUT_MAX}'         => sanitizeStr($this->config['INPUT_MAX']),
 			];
 		}
 

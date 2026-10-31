@@ -12,6 +12,7 @@ use function Puchiko\html\closeUnclosedTags;
 use function Puchiko\html\countHtmlLineBreaks;
 use function Puchiko\html\truncateHtml;
 use function Puchiko\html\truncateHtmlByLineBreak;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use PostCommentListenerTrait;
@@ -134,7 +135,7 @@ class moduleMain extends abstractModuleMain {
 		$postUrl = $this->moduleContext->board->getBoardThreadURL($postNumber);
 
 		// build anchor tag
-		$postAnchor = '<a href="' . htmlspecialchars($postUrl) . '">No.' . htmlspecialchars($postNumber) . ' </a>';
+		$postAnchor = '<a href="' . sanitizeStr($postUrl) . '">No.' . sanitizeStr($postNumber) . ' </a>';
 
 		// return
 		return $postAnchor;

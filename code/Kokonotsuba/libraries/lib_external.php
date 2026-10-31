@@ -8,6 +8,7 @@ namespace Kokonotsuba\libraries;
 
 use DateInterval;
 use DateTime;
+use function Puchiko\strings\sanitizeStr;
 
 /**
  * Get "last post" information for multiple sources.
@@ -33,7 +34,7 @@ function getLatestPosts(array $sources) {
 	foreach ($sources as $source) {
 		$handle = fopen($source['logfile'], 'r');
 		if (!$handle) {
-			$output .= 'Error opening log file for ' . htmlspecialchars($source['label']) . '<br>';
+			$output .= 'Error opening log file for ' . sanitizeStr($source['label']) . '<br>';
 			continue;
 		}
 

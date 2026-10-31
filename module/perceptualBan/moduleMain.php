@@ -16,6 +16,7 @@ use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 
 use function Kokonotsuba\Modules\perceptualBan\getPerceptualBanService;
 use function Kokonotsuba\libraries\_T;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use AuditableTrait;
@@ -74,7 +75,7 @@ class moduleMain extends abstractModuleMain {
 
 			if ($match !== null) {
 				$this->logTrigger((int) $match['id'], $match['phash_hex']);
-				throw new BoardException(_T('file_ban_blocked', htmlspecialchars($match['phash_hex'])));
+				throw new BoardException(_T('file_ban_blocked', sanitizeStr($match['phash_hex'])));
 			}
 		}
 	}

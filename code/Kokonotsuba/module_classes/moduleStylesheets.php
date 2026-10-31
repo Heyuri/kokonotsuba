@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\module_classes;
 
+use function Puchiko\strings\sanitizeStr;
+
 /**
  * Module stylesheets collected while the ModuleHeader hooks run and printed right after
  * globalBase.css, so a theme sheet still overrides a module rule exactly as it did when the
@@ -19,7 +21,7 @@ final class moduleStylesheets {
 		$html = '';
 
 		foreach (array_keys(self::$urls) as $url) {
-			$html .= '<link rel="stylesheet" href="' . htmlspecialchars($url) . '">' . "\n\t";
+			$html .= '<link rel="stylesheet" href="' . sanitizeStr($url) . '">' . "\n\t";
 		}
 
 		return $html;

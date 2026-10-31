@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\privateMessage;
 
 use Closure;
 use function Kokonotsuba\libraries\generateTripcode;
+use function Puchiko\strings\sanitizeStr;
 
 class messageUtility {
 	public function __construct(
@@ -124,7 +125,7 @@ class messageUtility {
 		}
 
 		return [
-			'name' => htmlspecialchars($nameOnly),
+			'name' => sanitizeStr($nameOnly),
 			'tripcode' => $tripcodeHash,
 		];
 	}
