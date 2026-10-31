@@ -13,6 +13,7 @@ use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\thumb\thumbnailerFactory;
 use function Kokonotsuba\libraries\_T;
 use function Puchiko\strings\formatFileSize;
+use function Puchiko\strings\sanitizeStr;
 
 class statusRoute implements route {
 	public function __construct(
@@ -60,7 +61,7 @@ class statusRoute implements route {
 		$dat = '';
 		$dat .= $this->board->getBoardHead('Board status');
 
-        $links = '[<a href="' . $this->config['PHP_SELF2'] . '?' . time() . '">' . _T('return') . '</a>] [<a href="' . $this->config['PHP_SELF'] . '?mode=moduleloaded">' . _T('module_info_top') . '</a>]';
+        $links = '[<a href="' . sanitizeStr($this->board->getBoardURL() . '?' . time()) . '">' . _T('return') . '</a>] [<a href="' . sanitizeStr($this->board->getBoardURL(true) . '?mode=moduleloaded') . '">' . _T('module_info_top') . '</a>]';
 
         $this->moduleEngine->dispatch('LinksAboveBar', array(&$links));
 		$dat .= $links . '<h2 class="theading2">' . _T('info_top') . '</h2>
@@ -118,7 +119,7 @@ class statusRoute implements route {
 		</tr>
 		<tr>
 			<td>' . _T('info_basic_showid') . '</td>
-			<td colspan="3"> ' . $this->config['DISP_ID'] . ' ' . _T('info_basic_showid_after') . '</td>
+			<td colspan="3"> ' . $this->displayIdMode() . ' ' . _T('info_basic_showid_after') . '</td>
 		</tr>
 		<tr>
 			<td>' . _T('info_basic_cr_limit') . '</td>
@@ -185,4 +186,13 @@ class statusRoute implements route {
 		echo $dat;
 	}
 
+
+	/** 2 forced, 1 selective (OPs opt in), 0 off; poster IDs are the displayId module's. */
+	private function displayIdMode(): int {
+		if (!$this->board->getConfigValue('ModuleList.displayId', false)) {
+			return 0;
+		}
+
+		return $this->board->getConfigValue('modules.displayId.DISP_ID', false) ? 2 : 1;
+	}
 }
