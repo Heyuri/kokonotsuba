@@ -136,7 +136,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$TITLE}' => $raw ? $group['title'] : sanitizeStr($group['title']),
 			'{$KIND_LABEL}' => match ($kind) {
 				'boards' => '<span class="sideNavBoxKind" title="New boards are added at the end">Listed boards</span>',
-				'main' => '<span class="sideNavBoxKind">Home, overboard, hide nav</span>',
+				'main' => '<span class="sideNavBoxKind">Home, overboard, board directories, hide nav</span>',
 				default => '',
 			},
 			'{$ROWS}' => $rows,
@@ -219,7 +219,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			}
 			// an automatic link stays in a group of its own kind
 			$source = isset($fields['source']) ? (string) $fields['source'] : null;
-			if ($source !== null && (!preg_match('/^(board:\d+|home|overboard|hide)$/', $source)
+			if ($source !== null && (!preg_match('/^(board:\d+|home|overboard|dirs|hide)$/', $source)
 				|| $groups[$groupKey]['kind'] !== (str_starts_with($source, 'board:') ? 'boards' : 'main'))) {
 				throw new BoardException(_T('sidenav_invalid_layout'));
 			}
@@ -361,12 +361,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		return mb_substr($text, 0, $maxLength);
 	}
 
-	/** Relative URLs and http(s) only, so a link can never run script. */
+	/** Relative URLs, http(s), irc(s) and mailto only, so a link can never run script. */
 	private function requireUrl(mixed $value): string {
 		$url = $this->requireText($value, 2048);
 		$parts = preg_match('/[\x00-\x20\x7f]/', $url) ? false : parse_url($url);
 		$scheme = $parts['scheme'] ?? null;
-		if ($parts === false || ($scheme !== null && !in_array(strtolower($scheme), ['http', 'https'], true))) {
+		if ($parts === false || ($scheme !== null && !in_array(strtolower($scheme), ['http', 'https', 'irc', 'ircs', 'mailto'], true))) {
 			throw new BoardException(_T('sidenav_invalid_url'));
 		}
 		return $url;

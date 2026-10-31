@@ -89,6 +89,7 @@
 			var items = group.links.filter(function (l) { return !l.hidden; }).map(function (l) {
 				var label = l.label ? escapeHtml(l.label) : l.defaultLabel;
 				if (l.source === 'hide') return fill(t.hide, { LABEL: label });
+				if (l.source === 'dirs') return fill(t.dirs, { LABEL: label });
 				return fill(t.item, { URL: escapeHtml(l.url), LABEL: label, LINK_TITLE: escapeHtml(l.label || l.title) });
 			});
 			if (!items.length) return '';
@@ -105,12 +106,12 @@
 		form.classList.toggle('sideNavEditorDirty', JSON.stringify(layout) !== initial);
 	}
 
-	/** Same rule as the server: relative or http(s), no whitespace or control characters. */
+	/** Same rule as the server: relative, http(s), irc(s) or mailto, no whitespace or control characters. */
 	function validateUrl(field) {
 		var v = field.value.trim();
 		var scheme = /^([a-z][a-z0-9+.-]*):/i.exec(v);
-		var bad = /[\x00-\x20\x7f]/.test(v) || (scheme && !/^https?$/i.test(scheme[1]));
-		field.setCustomValidity(bad ? 'Use a relative URL or one starting with http:// or https://' : '');
+		var bad = /[\x00-\x20\x7f]/.test(v) || (scheme && !/^(https?|ircs?|mailto)$/i.test(scheme[1]));
+		field.setCustomValidity(bad ? 'Use a relative URL or one starting with http://, https://, irc://, ircs:// or mailto:' : '');
 	}
 
 	// ─── Actions ─────────────────────────────────────────────────────────────
