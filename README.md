@@ -74,6 +74,7 @@ Everything lives under that one directory:
 ```
 /var/www/html/kokonotsuba/
 ├── install.php   open this in a browser, then delete it
+├── index.php     the site front page (news, pages, board list)
 ├── koko.php      backend entry point (each board's koko.php requires it)
 ├── static/       css, js and images, served directly
 ├── global/       site settings, error log, board storage - must not be web-readable
@@ -83,6 +84,8 @@ Everything lives under that one directory:
 
 Boards are served from inside it: a board called `b` ends up at
 `https://example.net/kokonotsuba/boards/b/`.
+
+The front page is `index.php`, so it is at `https://example.net/kokonotsuba/`
 
 ### 3. Permissions
 
