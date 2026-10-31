@@ -25,7 +25,7 @@
 			</tr>
 			<tr>
 				<td class="postblock">{$TH_IP}</td>
-				<td><a class="reportIpLink" href="{$IP_REPORTS_URL}" title="{$IP_REPORTS_TEXT}">{$REPORTER_IP}</a></td>
+				<td><a class="reportIpLink" href="{$IP_REPORTS_URL}" title="{$IP_REPORTS_TEXT}">{$REPORTER_IP}</a>{$REPORTER_IP_TOOLS}</td>
 			</tr>
 			<tr>
 				<td class="postblock">{$TH_DATE}</td>
