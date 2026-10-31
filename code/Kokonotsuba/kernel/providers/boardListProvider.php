@@ -11,6 +11,7 @@ use Kokonotsuba\cache\path_cache\boardPathService;
 use Kokonotsuba\config\configRepository;
 use Kokonotsuba\config\configService;
 use Kokonotsuba\containers\appContainer;
+use Kokonotsuba\front_pages\frontPageCache;
 
 /** The board services, config service and the list of every board. Needs no request board. */
 final class boardListProvider {
@@ -38,6 +39,9 @@ final class boardListProvider {
 
 		$boardService = new boardService($boardRepository, $container, $boardPathService);
 		$container->set('boardService', $boardService);
+
+		// the front page caches the board list in its side nav
+		$boardService->onChange(static fn() => frontPageCache::forSite()->forgetAll());
 
 		$boardList = $boardService->getAllRegularBoards();
 		$visibleBoards = array_values(array_filter($boardList, static fn (board $board): bool => (bool)$board->getBoardListed()));

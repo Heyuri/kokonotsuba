@@ -22,11 +22,25 @@ use function Puchiko\strings\sanitizeStr;
 
 /** Service for assembling, creating, editing, and deleting board objects. */
 class boardService {
+	/** @var list<callable(): void> */
+	private array $changeListeners = [];
+
 	public function __construct(
 		private readonly boardRepository $boardRepository,
 		private readonly appContainer $container,
 		private readonly boardPathService $boardPathService
 	) {}
+
+	/** Called after a board is created, edited or deleted, e.g. to forget cached front page HTML. */
+	public function onChange(callable $listener): void {
+		$this->changeListeners[] = $listener;
+	}
+
+	private function notifyChange(): void {
+		foreach ($this->changeListeners as $listener) {
+			$listener();
+		}
+	}
 
 	/**
 	 * Update editable fields on an existing board.
@@ -69,6 +83,7 @@ class boardService {
 		}
 
 		$this->boardRepository->updateBoardByUID($board->getBoardUID(), $fields);
+		$this->notifyChange();
 	}
 
 	/**
@@ -94,6 +109,7 @@ class boardService {
 		safeRmdir($boardPath);
 		safeRmDir($boardStoragePath);
 		safeRmDir($boardCdnDir);
+		$this->notifyChange();
 	}
 
 	/**
@@ -175,6 +191,7 @@ class boardService {
             $newBoardFromDatabase = $this->getBoard($newBoardUID);
             $newBoardFromDatabase->rebuildBoard();
 
+            $this->notifyChange();
             return $newBoardFromDatabase;
         } catch (Exception $e) {
             // Handle rollback and cleanup
