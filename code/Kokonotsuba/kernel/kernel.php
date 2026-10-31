@@ -74,38 +74,29 @@ final class kernel {
 
 	/** Global config, policies, database, repositories, the board list and front page content. No session, no board. */
 	public static function bootServices(request $request, cookieService $cookieService, ?databaseHandles $db = null): appContainer {
-		// require all libs
 		self::loadLibraries();
 
-		// start container class
 		$container = new appContainer();
 
-		//
-		// below we'll initialize classes and other structures that koko uses and all them to the container
-		//
-
-		// core systems (cookies, request object, global config, and database connection)
+		// cookies, request, global config and the database connection
 		coreProvider::register($container, $request, $cookieService, $db ?? self::connectDatabase());
 
-		// koko's repository and service classes 
+		// repositories and services
 		repositoryProvider::register($container);
 
-		// board list (contains all boards in the database)
+		// every board in the database
 		boardListProvider::register($container);
 
-		// init front 
+		// news and pages; the action log on any board needs their types
 		frontContentProvider::register($container);
 
-		// return the container class
 		return $container;
 	}
 
 	/** Everything a web request shares: bootServices plus the session and the site-scope services. */
 	public static function bootWeb(): appContainer {
-		// require libraries
 		self::loadLibraries();
 
-		// build request object from super global
 		$request = request::fromGlobals();
 
 		// Timings for the debug bar, and the request sampler when a profile was asked for. Both are
@@ -146,10 +137,10 @@ final class kernel {
 		$request = $container->get('request');
 
 		try {
-			// update account session values to whats in the database so account db changes take effect immedietly  
+			// update account session values to whats in the database so account db changes take effect immediately
 			updateAccountSession($container->get('accountRepository'), $container->get('loginSessionHandler'));
 
-			// run the handler with container context 
+			// run the handler with container context
 			$handler($container);
 		} catch (BoardException $boardException) {
 			$errorMessage = $boardException->getMessage();
