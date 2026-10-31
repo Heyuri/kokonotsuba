@@ -12,6 +12,7 @@ use Kokonotsuba\news\newsService;
 use Kokonotsuba\policy\frontPagePolicy;
 use Kokonotsuba\request\request;
 use Kokonotsuba\routers\route;
+use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 
@@ -35,7 +36,8 @@ final class frontPageRoute implements route {
 	public function handle(): void {
 		[$key, $render] = $this->resolveView();
 
-		if ($this->isStaff()) {
+		// only anonymous viewers share the cache: any signed-in role can draw listenStaff() output
+		if (!$this->isAnonymous()) {
 			$html = $render();
 		} else {
 			$dependencies = [];
@@ -117,6 +119,10 @@ final class frontPageRoute implements route {
 		}
 
 		return null;
+	}
+
+	private function isAnonymous(): bool {
+		return $this->staffAccountFromSession->getRoleLevel()->isLessThan(userRole::LEV_USER);
 	}
 
 	private function isStaff(): bool {
