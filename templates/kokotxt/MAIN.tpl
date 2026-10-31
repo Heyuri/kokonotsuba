@@ -1,3 +1,4 @@
+	<script>kkjs.form_position_early();</script>
 	{$FORMDAT}
 	{$THREADFRONT}
 	<form name="delform" id="delform" action="{$LIVE_INDEX_FILE}" method="post">
@@ -7,4 +8,4 @@
 		<!--&DELFORM/-->
 	</form>
 	<!--&IF($BOTTOM_PAGENAV,'{$BOTTOM_PAGENAV}','')-->
-	<div id="postarea2"></div>
+	<div id="postarea2"></div><script>kkjs.form_position_apply();</script>

@@ -1,4 +1,5 @@
 	<!--&IF($IS_THREAD,'<div class="threadNavBar">[<a href="{$STATIC_INDEX_FILE}">Return</a>] [<a href="#bottom">Bottom</a>]</div>','')-->
+	<script>kkjs.form_position_early();</script>
 	{$FORMDAT}
 	{$THREADFRONT}
 	<!--&IF($TOP_PAGENAV,'{$TOP_PAGENAV}<hr class="threadSeparator topPagerSeparator">','')-->
@@ -10,4 +11,4 @@
 		<!--&DELFORM/-->
 	</form>
 	<!--&IF($BOTTOM_PAGENAV,'{$BOTTOM_PAGENAV}','')-->
-	<div id="postarea2"></div>
+	<div id="postarea2"></div><script>kkjs.form_position_apply();</script>
