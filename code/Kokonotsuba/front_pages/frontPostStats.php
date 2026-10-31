@@ -5,6 +5,8 @@ namespace Kokonotsuba\front_pages;
 use Closure;
 use Kokonotsuba\post\postRepository;
 
+use function Puchiko\writeFileAtomically;
+
 /**
  * Posts made on listed boards in the last hour and the last 24 hours, for the front page.
  * Kept in a small file for a minute so most front page hits run no query.
@@ -57,15 +59,6 @@ final class frontPostStats {
 	}
 
 	private function write(array $data): void {
-		$directory = dirname($this->file);
-		if (!is_dir($directory) && !@mkdir($directory, 0755, true) && !is_dir($directory)) {
-			return;
-		}
-
-		// written beside and renamed, so a concurrent reader never sees half a file
-		$temporary = $this->file . '.' . bin2hex(random_bytes(4)) . '.tmp';
-		if (@file_put_contents($temporary, json_encode($data)) !== false) {
-			@rename($temporary, $this->file);
-		}
+		writeFileAtomically($this->file, (string)json_encode($data));
 	}
 }

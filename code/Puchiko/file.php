@@ -307,3 +307,27 @@ function isValidMySQLDumpFile(string $filePath): bool {
 	// Return if the file seems to be a valid MySQL dump
 	return $valid;
 }
+
+/**
+ * Write a file beside its target and rename it in, so a concurrent reader never sees half a file.
+ * Creates the parent directory; leaves no temporary file behind on failure.
+ */
+function writeFileAtomically(string $path, string $contents): bool {
+	$directory = dirname($path);
+	if (!is_dir($directory) && !@mkdir($directory, 0755, true) && !is_dir($directory)) {
+		return false;
+	}
+
+	$temporary = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
+	if (@file_put_contents($temporary, $contents) === false) {
+		@unlink($temporary);
+		return false;
+	}
+
+	if (!@rename($temporary, $path)) {
+		@unlink($temporary);
+		return false;
+	}
+
+	return true;
+}

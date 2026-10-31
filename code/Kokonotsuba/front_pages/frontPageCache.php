@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\front_pages;
 
+use function Puchiko\writeFileAtomically;
+
 /**
  * Rendered front page views for visitors, one file per view. Forgotten as a whole whenever
  * anything they draw changes; never written or read for staff, who see the edit bar.
@@ -30,16 +32,7 @@ final class frontPageCache {
 	}
 
 	public function put(string $key, string $html): void {
-		if (!is_dir($this->directory) && !@mkdir($this->directory, 0755, true) && !is_dir($this->directory)) {
-			return;
-		}
-
-		// written beside and renamed, so a concurrent reader never sees half a page
-		$file = $this->path($key);
-		$temporary = $file . '.' . bin2hex(random_bytes(4)) . '.tmp';
-		if (@file_put_contents($temporary, $html) !== false) {
-			@rename($temporary, $file);
-		}
+		writeFileAtomically($this->path($key), $html);
 	}
 
 	public function forgetAll(): void {
