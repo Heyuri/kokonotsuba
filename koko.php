@@ -11,7 +11,7 @@ ignore_user_abort(true);
 require __DIR__ . '/autoload.php';
 
 // load all library files
-kernel::loadLibraries();
+kernel::loadLibraries(__DIR__);
 
 // The backend entry point only runs when a board's koko.php requires it. Requested directly it
 // has no board, so it refuses here rather than in a web server rule that has to know its path.
