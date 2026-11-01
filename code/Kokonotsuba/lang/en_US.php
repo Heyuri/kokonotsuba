@@ -2092,5 +2092,3 @@ $language['front_news_page_title'] = 'News, page %s';
 $language['front_news_permalink'] = 'Link to this post';
 $language['front_news_by'] = 'by %s';
 $language['front_news_draft'] = '(draft)';
-$language['front_news_newer'] = 'Newer';
-$language['front_news_older'] = 'Older';

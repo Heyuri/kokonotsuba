@@ -52,6 +52,22 @@ function getBoardPageLink(int $page, bool $isStaticAll, string $liveFrontEnd, bo
 	return $liveFrontEnd . '?page=' . $page;
 }
 
+/**
+ * A Previous/Next button for renderPager() that keeps the link's query string: a GET form drops
+ * the one in its action, so it is carried as hidden inputs.
+ */
+function pagerLinkForm(string $link, string $label): string {
+	$action = strtok($link, '?');
+	parse_str((string) parse_url($link, PHP_URL_QUERY), $query);
+
+	$inputs = '';
+	foreach ($query as $key => $value) {
+		$inputs .= '<input type="hidden" name="' . sanitizeStr((string) $key) . '" value="' . sanitizeStr((string) $value) . '">';
+	}
+
+	return '<form action="' . sanitizeStr($action) . '" method="get">' . $inputs . '<button type="submit">' . sanitizeStr($label) . '</button></form>';
+}
+
 function renderPager(int $currentPage, int $totalPages, callable $getLink, ?callable $getForm = null): string {
 	$pageHTML = '<table id="pager"><tbody><tr>';
 

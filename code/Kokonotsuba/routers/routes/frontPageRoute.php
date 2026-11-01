@@ -95,7 +95,7 @@ final class frontPageRoute implements route {
 		$pageNumber = max(1, $this->intParameter('page') ?? 1);
 
 		return ['list:' . $pageNumber, function () use ($pageNumber): string {
-			$newsPage = $this->newsService->listPage($pageNumber, (int)($this->siteConfig['SITE']['NEWS_PER_PAGE'] ?? 5), $this->frontPagePolicy->canEditNews());
+			$newsPage = $this->newsService->listPage($pageNumber, (int)($this->siteConfig['SITE']['NEWS_PER_PAGE'] ?? 10), $this->frontPagePolicy->canEditNews());
 			if ($pageNumber > $newsPage->pageCount) {
 				throw new BoardException(_T('news_not_found'), 404);
 			}

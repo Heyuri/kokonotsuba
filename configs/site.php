@@ -24,6 +24,6 @@ return [
 	'SITE.BOARD_LIST_STATS' => boolField('config_label_SITE.BOARD_LIST_STATS', true, 'config_desc_SITE.BOARD_LIST_STATS', global: true),
 	'SITE.SHOW_GLOBAL_MESSAGE' => boolField('config_label_SITE.SHOW_GLOBAL_MESSAGE', true, 'config_desc_SITE.SHOW_GLOBAL_MESSAGE', global: true),
 	'SITE.SHOW_BLOTTER'     => boolField('config_label_SITE.SHOW_BLOTTER', false, 'config_desc_SITE.SHOW_BLOTTER', global: true),
-	'SITE.NEWS_PER_PAGE'    => intField('config_label_SITE.NEWS_PER_PAGE', 5, 'config_desc_SITE.NEWS_PER_PAGE', min: 1, global: true),
+	'SITE.NEWS_PER_PAGE'    => intField('config_label_SITE.NEWS_PER_PAGE', 10, 'config_desc_SITE.NEWS_PER_PAGE', min: 1, global: true),
 	'SITE.NAV_LINKS'        => arrayField('config_label_SITE.NAV_LINKS', [], 'config_desc_SITE.NAV_LINKS', global: true, map: true),
 ];
