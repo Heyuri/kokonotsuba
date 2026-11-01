@@ -17,3 +17,4 @@
 	<script src="{$STATIC_URL}js/backgroundTaskPoller.js" defer></script>
 	<script src="{$STATIC_URL}js/attachmentDownload.js" defer></script>
 	{$JS_DEFAULT_SETTINGS}
+	{$CUSTOM_HEAD}

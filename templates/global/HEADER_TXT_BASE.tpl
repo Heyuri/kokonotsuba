@@ -14,3 +14,4 @@
 	{$BOARD_STYLESHEETS}
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">
 	{$JS_DEFAULT_SETTINGS}
+	{$CUSTOM_HEAD}

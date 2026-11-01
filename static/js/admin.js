@@ -74,13 +74,16 @@
 	}
 
 	// Attach event listeners to relevant file links
-	document.querySelectorAll('td a[href*="src/"][href$=".gif"], td a[href*="src/"][href$=".mp4"], td a[href*="src/"][href$=".webm"], td a[href*="src/"][href$=".jpg"], td a[href*="src/"][href$=".png"]').forEach(link => {
+
+	const exts = ['gif', 'mp4', 'webm', 'jpg', 'jpeg', 'png'];
+	const selector = exts.map(ext => `td a[href*="src/"][href$=".${ext}" i]`).join(', ');
+	document.querySelectorAll(selector).forEach(link => {
 		link.addEventListener('mouseenter', async function(e) {
 			currentLink = link; // Set current link for hover check
 			clearTimeout(hoverTimeout);
 
 			// Extract filename without extension
-			const match = link.href.match(/([^/]+)\.(gif|mp4|webm|jpg|png)$/);
+			const match = link.href.match(/([^/]+)\.(gif|mp4|webm|jpe?g|png)$/i);
 			if (!match) return;
 
 			const filename = match[1];

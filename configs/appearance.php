@@ -18,6 +18,7 @@ return [
 	'HOME'               => stringField('config_label_HOME', $homeDefault, 'config_desc_HOME', global: true),
 	'FOOTTEXT'           => textField('config_label_FOOTTEXT', '', 'config_desc_FOOTTEXT'),
 	'REF_URL'            => stringField('config_label_REF_URL', '', 'config_desc_REF_URL'),
+	'CUSTOM_HEAD'        => textField('config_label_CUSTOM_HEAD', '', 'config_desc_CUSTOM_HEAD'),
 
 	'TEMPLATE_FILE'       => templateField('config_label_TEMPLATE_FILE', 'kokoimg', 'config_desc_TEMPLATE_FILE'),
 	'REPLY_TEMPLATE_FILE' => templateField('config_label_REPLY_TEMPLATE_FILE', 'kokoimg', 'config_desc_REPLY_TEMPLATE_FILE'),
