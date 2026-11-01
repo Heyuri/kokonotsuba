@@ -740,7 +740,6 @@ $language['poststats_tile_per_hour']    = 'Posts per hour (%s)';
 $language['poststats_tile_total']       = 'Posts made';
 $language['poststats_tile_first_post']  = 'First post';
 $language['poststats_tile_latest_no']   = 'Latest No.';
-$language['poststats_tile_undated']     = 'Undated (purged)';
 // Zoom links. postStatsRenderer::RANGES names these keys rather than the text itself.
 $language['poststats_range_30d']        = '30 days';
 $language['poststats_range_90d']        = '90 days';

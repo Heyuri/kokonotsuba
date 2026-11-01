@@ -52,6 +52,9 @@ class postStatsRenderer {
 	/** Most dates the x axis will carry before it starts skipping buckets. */
 	private const AXIS_LABELS = 6;
 
+	/** Gaps between post count markers on the y axis. */
+	private const Y_AXIS_STEPS = 5;
+
 	public function __construct(
 		private readonly templateEngine $templateEngine,
 		private readonly int $maxBars,
@@ -315,8 +318,8 @@ class postStatsRenderer {
 
 		return $this->templateEngine->ParseBlock('POSTSTATS_CHART', [
 			'{$CAPTION}' => sanitizeStr($caption),
-			'{$PEAK}' => number_format($peak),
-			'{$MIDPOINT}' => number_format(intdiv($peak, 2)),
+			'{$Y_AXIS}' => $this->yAxisLabels($peak),
+			'{$GRID}' => $this->gridPath(),
 			'{$WIDTH}' => self::PLOT_WIDTH,
 			'{$HEIGHT}' => self::PLOT_HEIGHT,
 			'{$AREA}' => $this->areaPath($top, $this->plotPoints(array_fill(0, count($values), 0), $peak)),
@@ -388,8 +391,8 @@ class postStatsRenderer {
 		return $this->templateEngine->ParseBlock('POSTSTATS_STACK', [
 			'{$CAPTION}' => sanitizeStr($caption),
 			'{$CHART_ID}' => $chartId,
-			'{$PEAK}' => number_format($peak),
-			'{$MIDPOINT}' => number_format(intdiv($peak, 2)),
+			'{$Y_AXIS}' => $this->yAxisLabels($peak),
+			'{$GRID}' => $this->gridPath(),
 			'{$WIDTH}' => self::PLOT_WIDTH,
 			'{$HEIGHT}' => self::PLOT_HEIGHT,
 			'{$BANDS}' => $bands,
@@ -403,6 +406,26 @@ class postStatsRenderer {
 	}
 
 	/** Whether the last of several buckets is still filling. */
+	/** Post counts from the peak down to 0, one span per marker. */
+	private function yAxisLabels(int $peak): string {
+		$html = '';
+		for ($step = self::Y_AXIS_STEPS; $step >= 0; $step--) {
+			$html .= '<span>' . number_format((int) round($peak * $step / self::Y_AXIS_STEPS)) . '</span>';
+		}
+
+		return $html;
+	}
+
+	/** One horizontal line per y axis marker. */
+	private function gridPath(): string {
+		$path = '';
+		for ($step = 0; $step <= self::Y_AXIS_STEPS; $step++) {
+			$path .= 'M0 ' . $this->coordinate(self::PLOT_HEIGHT * $step / self::Y_AXIS_STEPS) . 'H' . self::PLOT_WIDTH;
+		}
+
+		return $path;
+	}
+
 	private function isPartial(array $buckets): bool {
 		return count($buckets) > 1 && !empty($buckets[count($buckets) - 1]['partial']);
 	}
@@ -529,10 +552,6 @@ class postStatsRenderer {
 			'poststats_tile_total' => [null, number_format($stats['total'])],
 			'poststats_tile_first_post' => [null, $stats['firstDay'] === '' ? _T('poststats_none') : $stats['firstDay']],
 		];
-
-		if (($stats['undated'] ?? 0) > 0) {
-			$values['poststats_tile_undated'] = [null, number_format($stats['undated'])];
-		}
 
 		if ($showLastNumber) {
 			$values['poststats_tile_latest_no'] = [null, number_format($stats['lastNo'])];

@@ -157,6 +157,14 @@
 	vector-effect: non-scaling-stroke;
 }
 
+.postStatsGrid {
+	fill: none;
+	stroke: var(--color-fg-omitted, #707070);
+	stroke-opacity: 0.3;
+	stroke-width: 1px;
+	shape-rendering: crispEdges;
+}
+
 .postStatsLine {
 	fill: none;
 	stroke: var(--color-bg-theading, #e04000);
