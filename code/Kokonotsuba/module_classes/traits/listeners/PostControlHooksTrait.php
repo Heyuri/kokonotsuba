@@ -11,6 +11,7 @@ use Kokonotsuba\thread\Thread;
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\getPageOfThread;
 use function Kokonotsuba\libraries\validatePostInput;
+use function Puchiko\strings\sanitizeStr;
 
 /**
  * Trait for post-level admin modules (ban, delete, anti-spam, etc.).
@@ -62,8 +63,9 @@ trait PostControlHooksTrait {
 	 *        URL parameter name (e.g. 'postUid') to auto-generate via getModulePageURL.
 	 * @param string $action   Internal action identifier used by JavaScript.
 	 * @param string $label    Display text shown in the widget menu.
+	 * @param string $group    Feature group the entry is drawn with (postMenu::GROUP_*), '' for none.
 	 */
-	protected function registerSimplePostWidget(callable|string $urlGenerator, string $action, string $label): void {
+	protected function registerSimplePostWidget(callable|string $urlGenerator, string $action, string $label, string $group = ''): void {
 		if (is_string($urlGenerator)) {
 			$paramName = $urlGenerator;
 			$urlGenerator = fn(Post $post) => $this->getModulePageURL([$paramName => $post->getUid()], false, true);
@@ -72,8 +74,8 @@ trait PostControlHooksTrait {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModeratePostWidget',
-			function(array &$widgetArray, Post &$post) use ($urlGenerator, $action, $label) {
-				$widgetArray[] = $this->buildWidgetEntry($urlGenerator($post), $action, $label, '');
+			function(array &$widgetArray, Post &$post) use ($urlGenerator, $action, $label, $group) {
+				$widgetArray[] = $this->buildWidgetEntry($urlGenerator($post), $action, $label, '', [], $group);
 			}
 		);
 	}
@@ -91,7 +93,7 @@ trait PostControlHooksTrait {
 			$this->getRequiredRole(),
 			'LinksAboveBar',
 			function(string &$linkHtml) use ($title, $href, $textContent) {
-				$linkHtml .= '<li class="adminNavLink"><a title="' . htmlspecialchars($title) . '" href="' . htmlspecialchars($href) . '">' . htmlspecialchars($textContent) . '</a></li>';
+				$linkHtml .= '<li class="adminNavLink"><a title="' . sanitizeStr($title) . '" href="' . sanitizeStr($href) . '">' . sanitizeStr($textContent) . '</a></li>';
 			}
 		);
 
@@ -177,7 +179,7 @@ trait PostControlHooksTrait {
 	}
 
 	protected function renderAttachmentButton(string $url, string $functionClass, string $title, string $label): string {
-		return ' <span class="adminFunctions admin' . $functionClass . 'Function attachmentButton">[<a href="' . htmlspecialchars($url) . '" title="' . htmlspecialchars($title) . '">' . $label . '</a>]</span>';
+		return ' <span class="adminFunctions admin' . $functionClass . 'Function attachmentButton">[<a href="' . sanitizeStr($url) . '" title="' . sanitizeStr($title) . '">' . $label . '</a>]</span>';
 	}
 
 	protected function renderAttachmentForm(string $url, string $functionClass, string $title, string $label): string {

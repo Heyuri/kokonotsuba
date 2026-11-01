@@ -17,6 +17,7 @@ namespace Kokonotsuba\module_classes;
 use Kokonotsuba\module_classes\moduleContext;
 use Kokonotsuba\renderers\widgetMenuPolicy;
 use Kokonotsuba\template\templateEngine;
+use function Puchiko\strings\sanitizeStr;
 
 abstract class abstractModule {
 	private ?widgetMenuPolicy $menuPolicy = null;
@@ -112,7 +113,7 @@ abstract class abstractModule {
 		}
 
 		// generate the script html element
-		$scriptHtml = '<script src="' . htmlspecialchars($url) . '" ' . htmlspecialchars($deferString) . '></script>';
+		$scriptHtml = '<script src="' . sanitizeStr($url) . '" ' . sanitizeStr($deferString) . '></script>';
 
 		// return the script html
 		return $scriptHtml;
@@ -155,7 +156,8 @@ abstract class abstractModule {
 		string $action,
 		string $label,
 		string $subMenu,
-		array $params = []
+		array $params = [],
+		string $group = ''
 	): array {
 		// assemble the widget
 		$widget = [
@@ -172,7 +174,10 @@ abstract class abstractModule {
 			'subMenu' => $subMenu,
 
 			// POST parameters for JS to send
-			'params' => $params
+			'params' => $params,
+
+			// feature group, entries sharing one are drawn next to each other (postMenu::grouped())
+			'group' => $group
 		];
 
 		// return assembled widget

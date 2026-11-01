@@ -1728,3 +1728,8 @@ caption h3 {
 .reply.deletedStub-staff {
 	background: var(--color-bg-deleted-staff, #d7e3f8);
 }
+
+/* Form stored at the bottom: hidden at the top until koko.js moves it, so nothing shifts */
+body.formAtBottom #postarea #postform {
+	display: none;
+}

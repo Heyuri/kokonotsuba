@@ -377,4 +377,49 @@ class ConfigServiceTest extends TestCase {
 
 		$this->assertFalse($this->repository->hasRow(self::BOARD), 'an emptied scope should leave no row');
 	}
+
+	// ---- site-wide settings ---------------------------------------------------
+
+	public function testABoardOverrideOfASiteWideSettingIsNeverApplied(): void {
+		// Stored before the service first reads, as an old row would be.
+		$this->repository->saveOverridesForBoardUid(self::BOARD, ['STAFF_LOGIN_TIMEOUT' => 60, 'PAGE_DEF' => 42]);
+		$this->service->setOverride(GLOBAL_BOARD_UID, 'STAFF_LOGIN_TIMEOUT', '600');
+
+		$this->assertSame(['PAGE_DEF' => 42], $this->service->getOverrides(self::BOARD));
+		$this->assertSame(600, $this->service->getEffectiveConfig(self::BOARD)['STAFF_LOGIN_TIMEOUT']);
+	}
+
+	public function testSettingASiteWideSettingOnABoardIsRejected(): void {
+		$this->assertThrows(
+			fn() => $this->service->setOverride(self::BOARD, 'STAFF_LOGIN_TIMEOUT', '60'),
+			InvalidArgumentException::class
+		);
+		$this->assertThrows(
+			fn() => $this->service->unsetOverride(self::BOARD, 'STAFF_LOGIN_TIMEOUT'),
+			InvalidArgumentException::class
+		);
+	}
+
+	public function testTheGlobalScopeMaySetASiteWideSetting(): void {
+		$this->service->setOverride(GLOBAL_BOARD_UID, 'STAFF_LOGIN_TIMEOUT', '600');
+
+		$this->assertSame(['STAFF_LOGIN_TIMEOUT' => 600], $this->service->getOverrides(GLOBAL_BOARD_UID));
+	}
+
+	public function testABoardFormSubmittingASiteWideSettingStoresNothingForIt(): void {
+		$submitted = $this->submission(['PAGE_DEF' => 42]);
+		$submitted[configSchema::inputKey('STAFF_LOGIN_TIMEOUT')] = '60';
+
+		$this->service->saveOverrides(self::BOARD, $submitted);
+
+		$this->assertSame(['PAGE_DEF' => 42], $this->repository->getOverridesByBoardUid(self::BOARD));
+	}
+
+	public function testSavingABoardDropsAStaleSiteWideOverride(): void {
+		$this->repository->saveOverridesForBoardUid(self::BOARD, ['STAFF_LOGIN_TIMEOUT' => 60]);
+
+		$this->service->saveOverrides(self::BOARD, $this->submission(['PAGE_DEF' => 42]));
+
+		$this->assertSame(['PAGE_DEF' => 42], $this->repository->getOverridesByBoardUid(self::BOARD));
+	}
 }

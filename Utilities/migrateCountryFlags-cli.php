@@ -21,15 +21,12 @@ require_once $rootDir . 'module/countryFlags/geoip/geoip2.phar';
 require_once $rootDir . 'module/countryFlags/countryFlagRepository.php';
 require_once $rootDir . 'code/Kokonotsuba/constants.php';
 require $rootDir . 'paths.php';
-require $rootDir . 'bootstrap/libraryIncludes.php';
+\Kokonotsuba\kernel\kernel::loadLibraries();
 
 use GeoIp2\Database\Reader;
-use Kokonotsuba\containers\appContainer;
 use Kokonotsuba\cookie\cookieService;
+use Kokonotsuba\kernel\kernel;
 use Kokonotsuba\request\request;
-use Kokonotsuba\account\staffAccountFromSession;
-use Kokonotsuba\policy\postPolicy;
-use Kokonotsuba\policy\postRenderingPolicy;
 use Kokonotsuba\Modules\countryFlags\countryFlagRepository;
 
 // ─── Parse CLI options ───────────────────────────────────────────────────────
@@ -40,41 +37,10 @@ $dryRun     = array_key_exists('dry-run', $options);
 
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
 
-$request                = new request();
-$globalConfig           = getGlobalConfig();
-$cookieService          = new cookieService([]);
-$staffAccountFromSession = new staffAccountFromSession();
-$currentUserId          = $staffAccountFromSession->getUID();
-$postPolicy             = new postPolicy(
-    $globalConfig['AuthLevels'],
-    $staffAccountFromSession->getRoleLevel(),
-    $currentUserId
-);
-$postRenderingPolicy    = new postRenderingPolicy(
-    $globalConfig['AuthLevels'],
-    $staffAccountFromSession->getRoleLevel(),
-    $currentUserId,
-    $cookieService
-);
+$container = kernel::bootServices(new request(), new cookieService([]));
 
-require $rootDir . 'bootstrap/database.php';
-
-/** @var \Kokonotsuba\database\databaseConnection $databaseConnection */
-/** @var \Kokonotsuba\database\transactionManager $transactionManager */
-/** @var array $dbSettings */
-
-$container = new appContainer();
-$container->set('request',                  $request);
-$container->set('cookieService',            $cookieService);
-$container->set('staffAccountFromSession',  $staffAccountFromSession);
-$container->set('currentUserId',            $currentUserId);
-$container->set('postPolicy',               $postPolicy);
-$container->set('postRenderingPolicy',      $postRenderingPolicy);
-$container->set('globalConfig',             $globalConfig);
-$container->set('databaseConnection',       $databaseConnection);
-$container->set('transactionManager',       $transactionManager);
-
-require $rootDir . 'bootstrap/repositories.php';
+$databaseConnection = $container->get('databaseConnection');
+$transactionManager = $container->get('transactionManager');
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 

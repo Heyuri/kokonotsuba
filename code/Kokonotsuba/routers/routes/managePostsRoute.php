@@ -161,7 +161,7 @@ class managePostsRoute implements route {
 	}
 
 	private function renderPostsTable(array $posts, array $boardMap, string $boardList, array $context): string {
-		$html = '<form id="managePostsForm" action="' . htmlspecialchars($context['cleanUrl']) . '" method="POST">';
+		$html = '<form id="managePostsForm" action="' . sanitizeStr($context['cleanUrl']) . '" method="POST">';
 		$html .= '<input type="hidden" name="mode" value="admin">
 					' . getCsrfHiddenInput() . '
 					<div id="tableManagePostsContainer" class="tableViewportWrapper">

@@ -20,6 +20,7 @@ use function Kokonotsuba\libraries\html\drawPager;
 use function Puchiko\json\renderJsonErrorPage;
 use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use AuditableTrait;
@@ -88,7 +89,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// render an empty new entry form for the window to clone
 		$form = $this->moduleContext->adminPageRenderer->ParseBlock('NEW_ENTRY_FORM',
 			[
-				'{$MODULE_URL}' => htmlspecialchars($this->moduleUrl),
+				'{$MODULE_URL}' => sanitizeStr($this->moduleUrl),
 				'{$PATTERN_VALUE}' => '',
 				'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 			]
@@ -360,13 +361,13 @@ class moduleAdmin extends abstractModuleAdmin {
 			$patternValue = html_entity_decode($patternValue);
 
 			// re-escape for the textarea, or a decoded </textarea> would close it
-			$patternValue = htmlspecialchars($patternValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+			$patternValue = sanitizeStr($patternValue);
 		}
 
 		// generate the form
 		$form = $this->moduleContext->adminPageRenderer->ParseBlock('NEW_ENTRY_FORM', 
 			[
-				'{$MODULE_URL}' => htmlspecialchars($this->moduleUrl),
+				'{$MODULE_URL}' => sanitizeStr($this->moduleUrl),
 				'{$PATTERN_VALUE}' => $patternValue,
 				'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 			]
@@ -387,7 +388,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$templateValues = $this->generateTemplateRowValues($entry);
 
 		// add module url
-		$templateValues['{$MODULE_URL}'] = htmlspecialchars($this->moduleUrl);
+		$templateValues['{$MODULE_URL}'] = sanitizeStr($this->moduleUrl);
 		$templateValues['{$CSRF_TOKEN}'] = getCsrfHiddenInput();
 
 		// add the edit form-specific templates
@@ -484,7 +485,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// return formed template values
 		return [
 			'{$ROWS}' => $templateRows,
-			'{$MODULE_URL}' => htmlspecialchars($this->moduleUrl),
+			'{$MODULE_URL}' => sanitizeStr($this->moduleUrl),
 			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 		];
 	}
@@ -499,19 +500,19 @@ class moduleAdmin extends abstractModuleAdmin {
 		// assemble values
 		return
 			[
-				'{$ID}' => htmlspecialchars($entry['id']),
-				'{$PATTERN}' => htmlspecialchars($entry['pattern']),
-				'{$IS_ACTIVE}' => htmlspecialchars($entry['is_active']),
-				'{$DESCRIPTION}' => htmlspecialchars($entry['description']),
-				'{$ACTION}' => htmlspecialchars($entry['action']),
-				'{$MATCH_TYPE}' => htmlspecialchars($entry['match_type']),
-				'{$CREATED_BY}' => htmlspecialchars($entry['created_by_username']),
-				'{$CREATED_AT}' => htmlspecialchars($entry['created_at']),
-				'{$APPLIED_FIELDS}' => htmlspecialchars($fieldsList),
-				'{$CASE_SENSITIVE}' => htmlspecialchars($entry['case_sensitive']),
-				'{$USER_MESSAGE}' => htmlspecialchars($entry['user_message']),
-				'{$MAX_DISTANCE}' => htmlspecialchars($entry['max_distance']),
-				'{$VIEW_ENTRY_URL}' => htmlspecialchars($entryUrl)
+				'{$ID}' => sanitizeStr($entry['id']),
+				'{$PATTERN}' => sanitizeStr($entry['pattern']),
+				'{$IS_ACTIVE}' => sanitizeStr($entry['is_active']),
+				'{$DESCRIPTION}' => sanitizeStr($entry['description']),
+				'{$ACTION}' => sanitizeStr($entry['action']),
+				'{$MATCH_TYPE}' => sanitizeStr($entry['match_type']),
+				'{$CREATED_BY}' => sanitizeStr($entry['created_by_username']),
+				'{$CREATED_AT}' => sanitizeStr($entry['created_at']),
+				'{$APPLIED_FIELDS}' => sanitizeStr($fieldsList),
+				'{$CASE_SENSITIVE}' => sanitizeStr($entry['case_sensitive']),
+				'{$USER_MESSAGE}' => sanitizeStr($entry['user_message']),
+				'{$MAX_DISTANCE}' => sanitizeStr($entry['max_distance']),
+				'{$VIEW_ENTRY_URL}' => sanitizeStr($entryUrl)
 			];
 	}
 

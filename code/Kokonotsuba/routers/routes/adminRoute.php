@@ -18,6 +18,7 @@ use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\getIdFromSession;
 use function Kokonotsuba\libraries\isLoggedIn;
 use function Puchiko\request\redirect;
+use function Puchiko\strings\sanitizeStr;
 
 class adminRoute implements route {
 	public function __construct(
@@ -90,6 +91,6 @@ class adminRoute implements route {
 			$warning .= ' ' . _T('login_failure_warning_last', $pending['lastAttempt']);
 		}
 
-		return '<p class="loginFailureWarning">' . htmlspecialchars($warning, ENT_QUOTES, 'UTF-8') . '</p>';
+		return '<p class="loginFailureWarning">' . sanitizeStr($warning) . '</p>';
 	}
 }

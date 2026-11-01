@@ -12,6 +12,7 @@ use Kokonotsuba\cache\thread_fragment\threadFragments;
 use Kokonotsuba\module_classes\traits\BanCheckpointTrait;
 use Kokonotsuba\module_classes\traits\listeners\MassModerateListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\renderers\post\postMenu;
 use Kokonotsuba\renderers\widgetMenuPolicy;
 use Kokonotsuba\userRole;
 
@@ -28,6 +29,7 @@ use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
@@ -228,7 +230,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'delete', 
 			'Delete', 
 			'',
-			['post_uid' => $postUid, 'action' => 'del']
+			['post_uid' => $postUid, 'action' => 'del'],
+			postMenu::GROUP_DELETION
 		);
 
 		// build the widget entry for muting
@@ -237,7 +240,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'mute', 
 			'Delete & Mute', 
 			'',
-			['post_uid' => $postUid, 'action' => 'delmute']
+			['post_uid' => $postUid, 'action' => 'delmute'],
+			postMenu::GROUP_DELETION
 		);
 
 		if ($this->moduleContext->postPolicy->canStaffPurge()) {
@@ -250,7 +254,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	/** The post menu's "Delete & Purge" entry, shaped like the two before it. */
 	private function buildPurgeWidgetEntry(string $baseUrl, int|string $postUid): array {
-		return $this->buildWidgetEntry($baseUrl, 'deletePurge', 'Delete & Purge', '', ['post_uid' => $postUid, 'action' => 'delpurge']);
+		return $this->buildWidgetEntry($baseUrl, 'deletePurge', 'Delete & Purge', '', ['post_uid' => $postUid, 'action' => 'delpurge'], postMenu::GROUP_DELETION);
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
@@ -309,9 +313,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		foreach ($entries as $w) {
 			$paramAttrs = '';
 			foreach ($w['params'] as $k => $v) {
-				$paramAttrs .= ' data-param-' . htmlspecialchars($k) . '="' . htmlspecialchars((string)$v) . '"';
+				$paramAttrs .= ' data-param-' . sanitizeStr($k) . '="' . sanitizeStr((string)$v) . '"';
 			}
-			$html .= '<a href="' . htmlspecialchars($w['href']) . '" data-action="' . htmlspecialchars($w['action']) . '" data-label="' . htmlspecialchars($w['label']) . '" data-subMenu="' . htmlspecialchars($w['subMenu']) . '"' . $paramAttrs . '></a>';
+			$html .= '<a href="' . sanitizeStr($w['href']) . '" data-action="' . sanitizeStr($w['action']) . '" data-label="' . sanitizeStr($w['label']) . '" data-subMenu="' . sanitizeStr($w['subMenu']) . '"' . $paramAttrs . '></a>';
 		}
 
 		return $html;

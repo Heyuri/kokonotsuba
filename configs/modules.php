@@ -38,7 +38,7 @@ return [
 	'ModuleList.edit'         => boolField('config_label_ModuleList.edit', true),
 	'ModuleList.perceptualBan'=> boolField('config_label_ModuleList.perceptualBan', true),
 	'ModuleList.excimerViewer'=> boolField('config_label_ModuleList.excimerViewer', true),
-	'ModuleList.anonIp'       => boolField('config_label_ModuleList.anonIp', true),
+	'ModuleList.anonIp'       => boolField('config_label_ModuleList.anonIp', true, global: true),
 	'ModuleList.threadCache'  => boolField('config_label_ModuleList.threadCache', true),
 	'ModuleList.report'       => boolField('config_label_ModuleList.report', true),
 	'ModuleList.staffAlerts'  => boolField('config_label_ModuleList.staffAlerts', true),
@@ -52,7 +52,7 @@ return [
 
 	/* posting */
 	'ModuleList.antiSpam'     => boolField('config_label_ModuleList.antiSpam', true),
-	'ModuleList.csrfPrevent'  => boolField('config_label_ModuleList.csrfPrevent', true),
+	'ModuleList.csrfPrevent'  => boolField('config_label_ModuleList.csrfPrevent', true, global: true),
 	'ModuleList.emotes'       => boolField('config_label_ModuleList.emotes', true),
 	'ModuleList.emoji'        => boolField('config_label_ModuleList.emoji', true),
 	'ModuleList.bbCode'       => boolField('config_label_ModuleList.bbCode', true),
@@ -73,6 +73,7 @@ return [
 	'ModuleList.threadWatcher'=> boolField('config_label_ModuleList.threadWatcher', true),
 	'ModuleList.threadMod'    => boolField('config_label_ModuleList.threadMod', true),
 	'ModuleList.sideNav'      => boolField('config_label_ModuleList.sideNav', true),
+	'ModuleList.lockDown'     => boolField('config_label_ModuleList.lockDown', true),
 
 	/* misc */
 	'ModuleList.soudane'      => boolField('config_label_ModuleList.soudane', true),
@@ -83,7 +84,7 @@ return [
 	'ModuleList.ads'          => boolField('config_label_ModuleList.ads', true),
 	'ModuleList.banner'       => boolField('config_label_ModuleList.banner', true),
 	'ModuleList.addInfo'      => boolField('config_label_ModuleList.addInfo', true),
-	'ModuleList.imageServer'  => boolField('config_label_ModuleList.imageServer', true),
+	'ModuleList.imageServer'  => boolField('config_label_ModuleList.imageServer', true, global: true),
 	'ModuleList.filter'       => boolField('config_label_ModuleList.filter', true),
 	'ModuleList.indexCommentTruncator' => boolField('config_label_ModuleList.indexCommentTruncator', true),
 	'ModuleList.nameRandomizer'=> boolField('config_label_ModuleList.nameRandomizer', false),

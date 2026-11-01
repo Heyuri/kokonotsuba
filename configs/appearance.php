@@ -8,15 +8,14 @@ require_once __DIR__ . '/_fieldTypes.php';
 
 use function Kokonotsuba\config\fields\{boolField, intField, stringField, textField, templateField};
 
-// The home link's default is the site-wide one from global/siteSettings.php (falling back to
-// globalconfig.php), so setting it once at install time covers every board while each board can
-// still point its own header somewhere else.
-$homeDefault = getGlobalConfig()['HOME'] ?? 'index.html';
+// The front page URL's default is the site-wide one from global/siteSettings.php, falling back to
+// the backend directory (globalconfig.php).
+$homeDefault = getGlobalConfig()['HOME'] ?? '';
 
 return [
 	'_group' => 'Appearance & pagination',
 
-	'HOME'               => stringField('config_label_HOME', $homeDefault, 'config_desc_HOME'),
+	'HOME'               => stringField('config_label_HOME', $homeDefault, 'config_desc_HOME', global: true),
 	'FOOTTEXT'           => textField('config_label_FOOTTEXT', '', 'config_desc_FOOTTEXT'),
 	'REF_URL'            => stringField('config_label_REF_URL', '', 'config_desc_REF_URL'),
 	'CUSTOM_HEAD'        => textField('config_label_CUSTOM_HEAD', '', 'config_desc_CUSTOM_HEAD'),
@@ -39,7 +38,7 @@ return [
 	'MAX_AGE_TIME'       => intField('config_label_MAX_AGE_TIME', 0, 'config_desc_MAX_AGE_TIME'),
 
 	'STATIC_HTML_UNTIL'  => intField('config_label_STATIC_HTML_UNTIL', 10, 'config_desc_STATIC_HTML_UNTIL', min: -1),
-	'GZIP_COMPRESS_LEVEL'=> intField('config_label_GZIP_COMPRESS_LEVEL', 0, 'config_desc_GZIP_COMPRESS_LEVEL'),
+	'GZIP_COMPRESS_LEVEL'=> intField('config_label_GZIP_COMPRESS_LEVEL', 0, 'config_desc_GZIP_COMPRESS_LEVEL', global: true),
 	'MINIFY_HTML'        => boolField('config_label_MINIFY_HTML', false, 'config_desc_MINIFY_HTML'),
 	'AUTO_LINK'          => boolField('config_label_AUTO_LINK', true, 'config_desc_AUTO_LINK'),
 ];

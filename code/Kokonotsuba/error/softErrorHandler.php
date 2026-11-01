@@ -8,6 +8,7 @@ use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
+use function Puchiko\strings\sanitizeStr;
 
 class softErrorHandler {
 	public function __construct(
@@ -43,10 +44,10 @@ class softErrorHandler {
 
 		$pte_vals = array(
 			'{$SELF2}' => $this->boardIndexFile.'?'.time(),
-			'{$MESG}' => htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8'),
+			'{$MESG}' => sanitizeStr($errorMessage),
 			'{$RETURN_TEXT}' => _T('return'),
 			'{$BACK_TEXT}' => _T('error_back'),
-			'{$BACK_URL}' => htmlspecialchars($this->request->getReferer()),
+			'{$BACK_URL}' => sanitizeStr($this->request->getReferer()),
 			'{$SHOW_ERROR_IMAGE}' => $showErrorImage
 		);
 

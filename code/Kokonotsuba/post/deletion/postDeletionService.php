@@ -79,7 +79,7 @@ class postDeletionService {
 	 * Wire up the module engine so deletions can be announced.
 	 *
 	 * Set after construction rather than injected: this service is built in
-	 * bootstrap/repositories.php, before the board (and with it the module engine) exists.
+	 * kernel/providers/repositoryProvider.php, before the board (and with it the module engine) exists.
 	 */
 	public function setModuleEngine(moduleEngine $moduleEngine): void {
 		$this->moduleEngine = $moduleEngine;

@@ -16,6 +16,7 @@ use function Kokonotsuba\libraries\getAttachmentUrl;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use AuditableTrait;
@@ -100,8 +101,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		$isSpoilered = !$isSpoilered;
 
 		$logMessage = $isSpoilered
-			? 'Spoiler enabled on No. ' . htmlspecialchars($post->getNumber())
-			: 'Spoiler removed on No. ' . htmlspecialchars($post->getNumber());
+			? 'Spoiler enabled on No. ' . sanitizeStr($post->getNumber())
+			: 'Spoiler removed on No. ' . sanitizeStr($post->getNumber());
 
 		$this->logAction($logMessage, $post->getBoardUID(), actionType::POST_FLAG);
 

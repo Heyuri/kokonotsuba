@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\sideNav;
 
 use Kokonotsuba\template\pageRenderer;
+use Kokonotsuba\template\templateEngine;
 
 use function Kokonotsuba\libraries\_T;
 use function Puchiko\strings\sanitizeStr;
@@ -16,19 +17,36 @@ use function Puchiko\strings\sanitizeStr;
  */
 class sideNavRenderer {
 	/** A main group's automatic links, in their default order. */
-	private const MAIN_SOURCES = ['home', 'overboard', 'hide'];
+	private const MAIN_SOURCES = ['home', 'overboard', 'dirs', 'hide'];
+
+	/** Hides the nav and shows board directories before it paints, per the reader (or the board default). */
+	private const HIDE_SCRIPT = '<script>(function(){var v=null,r=null;try{v=localStorage.getItem("sidenav");r=localStorage.getItem("sideNavDirs")}catch(e){}'
+		. 'var d=window.KOKO_DEFAULT_SETTINGS||{};'
+		. 'if(v!==null?v==="false":d.sidenav===false)document.body.classList.add("sideNavHidden");'
+		. 'if(r==="true")document.body.classList.add("sideNavShowDirs")})();</script>';
+
+	/** Closes the groups the reader collapsed, right after the nav is parsed so they never paint open. */
+	private const COLLAPSE_SCRIPT = '<script>(function(){var c=[];try{c=JSON.parse(localStorage.getItem("sideNavCollapsed"))||[]}catch(e){}'
+		. 'document.querySelectorAll(".sideNav .sideNavGroup").forEach(function(g){'
+		. 'if(c.indexOf(g.getAttribute("data-group"))!==-1)g.open=false})})();</script>';
 
 	/**
+	 * @param pageRenderer|templateEngine $renderer anything with the side nav templates in reach
 	 * @param array $boards listed boards
 	 * @param string[] $styleNames the board's style names, the default first
 	 */
 	public function __construct(
-		private readonly pageRenderer $renderer,
+		private readonly pageRenderer|templateEngine $renderer,
 		private readonly array $boards,
 		private readonly string $homeUrl,
 		private readonly string $overboardUrl,
 		private readonly array $styleNames,
 	) {}
+
+	/** The nav for a page, wrapped in the scripts that apply the reader's hide and collapse settings. */
+	public function renderForPage(array $layout): string {
+		return self::HIDE_SCRIPT . $this->render($layout) . self::COLLAPSE_SCRIPT;
+	}
 
 	/** @param array $layout groups with title, kind, id and links (label, url, source, hidden) */
 	public function render(array $layout): string {
@@ -102,6 +120,7 @@ class sideNavRenderer {
 			'group' => $this->renderer->ParseBlock('SIDE_NAV_GROUP', ['{$GROUP_ID}' => '%%ID%%', '{$TITLE}' => '%%TITLE%%', '{$ITEMS}' => '%%ITEMS%%']),
 			'item' => $this->item('%%LABEL%%', '%%URL%%', '%%LINK_TITLE%%'),
 			'hide' => $this->renderer->ParseBlock('SIDE_NAV_HIDE_ITEM', ['{$LABEL}' => '%%LABEL%%']),
+			'dirs' => $this->renderer->ParseBlock('SIDE_NAV_DIRS_ITEM', ['{$LABEL}' => '%%LABEL%%']),
 		];
 	}
 
@@ -114,6 +133,7 @@ class sideNavRenderer {
 			'home' => ['default_label' => _T('head_home'), 'default_url' => $this->homeUrl, 'link_title' => _T('head_home')],
 			'overboard' => ['default_label' => _T('sidenav_overboard'), 'default_url' => $this->overboardUrl, 'link_title' => _T('sidenav_overboard')],
 			'hide' => ['default_label' => _T('sidenav_hide'), 'default_url' => '', 'link_title' => _T('sidenav_hide')],
+			'dirs' => ['default_label' => _T('sidenav_dirs'), 'default_url' => '', 'link_title' => _T('sidenav_dirs')],
 			default => [
 				'default_label' => $boards[$source]->getBoardTitle(),
 				'default_url' => $boards[$source]->getBoardURL(),
@@ -129,8 +149,16 @@ class sideNavRenderer {
 		if ($source === 'hide') {
 			return $this->renderer->ParseBlock('SIDE_NAV_HIDE_ITEM', ['{$LABEL}' => $label]);
 		}
+		if ($source === 'dirs') {
+			return $this->renderer->ParseBlock('SIDE_NAV_DIRS_ITEM', ['{$LABEL}' => $label]);
+		}
+		if ($source !== null && str_starts_with($source, 'board:')) {
+			// shown by body.sideNavShowDirs, so the toggle never redraws the link
+			$prefix = '<span class="sideNavBoardDir">' . $link['link_title'] . ' - </span>';
+			return $this->item($prefix . $label, sanitizeStr($link['default_url']), $link['link_title']);
+		}
 		if ($source !== null) {
-			return $this->item($label, sanitizeStr($link['default_url']), str_starts_with($source, 'board:') ? $link['link_title'] : $label);
+			return $this->item($label, sanitizeStr($link['default_url']), $label);
 		}
 		return $this->item($label, sanitizeStr($link['url']), $label);
 	}

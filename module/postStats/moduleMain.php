@@ -15,6 +15,7 @@ use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
 use Puchiko\background\BackgroundTaskRegistry;
 
 use function Kokonotsuba\libraries\_T;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use TopLinksListenerTrait;
@@ -61,7 +62,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		$moduleHeader .= $this->moduleContext->templateEngine->ParseBlock('POSTSTATS_HEAD', [
-			'{$CSS_URL}' => htmlspecialchars($this->getConfig('STATIC_URL') . 'css/module/postStats.css'),
+			'{$CSS_URL}' => sanitizeStr($this->getConfig('STATIC_URL') . 'css/module/postStats.css'),
 		]);
 	}
 
@@ -95,10 +96,10 @@ class moduleMain extends abstractModuleMain {
 		);
 
 		$page = $this->moduleContext->templateEngine->ParseBlock('POSTSTATS_PAGE', [
-			'{$RETURN_URL}' => htmlspecialchars($this->getConfig('STATIC_INDEX_FILE') . '?' . time()),
-			'{$RETURN_TEXT}' => htmlspecialchars(_T('return')),
-			'{$PAGE_TITLE}' => htmlspecialchars(_T('poststats_title')),
-			'{$NOTE}' => htmlspecialchars(_T('poststats_note')),
+			'{$RETURN_URL}' => sanitizeStr($this->getConfig('STATIC_INDEX_FILE') . '?' . time()),
+			'{$RETURN_TEXT}' => sanitizeStr(_T('return')),
+			'{$PAGE_TITLE}' => sanitizeStr(_T('poststats_title')),
+			'{$NOTE}' => sanitizeStr(_T('poststats_note')),
 			'{$BOARD_SECTION}' => $boardSection,
 			'{$SITE_SECTION}' => $this->showSiteWide
 				? $this->renderSiteWideSection($service, $renderer, $range, $rangeDays)

@@ -7,11 +7,6 @@ $appRoot = $backgroundAppRoot ?? __DIR__ . '/../';
 // (e.g. SCRIPT_FILENAME under PHP-FPM) that differs from __DIR__.
 require_once __DIR__ . '/../autoload.php';
 require_once $appRoot . 'code/Kokonotsuba/constants.php';
-require $appRoot . 'paths.php';
-require $appRoot . 'bootstrap/libraryIncludes.php';
-$dbSettings = require $appRoot . 'databaseSettings.php';
-require $appRoot . 'bootstrap/database.php';
+require_once $appRoot . 'paths.php';
 
-/** @var \Kokonotsuba\database\databaseConnection $databaseConnection */
-/** @var \Kokonotsuba\database\transactionManager $transactionManager */
-/** @var array $dbSettings */
+\Kokonotsuba\kernel\kernel::connectDatabase(require $appRoot . 'databaseSettings.php');

@@ -1,0 +1,151 @@
+
+/* Heyuri star in the top left corner, behind the page; dark styles turn it off with --front-page-bg: none. */
+body.frontpage::before {
+	content: '';
+	display: var(--front-page-bg, block);
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: -1;
+	width: 400px;
+	height: 400px;
+	background: url(../image/heyuribg.png) no-repeat top left;
+	pointer-events: none;
+}
+
+/* beside the side nav, not under it */
+body.frontpage:not(.sideNavHidden)::before {
+	left: var(--side-nav-width, 0);
+}
+
+.frontpage .fronttitle {
+	display: block;
+	margin: 0;
+	color: var(--color-fg-main);
+	font-size: 48px;
+	font-weight: 700;
+	font-style: italic;
+	word-break: break-word;
+}
+
+.frontpage .frontPostStats {
+	margin-top: 0.5em;
+	font-size: var(--font-size-small);
+	font-weight: bold;
+}
+
+.frontpage #content {
+	max-width: 80%;
+	margin: 1em auto 0;
+}
+
+.frontpage .nav {
+	border-bottom: 1px solid var(--color-hi-contrast-border);
+	margin-bottom: 0.5em;
+}
+
+.frontpage .frontNav {
+	display: flex;
+	flex-wrap: wrap;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	font-size: var(--font-size-small);
+}
+
+.frontpage .frontNav li {
+	padding: 3px 6px;
+	border-right: 1px solid var(--color-hi-contrast-border);
+	white-space: nowrap;
+}
+
+.frontpage .headline {
+	margin: 0;
+	padding: 5px;
+	font-family: Verdana, Tahoma, sans-serif;
+	font-size: 95%;
+	border-bottom: 1px solid var(--color-hi-contrast-border);
+}
+
+.frontpage .headline small {
+	font-weight: normal;
+}
+
+.frontpage .headline .barctl {
+	float: right;
+}
+
+.frontpage .newsbody,
+.frontpage .frontPageBody {
+	padding: 5px 5px 0 30px;
+	margin-bottom: 20px;
+	font-family: Verdana, Tahoma, sans-serif;
+	font-size: 10pt;
+}
+
+.frontpage .frontPager {
+	margin: 10px 0;
+}
+
+.frontpage .newsDraft {
+	color: var(--color-fg-warning);
+}
+
+@media (max-width: 600px) {
+	.frontpage .newsbody,
+	.frontpage .frontPageBody {
+		padding-left: 10px;
+	}
+}
+
+.frontpage .frontPageTools {
+	margin: 0.5em 0;
+	font-size: var(--font-size-small);
+}
+
+.frontpage .frontEdit {
+	font-size: var(--font-size-small);
+	font-weight: normal;
+}
+
+.frontpage .frontAdminList {
+	width: 100%;
+}
+
+.frontpage .frontBoardList {
+	width: 100%;
+	margin-bottom: 1em;
+}
+
+.frontpage .frontBoardList .frontBoardStat {
+	text-align: right;
+}
+
+.frontpage .frontAdminError {
+	color: var(--color-fg-warning);
+	font-weight: var(--font-weight-bold);
+}
+
+.frontpage .frontEditor .formtable {
+	width: 100%;
+}
+
+.frontpage .frontEditor .inputtext {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.frontpage .frontEditor input[type="number"].inputtext {
+	width: 5em;
+}
+
+.frontpage .frontBodyInput {
+	font-family: monospace;
+}
+
+.frontpage .frontPreview {
+	width: 100%;
+	height: 400px;
+	border: 1px solid var(--color-hi-contrast-border);
+	resize: vertical;
+}

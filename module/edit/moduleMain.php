@@ -15,11 +15,13 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\BanCheckpointTrait;
+use Kokonotsuba\module_classes\traits\listeners\BelowCommentListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
-use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostsPrefetchListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostWidgetListenerTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\post\textFormat;
+use Kokonotsuba\renderers\post\postMenu;
 use Kokonotsuba\userRole;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
@@ -53,8 +55,9 @@ use function Puchiko\strings\strlenUnicode;
 class moduleMain extends abstractModuleMain {
 	use AuditableTrait;
 	use BanCheckpointTrait;
+	use BelowCommentListenerTrait;
 	use ModuleHeaderListenerTrait;
-	use PostListenerTrait;
+	use PostsPrefetchListenerTrait;
 	use PostWidgetListenerTrait;
 
 	/** GET pageName that answers with the post's editable fields as JSON. */
@@ -65,6 +68,9 @@ class moduleMain extends abstractModuleMain {
 
 	private editAttachments $attachments;
 	private postRevisionService $revisions;
+
+	/** @var array<int, ?array> Each drawn post's newest edit by uid, null when never edited. */
+	private array $latestEdits = [];
 
 	public function getName(): string {
 		return 'Post editing';
@@ -86,6 +92,8 @@ class moduleMain extends abstractModuleMain {
 		));
 
 		$this->listenModuleHeader('onGenerateModuleHeader');
+		$this->listenPostsPrefetch('onPrefetchLatestEdits');
+		$this->listenBelowComment('onRenderEditedNotice');
 
 		$engine = $this->moduleContext->moduleEngine;
 
@@ -104,10 +112,49 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		$this->listenPostWidget('onRenderPostWidget');
-		$this->listenPost('onRenderPost');
 	}
 
 	// ─── Frontend hooks ───────────────────────────────────────────
+
+	/** @param Post[] $posts Load the page's edits in one query instead of one per post. */
+	private function onPrefetchLatestEdits(array $posts): void {
+		$uids = [];
+		foreach ($posts as $post) {
+			if ($post instanceof Post && !array_key_exists($post->getUid(), $this->latestEdits)) {
+				$uids[] = $post->getUid();
+			}
+		}
+
+		if ($uids === []) {
+			return;
+		}
+
+		$found = $this->revisions->getLatestEditsForPosts($uids);
+		foreach ($uids as $uid) {
+			$this->latestEdits[$uid] = $found[$uid] ?? null;
+		}
+	}
+
+	/** "Post was edited on ... by user/staff" under the comment, from the post's newest edit. */
+	private function onRenderEditedNotice(string &$belowComment, Post $post, array $threadPosts, bool $adminMode): void {
+		$uid = $post->getUid();
+
+		// drawn without a prefetch (a single post, the edit window's response)
+		if (!array_key_exists($uid, $this->latestEdits)) {
+			$this->onPrefetchLatestEdits([$post]);
+		}
+
+		$edit = $this->latestEdits[$uid];
+		if ($edit === null) {
+			return;
+		}
+
+		$date = $this->moduleContext->postDateFormatter->formatPlainFromDateString($edit['edited_at']);
+		$key = $edit['edited_by'] === null ? 'post_edited_by_poster' : 'post_edited_by_staff';
+
+		$belowComment .= '<div class="postEditedNotice"><small>' . sanitizeStr(_T($key, $date)) . '</small></div>';
+	}
+
 
 	/**
 	 * Add the edit entry to the post dropdown. The href is a working link on its own, so
@@ -122,7 +169,9 @@ class moduleMain extends abstractModuleMain {
 			$this->getEditFormUrl($post->getUid()),
 			self::WIDGET_ACTION,
 			_T('edit_own_post'),
-			''
+			'',
+			[],
+			postMenu::GROUP_EDIT
 		);
 	}
 
@@ -135,21 +184,7 @@ class moduleMain extends abstractModuleMain {
 			return;
 		}
 
-		$widgetArray[] = $this->buildWidgetEntry($this->getStaffEditUrl($post->getUid()), self::WIDGET_ACTION, _T('edit_own_post'), '');
-	}
-
-	/**
-	 * The dropdown toggle is JS-only, so mirror the entry as a plain link for readers without
-	 * scripting, the same way the report module does.
-	 */
-	private function onRenderPost(array &$templateValues, Post &$post, array &$threadPosts, board &$board, bool &$adminMode): void {
-		if (!$this->isReaderEditable($post)) {
-			return;
-		}
-
-		$templateValues['{$POSTINFO_EXTRA}'] .= ' <span class="editLinkContainer no-js-only">[<a href="'
-			. $this->getEditFormUrl($post->getUid(), true) . '" title="' . sanitizeStr(_T('edit_own_post_title')) . '">'
-			. sanitizeStr(_T('edit_own_post')) . '</a>]</span>';
+		$widgetArray[] = $this->buildWidgetEntry($this->getStaffEditUrl($post->getUid()), self::WIDGET_ACTION, _T('edit_own_post'), '', [], postMenu::GROUP_EDIT);
 	}
 
 	/**

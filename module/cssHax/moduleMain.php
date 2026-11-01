@@ -159,7 +159,7 @@ class moduleMain extends abstractModuleMain {
 		$styleBlock = $this->buildStyleAttributes($threadData, $threadData->getOpNumber(), $isThreadView);
 
 		// also pull the raw CSS if any exists
-		$rawStyling = htmlspecialchars($threadData->getRawStyling() ?? '');
+		$rawStyling = sanitizeStr($threadData->getRawStyling() ?? '');
 
 		// collect styling to be rendered in <head> later
 		$this->styleCollector->add($styleBlock . $rawStyling);

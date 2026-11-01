@@ -1,0 +1,1 @@
+				<tr><td><a href="{$URL}">{$NAME}</a></td><td>{$DESCRIPTION}</td><!--&IF($STATS,'<td class="frontBoardStat">{$PPH}</td><td class="frontBoardStat">{$PPD}</td><td class="frontBoardStat">{$USERS}</td><td class="frontBoardStat">{$POSTS}</td>','')--></tr>

@@ -35,7 +35,7 @@ $root = dirname(__DIR__);
 require $root . '/autoload.php';
 require $root . '/code/Kokonotsuba/constants.php';
 require $root . '/paths.php';
-require $root . '/bootstrap/libraryIncludes.php';
+\Kokonotsuba\kernel\kernel::loadLibraries();
 
 use Kokonotsuba\config\configRepository;
 use Kokonotsuba\config\legacyConfigImporter;

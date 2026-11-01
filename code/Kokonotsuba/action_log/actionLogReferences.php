@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\action_log;
 
+use function Puchiko\strings\sanitizeStr;
+
 /**
  * The things a log line points at, and how to reach them.
  *
@@ -68,7 +70,7 @@ class actionLogReferences {
 	public function toHtml(string $text, int $boardUid): string {
 		// Escaping first leaves the token syntax intact - none of {{ : | }} is escaped - so the
 		// label is already safe by the time it is put in the anchor.
-		$escaped = htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+		$escaped = sanitizeStr($text);
 
 		// Split on the tokens so the prose patterns only ever see prose: a label that happens to
 		// read like one is left alone, and neither pass can match inside the other's anchor.
@@ -97,7 +99,7 @@ class actionLogReferences {
 			return $label;
 		}
 
-		return '<a href="' . htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">' . $label . '</a>';
+		return '<a href="' . sanitizeStr($url) . '">' . $label . '</a>';
 	}
 
 	/** The registered prose patterns, applied to one stretch of escaped text. */

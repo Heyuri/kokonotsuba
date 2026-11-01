@@ -83,7 +83,7 @@ function generateModerateButton(
 	bool $isNoScript = false,
 ): string {
 	// generate the html for a moderate button with the given url, label, title and class
-	$buttonSpan = '<span class="adminFunctions ' . htmlspecialchars($class) . '">[<a href="' . htmlspecialchars($buttonUrl) . '" title="' . htmlspecialchars($title) . '">' . htmlspecialchars($label) . '</a>]</span>';
+	$buttonSpan = '<span class="adminFunctions ' . sanitizeStr($class) . '">[<a href="' . sanitizeStr($buttonUrl) . '" title="' . sanitizeStr($title) . '">' . sanitizeStr($label) . '</a>]</span>';
 
 	// if the button is meant to be used in a no script context, wrap it in a noscript tag
 	if($isNoScript) {
@@ -162,12 +162,12 @@ function generateModerateForm(
 	if ($useFormAction) {
 		// Inside delform — use formaction to avoid nested <form> tags.
 		// The CSRF token is already present as a hidden input in delform.
-		$html = '<span class="adminFunctions ' . htmlspecialchars($class) . '">'
+		$html = '<span class="adminFunctions ' . sanitizeStr($class) . '">'
 			. '[<button type="submit" class="buttonLink"'
-			. ' formaction="' . htmlspecialchars($buttonUrl) . '"'
+			. ' formaction="' . sanitizeStr($buttonUrl) . '"'
 			. ' formmethod="POST"'
-			. ' title="' . htmlspecialchars($title) . '">'
-			. htmlspecialchars($label)
+			. ' title="' . sanitizeStr($title) . '">'
+			. sanitizeStr($label)
 			. '</button>]'
 			. '</span>';
 
@@ -182,10 +182,10 @@ function generateModerateForm(
 	// Standalone context (admin management pages) — wrap in its own <form>.
 	$csrfToken = sanitizeStr(getOrCreateCsrfToken());
 
-	return '<span class="adminFunctions ' . htmlspecialchars($class) . '">'
-		. '<form method="POST" action="' . htmlspecialchars($buttonUrl) . '" style="display:inline">'
+	return '<span class="adminFunctions ' . sanitizeStr($class) . '">'
+		. '<form method="POST" action="' . sanitizeStr($buttonUrl) . '" style="display:inline">'
 		. '<input type="hidden" name="csrf_token" value="' . $csrfToken . '">'
-		. '[<button type="submit" class="buttonLink" title="' . htmlspecialchars($title) . '">' . htmlspecialchars($label) . '</button>]'
+		. '[<button type="submit" class="buttonLink" title="' . sanitizeStr($title) . '">' . sanitizeStr($label) . '</button>]'
 		. '</form>'
 		. '</span>';
 }
@@ -204,9 +204,9 @@ function generateAttachmentForm(
 ): string {
 	return ' <span class="adminFunctions admin' . $functionClass . 'Function attachmentButton">'
 		. '[<button type="submit" class="buttonLink"'
-		. ' formaction="' . htmlspecialchars($url) . '"'
+		. ' formaction="' . sanitizeStr($url) . '"'
 		. ' formmethod="POST"'
-		. ' title="' . htmlspecialchars($title) . '">'
+		. ' title="' . sanitizeStr($title) . '">'
 		. $label
 		. '</button>]'
 		. '</span>';

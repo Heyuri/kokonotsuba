@@ -53,7 +53,7 @@ $rootDir = dirname(__DIR__);
 require $rootDir . '/autoload.php';
 require $rootDir . '/code/Kokonotsuba/constants.php';
 require $rootDir . '/paths.php';
-require $rootDir . '/bootstrap/libraryIncludes.php';
+\Kokonotsuba\kernel\kernel::loadLibraries();
 
 // ── argument parsing ────────────────────────────────────────────────────────
 
@@ -108,7 +108,7 @@ $force = isset($flags['force']);
 try {
 	// ── wiring ──────────────────────────────────────────────────────────────────
 
-	require $rootDir . '/bootstrap/database.php';
+	\Kokonotsuba\kernel\kernel::connectDatabase();
 
 	$databaseConnection = databaseConnection::getInstance();
 	$postTable = getTableName('POST_TABLE');

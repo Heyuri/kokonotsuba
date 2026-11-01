@@ -8,15 +8,17 @@ namespace Kokonotsuba\Modules\imageMeta;
 
 require __DIR__ . '/exif.php';
 
+use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\AttachmentWidgetListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
-use RuntimeException;
 
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\constructAttachment;
 use function Kokonotsuba\libraries\getAttachmentUrl;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use ModuleHeaderListenerTrait;
@@ -118,53 +120,25 @@ class moduleMain extends abstractModuleMain {
 	 * Handles multiple attachments by reading requested file.
 	 */
 	public function ModulePage() {
-		echo $this->moduleContext->board->getBoardHead('Image meta');
-
-		echo '[<a href="' . $this->getConfig('STATIC_INDEX_FILE') . '">Return</a>]';
-		echo '<ul class="exifInfoList">';
-
-		// get post uid from request
-		$postUid = $this->moduleContext->request->getParameter('postUid', 'GET');
-
-		// validate post uid
-		if(!$postUid || $postUid <= 0) {
-			throw new RuntimeException;
+		// look everything up before drawing, so a bad link gets an error page instead of half a page
+		$postUid = (int)$this->moduleContext->request->getParameter('postUid', 'GET');
+		$fileId = (int)$this->moduleContext->request->getParameter('fileId', 'GET');
+		$post = $postUid > 0 ? $this->moduleContext->postRepository->getPostByUid($postUid) : false;
+		if (!$post) {
+			throw new BoardException(_T('post_not_found'), 404);
 		}
 
-		// get file id from request
-		$fileId = $this->moduleContext->request->getParameter('fileId', 'GET');
-
-		// validate file id
-		if(!$fileId || $fileId <= 0) {
-			throw new RuntimeException;
+		$attachment = $fileId > 0 ? $post->getAttachmentById($fileId) : null;
+		if (!$attachment) {
+			throw new BoardException(_T('attachment_not_found'), 404);
 		}
 
-		// fetch post associated with uid
-		$post = $this->moduleContext->postRepository->getPostByUid($postUid);
-
-		// throw runtime exception if post doesn't exist
-		if(!$post) {
-			throw new RuntimeException;
-		}
-
-		// get board
 		$board = searchBoardArrayForBoard($post->getBoardUID());
 
-		// get attachments
-		$attachments = $post->getAttachments() ?? null;
+		echo $this->moduleContext->board->getBoardHead('Image meta');
 
-		// throw runtime exception if no attachments
-		if(!$attachments) {
-			throw new RuntimeException;
-		} 
-
-		// get attachment
-		$attachment = $post->getAttachmentById($fileId);
-
-		// throw runtime if attachment not found
-		if(!$attachment) {
-			throw new RuntimeException;
-		}
+		echo '[<a href="' . sanitizeStr((string)$this->getConfig('STATIC_INDEX_FILE')) . '">Return</a>]';
+		echo '<ul class="exifInfoList">';
 
 		if (attachmentFileExists($attachment)) {
 			$pfile = $board->getBoardUploadedFilesDirectory() . $board->getConfigValue('IMG_DIR') . $attachment['storedFileName'] . '.' . $attachment['fileExtension'];
@@ -178,9 +152,9 @@ class moduleMain extends abstractModuleMain {
 					echo '</ul><div class="tableViewportWrapper"><table class="exif postlists"><tbody>';
 					foreach ($exif_data as $key => $section) {
 						foreach ($section as $name => $value) {
-							$safeKey   = htmlspecialchars((string)$key,   ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-							$safeName  = htmlspecialchars((string)$name,  ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-							$safeValue = htmlspecialchars(is_scalar($value) ? (string)$value : print_r($value, true), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+							$safeKey   = sanitizeStr((string)$key);
+							$safeName  = sanitizeStr((string)$name);
+							$safeValue = sanitizeStr(is_scalar($value) ? (string)$value : print_r($value, true));
 							echo "<tr><th>{$safeKey}.{$safeName}</th><td>{$safeValue}</td></tr>";
 						}
 					}
@@ -195,8 +169,8 @@ class moduleMain extends abstractModuleMain {
 					echo '<li>Image contains EXIF data:</li>';
 					echo '</ul><div class="tableViewportWrapper"><table border="1"><tbody>';
 					foreach ($exif->exif_data as $key => $value) {
-						$safeKey   = htmlspecialchars((string)$key, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-						$safeValue = htmlspecialchars(is_scalar($value) ? (string)$value : print_r($value, true), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+						$safeKey   = sanitizeStr((string)$key);
+						$safeValue = sanitizeStr(is_scalar($value) ? (string)$value : print_r($value, true));
 						echo "<tr><th>{$safeKey}</th><td>{$safeValue}</td></tr>";
 					}
 					echo '</tbody></table></div><p>';
@@ -208,8 +182,9 @@ class moduleMain extends abstractModuleMain {
 			echo '<li><strong class="error">File Not Found!</strong></li>';
 		}
 
-		if ($this->moduleContext->request->hasParameter('HTTP_REFERER', 'SERVER')) {
-			echo '[<a href="' . $this->moduleContext->request->getReferer() . '" onclick="event.preventDefault();history.go(-1);">Back</a>]';
+		$referer = $this->moduleContext->request->getReferer();
+		if ($referer !== '') {
+			echo '[<a href="' . sanitizeStr($referer) . '" onclick="event.preventDefault();history.go(-1);">Back</a>]';
 		}
 
 		echo $this->moduleContext->board->getBoardFooter();

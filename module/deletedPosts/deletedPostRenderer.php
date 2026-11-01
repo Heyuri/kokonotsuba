@@ -28,6 +28,7 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\getFiltersFromRequest;
 use function Puchiko\strings\buildSmartQuery;
+use function Puchiko\strings\sanitizeStr;
 
 class deletedPostRenderer {
 	private ?boardRendererFactory $rendererFactory = null;
@@ -250,7 +251,7 @@ class deletedPostRenderer {
 		$url = $this->deletedPostUtility->generateDeletedPostViewUrl($deletedPost->getDeletedPostId());
 
 		// add url for the view
-		$deletedPostTemplateValues['{$VIEW_URL}'] = htmlspecialchars($url);
+		$deletedPostTemplateValues['{$VIEW_URL}'] = sanitizeStr($url);
 
 		// parse the template block
 		$deletedPostHtml = $this->adminPageRenderer->ParseBlock('DELETED_POST_ENTRY', $deletedPostTemplateValues);
@@ -261,9 +262,9 @@ class deletedPostRenderer {
 		// generate page section html
 		$deletedPostEntryPage = $this->adminPageRenderer->ParseBlock('DELETED_POST_VIEW_ENTRY', [
 			'{$DELETED_POST}' => $deletedPostHtml,
-			'{$BACK_URL}' => htmlspecialchars($backUrl),
+			'{$BACK_URL}' => sanitizeStr($backUrl),
 			'{$IS_OPEN}' => $deletedPostTemplateValues['{$IS_OPEN}'],
-			'{$URL}' => htmlspecialchars($this->modulePageUrl)
+			'{$URL}' => sanitizeStr($this->modulePageUrl)
 		]);
 
 		// output the admin page
@@ -402,7 +403,7 @@ class deletedPostRenderer {
 				'{$CAN_VIEW_ALL_DELETED_POSTS}' => $roleLevel->isAtLeast($this->requiredRoleActionForModAll),
 				'{$ARE_NO_POSTS}' => $areNoPosts,
 				'{$MODULE_HEADER_TEXT}' => $moduleHeader,
-				'{$URL}' => htmlspecialchars($this->modulePageUrl),
+				'{$URL}' => sanitizeStr($this->modulePageUrl),
 				'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 				'{$FILTER_FORM}' => $filterFormHtml
 			]
@@ -483,21 +484,21 @@ class deletedPostRenderer {
 
 		// put together the placeholder => value
 		$templateValues = [
-			'{$DELETED_BY}' => htmlspecialchars($deletedByUsername),
+			'{$DELETED_BY}' => sanitizeStr($deletedByUsername),
 			'{$DELETED_AT}' => isset($deletedTimestamp) ? $this->postDateFormatter->formatFromDateString($deletedTimestamp) : '',
-			'{$ID}' => htmlspecialchars($id),
+			'{$ID}' => sanitizeStr($id),
 			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
-			'{$BOARD_UID}' => htmlspecialchars($boardUID),
+			'{$BOARD_UID}' => sanitizeStr($boardUID),
 			'{$CAN_PURGE}' => $roleLevel->isAtLeast($this->requiredRoleActionForModAll),
 			'{$BOARD_TITLE}' => $boardTitle,
-			'{$VIEW_MORE_URL}' => htmlspecialchars($viewMoreUrl),
+			'{$VIEW_MORE_URL}' => sanitizeStr($viewMoreUrl),
 			'{$POST_HTML}' => $postHtml,
 			'{$IS_OPEN}' => $deletedEntry->getOpenFlag() ? 1 : null,
 			'{$IS_ATTACHMENT_ONLY}' => $isAttachmentOnly,
 			'{$RESTORED_AT}' => ($deletedEntry->getRestoredAt() !== null) ? $this->postDateFormatter->formatFromDateString($deletedEntry->getRestoredAt()) : '',
-			'{$RESTORED_BY}' => htmlspecialchars($restoredByUsername),
-			'{$SHOW_ALL}' => htmlspecialchars($showAll),
-			'{$URL}' => htmlspecialchars($this->modulePageUrl),
+			'{$RESTORED_BY}' => sanitizeStr($restoredByUsername),
+			'{$SHOW_ALL}' => sanitizeStr($showAll),
+			'{$URL}' => sanitizeStr($this->modulePageUrl),
 			'{$CAN_PURGE_RESTORE_RECORD}' => $roleLevel->isAtLeast($this->requiredRoleForDeleteRestoredRecord)
 		];
 

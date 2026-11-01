@@ -18,5 +18,5 @@ return [
 	'_group'  => 'Moderation',
 	'_module' => 'IP Anonymizer',
 
-	'AUTO_ANONYMIZE_DAYS' => intField('config_label_modules.anonIp.AUTO_ANONYMIZE_DAYS', 0, 'config_desc_modules.anonIp.AUTO_ANONYMIZE_DAYS', min: 0),
+	'AUTO_ANONYMIZE_DAYS' => intField('config_label_modules.anonIp.AUTO_ANONYMIZE_DAYS', 0, 'config_desc_modules.anonIp.AUTO_ANONYMIZE_DAYS', min: 0, global: true),
 ];

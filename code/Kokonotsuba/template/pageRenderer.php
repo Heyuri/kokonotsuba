@@ -12,6 +12,7 @@ use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\html\drawAdminTheading;
 use function Kokonotsuba\libraries\html\generateAdminLinkButtons;
 use function Kokonotsuba\libraries\html\generateUserNavBar;
+use function Kokonotsuba\libraries\html\getFrontAdminNavEntriesFromConfig;
 use function Kokonotsuba\libraries\html\getStaffNavCoreEntries;
 use function Kokonotsuba\libraries\html\renderStaffNavCoreEntry;
 
@@ -55,7 +56,8 @@ class pageRenderer {
 			$coreNavEntries = getStaffNavCoreEntries(
 				$liveIndexFile,
 				$this->board->getConfigValue('AuthLevels.CAN_VIEW_ACTION_LOG', userRole::LEV_MODERATOR),
-				false
+				false,
+				getFrontAdminNavEntriesFromConfig($config)
 			);
 
 			foreach ($coreNavEntries as $coreNavEntry) {

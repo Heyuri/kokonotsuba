@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\install;
 
+use function Puchiko\strings\sanitizeStr;
+
 /** Renders the installer's pages. All output goes through here; nothing else echoes. */
 final class installerPage {
 	private const STATUS_MARK = [
@@ -160,7 +162,7 @@ final class installerPage {
 			'<table class="fields">';
 
 		$this->field($values, $errors, 'website_url', 'Board base URL', 'text', 'https://example.net/kokonotsuba/boards/');
-		$this->field($values, $errors, 'home_url', 'Home link', 'text', 'https://example.net/');
+		$this->field($values, $errors, 'home_url', 'Front page / home URL', 'text', 'https://example.net/kokonotsuba/');
 		$this->field($values, $errors, 'static_url', 'Static URL', 'text', 'https://example.net/kokonotsuba/static/');
 		$this->field($values, $errors, 'static_path', 'Static path on disk', 'text', '/var/www/html/kokonotsuba/static/');
 
@@ -248,7 +250,7 @@ final class installerPage {
 	}
 
 	private static function escape(string $value): string {
-		return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+		return sanitizeStr($value);
 	}
 
 	private function style(): string {

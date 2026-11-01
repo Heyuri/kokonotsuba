@@ -2,7 +2,9 @@
 
 namespace Kokonotsuba\libraries\html;
 
+use Kokonotsuba\front_pages\frontPageLinks;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\policy\frontPagePolicy;
 use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
@@ -31,7 +33,7 @@ function generateAdminLinkButtons(string $liveIndexFile, string $staticIndexFile
  * board, so this is just the Return link, carrying the same cache-busting query string.
  */
 function generateUserNavBar(string $staticIndexFile, request $request): string {
-	return '<div class="userNavBar">[<a href="' . htmlspecialchars($staticIndexFile) . '?' . $request->getRequestTime() . '">'
+	return '<div class="userNavBar">[<a href="' . sanitizeStr($staticIndexFile) . '?' . $request->getRequestTime() . '">'
 		. _T('return') . '</a>]</div>';
 }
 
@@ -45,9 +47,10 @@ function generateUserNavBar(string $staticIndexFile, request $request): string {
  *
  * @param  bool $includeLiveFrontend Whether to lead with the link back to the live board.
  *              False where that link is already rendered separately.
+ * @param  array $frontAdminEntries The front page's entries, from getFrontAdminNavEntries(); appended as they are.
  * @return array<int, array{key: string, label: string, url: string, title: string, group: string, method: string}>
  */
-function getStaffNavCoreEntries(string $liveIndexFile, userRole $actionLogRole, bool $includeLiveFrontend = true): array {
+function getStaffNavCoreEntries(string $liveIndexFile, userRole $actionLogRole, bool $includeLiveFrontend = true, array $frontAdminEntries = []): array {
 	$roleLevel = getRoleLevelFromSession();
 
 	$destinations = [
@@ -80,23 +83,54 @@ function getStaffNavCoreEntries(string $liveIndexFile, userRole $actionLogRole, 
 		];
 	}
 
+	return array_merge($entries, $frontAdminEntries);
+}
+
+/**
+ * The front page's News, Pages and Logo as the staff nav's 'frontPage' group, each only for whoever
+ * may edit it. Shared by the board staff navs and the front page's own so both list the same.
+ *
+ * @return array<int, array{key: string, label: string, url: string, title: string, group: string, method: string}>
+ */
+function getFrontAdminNavEntries(frontPagePolicy $policy, frontPageLinks $links): array {
+	$sections = [
+		['frontNews', 'frontAdminNews', 'front_admin_news', $policy->canEditNews()],
+		['frontPages', 'frontAdminPages', 'front_admin_pages', $policy->canEditPages()],
+		['frontLogo', 'frontAdminLogo', 'front_admin_logo', $policy->canEditSite()],
+	];
+
+	$entries = [];
+	foreach ($sections as [$key, $anchor, $label, $allowed]) {
+		if ($allowed) {
+			$entries[] = ['key' => $key, 'label' => _T($label), 'url' => $links->admin($anchor), 'title' => _T('front_admin_manage'), 'group' => 'frontPage', 'method' => 'get'];
+		}
+	}
+
 	return $entries;
+}
+
+/** getFrontAdminNavEntries() for a board page: linked straight to the front page, judged by the board's AuthLevels. */
+function getFrontAdminNavEntriesFromConfig(array $config): array {
+	$policy = new frontPagePolicy((array)($config['AuthLevels'] ?? []), getRoleLevelFromSession(), null);
+	$links = frontPageLinks::forSite((string)($config['HOME'] ?? ''), (string)(getGlobalConfig()['WEBSITE_URL'] ?? ''));
+
+	return getFrontAdminNavEntries($policy, $links);
 }
 
 /** One core nav entry as the list item the admin nav bar is built from. */
 function renderStaffNavCoreEntry(array $entry): string {
-	$titleHtml = ($entry['title'] ?? '') !== '' ? ' title="' . htmlspecialchars($entry['title']) . '"' : '';
+	$titleHtml = ($entry['title'] ?? '') !== '' ? ' title="' . sanitizeStr($entry['title']) . '"' : '';
 
 	// state-changing destinations post with the token instead of linking
 	if (($entry['method'] ?? 'get') === 'post') {
-		return '<li class="adminNavLink"><form method="POST" action="' . htmlspecialchars($entry['url']) . '" style="display:inline">'
+		return '<li class="adminNavLink"><form method="POST" action="' . sanitizeStr($entry['url']) . '" style="display:inline">'
 			. getCsrfHiddenInput()
-			. '<button type="submit" class="buttonLink"' . $titleHtml . '>' . htmlspecialchars($entry['label']) . '</button>'
+			. '<button type="submit" class="buttonLink"' . $titleHtml . '>' . sanitizeStr($entry['label']) . '</button>'
 			. '</form></li>';
 	}
 
-	return '<li class="adminNavLink"><a' . $titleHtml . ' href="' . htmlspecialchars($entry['url']) . '">'
-		. htmlspecialchars($entry['label']) . '</a></li>';
+	return '<li class="adminNavLink"><a' . $titleHtml . ' href="' . sanitizeStr($entry['url']) . '">'
+		. sanitizeStr($entry['label']) . '</a></li>';
 }
 
 function drawAccountTable(string $liveIndexFile, array $accounts, string $csrfHiddenInput) {
@@ -105,12 +139,12 @@ function drawAccountTable(string $liveIndexFile, array $accounts, string $csrfHi
 	
 	foreach ($accounts as $account) {
 			$accountID = $account->getId();
-			$accountUsername = htmlspecialchars($account->getUsername());
+			$accountUsername = sanitizeStr($account->getUsername());
 			$accountRoleLevel = $account->getRoleLevel();
 			$accountNumberOfActions = $account->getNumberOfActions();
 			$accountLastLogin = $account->getLastLogin() ?? '<i>Never</i>';
 	
-			$viewHTML = '[<a title="View account" href="' . htmlspecialchars($liveIndexFile) . '?mode=viewStaffAccount&amp;id=' . (int)$accountID . '">View</a>]';
+			$viewHTML = '[<a title="View account" href="' . sanitizeStr($liveIndexFile) . '?mode=viewStaffAccount&amp;id=' . (int)$accountID . '">View</a>]';
 
 			$accountsHTML .= '<tr> 
 					<td class="colSelect"><input type="checkbox" name="del_ids[]" value="' . (int)$accountID . '"></td>
@@ -200,13 +234,13 @@ function buildThreadNavButtons(array $threadList, int $threadInnerIterator): str
 	// Up arrow (previous thread on this page)
 	if ($threadInnerIterator > 0 && isset($threadList[$threadInnerIterator - 1])) {
 		$aboveThread = $threadList[$threadInnerIterator - 1]->getThread();
-		$upArrow = '<a title="Go to above thread" href="#t' . htmlspecialchars($aboveThread->getBoardUID()) . '_' . htmlspecialchars($aboveThread->getOpNumber()) . '">&#9650;</a>';
+		$upArrow = '<a title="Go to above thread" href="#t' . sanitizeStr($aboveThread->getBoardUID()) . '_' . sanitizeStr($aboveThread->getOpNumber()) . '">&#9650;</a>';
 	}
 	
 	// Down arrow (next thread on this page)
 	if ($threadInnerIterator < count($threadList) - 1 && isset($threadList[$threadInnerIterator + 1])) {
 		$belowThread = $threadList[$threadInnerIterator + 1]->getThread();
-		$downArrow = '<a title="Go to below thread" href="#t' . htmlspecialchars($belowThread->getBoardUID()) . '_' . htmlspecialchars($belowThread->getOpNumber()) . '">&#9660;</a>';
+		$downArrow = '<a title="Go to below thread" href="#t' . sanitizeStr($belowThread->getBoardUID()) . '_' . sanitizeStr($belowThread->getOpNumber()) . '">&#9660;</a>';
 	}
 	
 	return $postFormButton . $upArrow . $downArrow;
@@ -246,7 +280,7 @@ function drawAdminTheading(&$dat, $staffSession) {
 function drawPushPostForm(&$dat, $pushPostCharacterLimit, $url, $postNumber, $post_uid) {		
 	$dat .= '<form id="push-post-form" method="POST" action="'.$url.'">
 				<input type="hidden" name="">
-				<input type="hidden" name="push-post-post-uid" value="'.htmlspecialchars($post_uid).'">
+				<input type="hidden" name="push-post-post-uid" value="'.sanitizeStr($post_uid).'">
 				<table>
 					<tbody>
 						<tr>
@@ -271,5 +305,5 @@ function drawPushPostForm(&$dat, $pushPostCharacterLimit, $url, $postNumber, $po
 }
 
 function getThreadTitle(string $boardUrl, string $boardTitle): string {
-	return '<span class="overboardThreadBoardTitle"><a href="' . htmlspecialchars($boardUrl).'">' . $boardTitle . '</a></span>';
+	return '<span class="overboardThreadBoardTitle"><a href="' . sanitizeStr($boardUrl).'">' . $boardTitle . '</a></span>';
 }

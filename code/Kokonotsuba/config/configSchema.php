@@ -148,7 +148,7 @@ class configSchema {
 	 * @param string $dotpath     Config dot-path key.
 	 * @param mixed  $meta        Raw metadata array from a schema file.
 	 * @param string $moduleLabel Owning module's sub-header label ('' for core fields).
-	 * @return array{default: mixed, type: string, label: string, desc: string, module: string, min: int|null}
+	 * @return array{default: mixed, type: string, label: string, desc: string, module: string, min: int|null, global: bool, map: bool}
 	 */
 	private static function normalizeField(string $dotpath, mixed $meta, string $moduleLabel = ''): array {
 		$meta = is_array($meta) ? $meta : ['default' => $meta];
@@ -169,6 +169,8 @@ class configSchema {
 			'desc'    => $meta['desc'] ?? '',
 			'module'  => $moduleLabel,
 			'min'     => $min,
+			'global'  => (bool)($meta['global'] ?? false),
+			'map'     => $type === self::TYPE_ARRAY && !empty($meta['map']),
 		];
 	}
 
@@ -263,6 +265,17 @@ class configSchema {
 	public static function hasField(string $dotpath): bool {
 		self::load();
 		return isset(self::$fields[$dotpath]);
+	}
+
+	/**
+	 * Whether a field is site-wide: set on the global scope only, never overridden by a board.
+	 *
+	 * @param string $dotpath Config dot-path key.
+	 * @return bool True for a declared field marked global.
+	 */
+	public static function isGlobalOnly(string $dotpath): bool {
+		self::load();
+		return !empty(self::$fields[$dotpath]['global']);
 	}
 
 	/**

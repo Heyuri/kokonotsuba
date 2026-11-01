@@ -28,6 +28,7 @@ final class webServerRules {
 		'autoload.php',
 		'databaseSettings.php',
 		'databaseSettings.example.php',
+		'frontPage.php',
 		'koko.php',
 		'paths.php',
 		'tables.php',

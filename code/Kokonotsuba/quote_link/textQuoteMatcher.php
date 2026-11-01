@@ -3,6 +3,7 @@
 namespace Kokonotsuba\quote_link;
 
 use Kokonotsuba\post\textFormat;
+use function Puchiko\strings\sanitizeStr;
 
 /**
  * The rules a ">some text" or ">file.jpg" quote is matched by, kept pure so they can be tested
@@ -87,7 +88,7 @@ final class textQuoteMatcher {
 
 	/** The needle as a LEGACY_HTML comment holds it. */
 	public static function legacyNeedle(string $needle): string {
-		return htmlspecialchars($needle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+		return sanitizeStr($needle);
 	}
 
 	/** The text a reader sees for a stored comment, one line per line break. */

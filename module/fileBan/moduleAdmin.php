@@ -22,6 +22,7 @@ use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 use function Kokonotsuba\Modules\fileBan\getFileBanService;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use AuditableTrait;
@@ -290,16 +291,16 @@ class moduleAdmin extends abstractModuleAdmin {
 		$templateRows = [];
 		foreach ($entries as $entry) {
 			$templateRows[] = [
-				'{$ID}' => htmlspecialchars($entry['id']),
-				'{$FILE_MD5}' => htmlspecialchars($entry['file_md5']),
-				'{$ADDED_BY}' => htmlspecialchars($entry['added_by_username'] ?? ''),
-				'{$CREATED_AT}' => htmlspecialchars($entry['created_at'] ?? ''),
+				'{$ID}' => sanitizeStr($entry['id']),
+				'{$FILE_MD5}' => sanitizeStr($entry['file_md5']),
+				'{$ADDED_BY}' => sanitizeStr($entry['added_by_username'] ?? ''),
+				'{$CREATED_AT}' => sanitizeStr($entry['created_at'] ?? ''),
 			];
 		}
 
 		$indexHtml = $this->moduleContext->adminPageRenderer->ParseBlock('FILE_BAN_INDEX', [
 			'{$ROWS}' => $templateRows,
-			'{$MODULE_URL}' => htmlspecialchars($this->moduleUrl),
+			'{$MODULE_URL}' => sanitizeStr($this->moduleUrl),
 			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 			'{$MD5_VALUE}' => '',
 			'{$FILE_BAN_INDEX_TITLE}' => _T('file_ban_index_title'),

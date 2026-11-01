@@ -176,7 +176,7 @@ class attachmentRenderer {
 		return $this->templateEngine->ParseBlock('ATTACHMENT_CONTAINER', [
 			'{$ATTACHMENT_CLASSES}' => $attachmentClasses,
 			// the front-end addresses an attachment by its file id
-			'{$FILE_ID}' => htmlspecialchars((string)$fileId),
+			'{$FILE_ID}' => sanitizeStr((string)$fileId),
 			'{$FILE_INFO_BAR}' => $fileInfoBar,
 			'{$FILE_SIZE}' => $fileSize,
 			'{$FILE_DIMENSIONS}' => $fileDimensions,
@@ -315,8 +315,8 @@ class attachmentRenderer {
 			'{$IMAGE_URL}' => $imageURL,
 			'{$THUMB_URL}' => $thumbURL,
 			'{$ALT_TEXT}' => $altText,
-			'{$ATTACHMENT_INDEX}' => htmlspecialchars($index),
-			'{$EXTENSION}' => htmlspecialchars($extension),
+			'{$ATTACHMENT_INDEX}' => sanitizeStr($index),
+			'{$EXTENSION}' => sanitizeStr($extension),
 			'{$IMG_DIMENSIONS}' => $imgDimensions,
 			'{$IMG_TITLE}' => $title ?? '',
 		]);
@@ -398,22 +398,22 @@ class attachmentRenderer {
 
 			$targetAttr = '';
 			if (isset($params['target'])) {
-				$targetAttr = ' target="' . htmlspecialchars($params['target']) . '"';
+				$targetAttr = ' target="' . sanitizeStr($params['target']) . '"';
 				unset($params['target']);
 			}
 
 			$paramAttrs = '';
 			foreach ($params as $key => $value) {
-				$paramAttrs .= ' data-param-' . htmlspecialchars($key) . '="' . htmlspecialchars((string)$value) . '"';
+				$paramAttrs .= ' data-param-' . sanitizeStr($key) . '="' . sanitizeStr((string)$value) . '"';
 			}
 
-			$html .= '<a href="' . htmlspecialchars($href) . '"'
-				. ' data-action="' . htmlspecialchars($action) . '"'
-				. ' data-label="' . htmlspecialchars($label) . '"'
-				. ' data-subMenu="' . htmlspecialchars($subMenu) . '"'
+			$html .= '<a href="' . sanitizeStr($href) . '"'
+				. ' data-action="' . sanitizeStr($action) . '"'
+				. ' data-label="' . sanitizeStr($label) . '"'
+				. ' data-subMenu="' . sanitizeStr($subMenu) . '"'
 				. $targetAttr
 				. $paramAttrs
-				. '>' . htmlspecialchars($label) . '</a>';
+				. '>' . sanitizeStr($label) . '</a>';
 		}
 
 		return $html;

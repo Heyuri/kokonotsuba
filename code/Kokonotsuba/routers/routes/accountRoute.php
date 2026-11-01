@@ -30,7 +30,7 @@ class accountRoute implements route {
 
 	public function handle(): void {
 		$authRoleLevel = $this->staffSession->getRoleLevel();
-		$authUsername = htmlspecialchars($this->staffSession->getUsername());
+		$authUsername = sanitizeStr($this->staffSession->getUsername());
 
 		$this->softErrorHandler->handleAuthError(userRole::LEV_USER);
 
@@ -46,15 +46,15 @@ class accountRoute implements route {
 
 		$accountTemplateValues = [
 			'{$CSRF_HIDDEN_INPUT}' => $csrfHiddenInput,
-			'{$ACCOUNT_ID}' => htmlspecialchars($this->staffSession->getUID()),
-			'{$ACCOUNT_NAME}' => htmlspecialchars($authUsername),
-			'{$ACCOUNT_ROLE}' => htmlspecialchars($authRoleLevel->displayRoleName()),
-			'{$ACCOUNT_ACTIONS}' => htmlspecialchars($currentAccount->getNumberOfActions()),
+			'{$ACCOUNT_ID}' => sanitizeStr($this->staffSession->getUID()),
+			'{$ACCOUNT_NAME}' => sanitizeStr($authUsername),
+			'{$ACCOUNT_ROLE}' => sanitizeStr($authRoleLevel->displayRoleName()),
+			'{$ACCOUNT_ACTIONS}' => sanitizeStr($currentAccount->getNumberOfActions()),
 		];
 
 		$roleOptions = '';
 		foreach (userRole::assignableRoles() as $role) {
-			$roleOptions .= '<option value="' . $role->value . '">' . htmlspecialchars($role->displayRoleName()) . '</option>';
+			$roleOptions .= '<option value="' . $role->value . '">' . sanitizeStr($role->displayRoleName()) . '</option>';
 		}
 
 		$accountTemplateRoles = [

@@ -152,7 +152,7 @@ class moduleMain extends abstractModuleMain {
 	/** Render the API documentation info page. */
 	private function renderInfoPage(): void {
 		$board = $this->moduleContext->board;
-		$baseApiUrl = htmlspecialchars($this->getModulePageURL([], false));
+		$baseApiUrl = sanitizeStr($this->getModulePageURL([], false));
 
 		$this->moduleContext->adminPageRenderer->setTemplate('admin');
 		$infoHtml = $this->moduleContext->adminPageRenderer->ParseBlock('POST_API_INFO', [

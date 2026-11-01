@@ -16,6 +16,7 @@ use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use AuditableTrait;
@@ -142,8 +143,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		$isAnimated = !$isAnimated;
 
 		$logMessage = $isAnimated
-			? 'Inline animation activated on No. ' . htmlspecialchars($post->getNumber())
-			: 'Inline animation deactivated on No. ' . htmlspecialchars($post->getNumber());
+			? 'Inline animation activated on No. ' . sanitizeStr($post->getNumber())
+			: 'Inline animation deactivated on No. ' . sanitizeStr($post->getNumber());
 
 		$this->logAction($logMessage, $post->getBoardUID(), actionType::POST_FLAG);
 

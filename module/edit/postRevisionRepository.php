@@ -79,6 +79,38 @@ class postRevisionRepository extends baseRepository {
 		);
 	}
 
+	/**
+	 * The newest edit of each post, for marking edited posts on a page.
+	 *
+	 * @param int[] $postUids
+	 * @return array<int, array{edited_at: string, edited_by: ?int}> Keyed by post uid; posts never edited are absent.
+	 */
+	public function getLatestEditsForPosts(array $postUids): array {
+		if ($postUids === []) {
+			return [];
+		}
+
+		$postUids = array_values(array_map('intval', $postUids));
+		$in = $this->buildInClause($postUids);
+
+		$rows = $this->queryAll(
+			"SELECT r.post_uid, r.edited_at, r.edited_by
+				FROM {$this->table} r
+				WHERE r.id IN (SELECT MAX(id) FROM {$this->table} WHERE post_uid IN {$in} GROUP BY post_uid)",
+			$postUids
+		);
+
+		$edits = [];
+		foreach ($rows as $row) {
+			$edits[(int)$row['post_uid']] = [
+				'edited_at' => (string)$row['edited_at'],
+				'edited_by' => $row['edited_by'] === null ? null : (int)$row['edited_by'],
+			];
+		}
+
+		return $edits;
+	}
+
 	/** How many revisions a post has, for deciding whether to offer the history at all. */
 	public function countRevisionsForPost(int $postUid): int {
 		return $this->countBy('post_uid', $postUid);

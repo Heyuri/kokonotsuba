@@ -99,7 +99,7 @@ class banAppealRepository extends baseRepository {
 
 		// Cast-interpolated for the same reason as banRepository::listBans().
 		$query = $this->baseSelect() . $where
-			. ' ORDER BY ap.status ASC, ap.filed_at DESC'
+			. ' ORDER BY ap.filed_at DESC, ap.appeal_id DESC'
 			. ' LIMIT ' . max(1, $limit) . ' OFFSET ' . max(0, $offset);
 
 		return $this->hydrateAll($this->queryAll($query, $params));

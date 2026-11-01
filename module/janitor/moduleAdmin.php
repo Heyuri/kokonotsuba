@@ -142,8 +142,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			// merge template values specific to this page into the array
 			$templateValues = array_merge($templateValues, 
 				[
-					'{$POST_NUMBER}'	=> htmlspecialchars($postNumber),
-					'{$POST_UID}'		=> htmlspecialchars($postUid),
+					'{$POST_NUMBER}'	=> sanitizeStr($postNumber),
+					'{$POST_UID}'		=> sanitizeStr($postUid),
 				]
 			);
 

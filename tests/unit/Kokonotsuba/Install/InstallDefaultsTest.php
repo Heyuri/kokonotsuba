@@ -22,8 +22,8 @@ class InstallDefaultsTest extends TestCase {
 		$this->assertSame('https://example.net/kokonotsuba/', $defaults->baseUrl());
 		$this->assertSame('https://example.net/kokonotsuba/boards/', $defaults->websiteUrl());
 		$this->assertSame('https://example.net/kokonotsuba/static/', $defaults->staticUrl());
-		// The home link defaults to the site root, not to the boards directory.
-		$this->assertSame('https://example.net/', $defaults->homeUrl());
+		// HOME is the front page, which index.php serves from the backend directory.
+		$this->assertSame('https://example.net/kokonotsuba/', $defaults->homeUrl());
 		$this->assertSame('/var/www/html/kokonotsuba/static/', $defaults->staticPath());
 		$this->assertSame('/var/www/html/kokonotsuba/boards/', $defaults->boardsPath());
 	}

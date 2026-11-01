@@ -11,7 +11,7 @@ use function Kokonotsuba\libraries\rebuildBoardsByArray;
 /**
  * Regenerate the static pages of the given boards in a detached process.
  *
- * Registered once at bootstrap under 'rebuild_boards' (see bootstrap/global.php), so anything
+ * Registered once at bootstrap under 'rebuild_boards' (see kernel/providers/coreProvider.php), so anything
  * that changes rendered output - the rebuild module, a board config save, a global config save -
  * dispatches the same task rather than rebuilding inside the request.
  *

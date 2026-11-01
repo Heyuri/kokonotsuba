@@ -38,6 +38,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		applyToggleState as applyFlagToggle;
 	}
 
+	/** Strip and undo-all sit together in the Thread submenu. */
+	private const WIDGET_GROUP = 'threadMod';
+
 	public const ACTION_OVERRIDE = 'threadMod.override';
 
 	private threadModService $service;
@@ -61,6 +64,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	protected function getToggleInactiveTitle(): string { return _T('threadmod_strip'); }
 	protected function getToggleCssClass(): string { return 'adminThreadModStripFunction'; }
 	protected function getToggleActionName(): string { return 'threadModStrip'; }
+	protected function getToggleWidgetGroup(): string { return self::WIDGET_GROUP; }
 	protected function getToggleJsFile(): string { return 'threadModAdmin.js'; }
 	protected function getToggleUrlParams(Post $post): array { return ['post_uid' => $post->getUid()]; }
 	protected function getToggleLogLabel(bool $active): string {
@@ -108,7 +112,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		});
 
 		$engine->addRoleProtectedListener($role, 'ModerateThreadWidget', function (array &$widgetArray, Post &$post, array &$threadPosts, ?Thread $thread = null) use ($url): void {
-			$widgetArray[] = $this->buildWidgetEntry($url, 'threadModUndoAll', _T('threadmod_staff_undo_all'), '', ['post_uid' => $post->getUid(), 'action' => 'undoAll']);
+			$widgetArray[] = $this->buildWidgetEntry($url, 'threadModUndoAll', _T('threadmod_staff_undo_all'), '', ['post_uid' => $post->getUid(), 'action' => 'undoAll'], self::WIDGET_GROUP);
 		});
 
 		$engine->addRoleProtectedListener($role, 'PostAdminControls', function (string &$modControlSection, Post &$post) use ($url): void {

@@ -64,7 +64,7 @@ final class postElementGenerator {
 		$replyUrl = $this->getBaseThreadUrl($crossLink, $threadResno, $totalThreadPages);
 		
 		// Return the reply button HTML
-		$replyButton = '[<a href="' . htmlspecialchars($replyUrl) . '">' . _T('reply_btn') . '</a>]';
+		$replyButton = '[<a href="' . sanitizeStr($replyUrl) . '">' . _T('reply_btn') . '</a>]';
 
 		return $replyButton;
 	}
@@ -79,10 +79,10 @@ final class postElementGenerator {
 		}
 
 		// build the url for the 'last X replies' anchor
-		$url = $this->getBaseThreadUrl($crossLink, $threadResno) . '&recentReplies=' . htmlspecialchars($recentReplies);
+		$url = $this->getBaseThreadUrl($crossLink, $threadResno) . '&recentReplies=' . sanitizeStr($recentReplies);
 
 		// then assemble the anchor html
-		$recentRepliesAnchor = '[<a href="' . htmlspecialchars($url) . '">' . _T('recent_btn', $recentReplies) . '</a>]';
+		$recentRepliesAnchor = '[<a href="' . sanitizeStr($url) . '">' . _T('recent_btn', $recentReplies) . '</a>]';
 
 		// return anchor
 		return $recentRepliesAnchor;

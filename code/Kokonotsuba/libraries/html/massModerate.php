@@ -6,6 +6,7 @@ use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\template\templateEngine;
 
 use function Kokonotsuba\libraries\_T;
+use function Puchiko\strings\sanitizeStr;
 
 /**
  * Build the staff-only [Moderate] control for the post checkboxes.
@@ -35,22 +36,22 @@ function generateMassModerateHtml(templateEngine $templateEngine, moduleEngine $
 		if (!isset($groups[$groupLabel])) {
 			$groups[$groupLabel] = [
 				'priority' => $tool['priority'] ?? 0,
-				'{$MM_GROUP_LABEL}' => htmlspecialchars($groupLabel),
+				'{$MM_GROUP_LABEL}' => sanitizeStr($groupLabel),
 				'{$MM_GROUP_ITEMS}' => [],
 			];
 		}
 
 		$groups[$groupLabel]['{$MM_GROUP_ITEMS}'][] = [
-			'{$MM_ACTION}'    => htmlspecialchars((string)($tool['action'] ?? '')),
-			'{$MM_LABEL}'     => htmlspecialchars((string)($tool['label'] ?? '')),
-			'{$MM_URL}'       => htmlspecialchars((string)($tool['url'] ?? '')),
-			'{$MM_SCOPE}'     => htmlspecialchars((string)($tool['scope'] ?? 'post')),
-			'{$MM_EFFECT}'    => htmlspecialchars((string)($tool['effect'] ?? 'none')),
-			'{$MM_REQUIRES}'  => htmlspecialchars((string)($tool['requires'] ?? '')),
-			'{$MM_INDICATOR}' => htmlspecialchars((string)($tool['indicator'] ?? '')),
-			'{$MM_FORM}'      => htmlspecialchars((string)($tool['form'] ?? '')),
-			'{$MM_CONFIRM}'   => htmlspecialchars((string)($tool['confirm'] ?? '')),
-			'{$MM_PARAMS}'    => htmlspecialchars(json_encode((object)($tool['params'] ?? []))),
+			'{$MM_ACTION}'    => sanitizeStr((string)($tool['action'] ?? '')),
+			'{$MM_LABEL}'     => sanitizeStr((string)($tool['label'] ?? '')),
+			'{$MM_URL}'       => sanitizeStr((string)($tool['url'] ?? '')),
+			'{$MM_SCOPE}'     => sanitizeStr((string)($tool['scope'] ?? 'post')),
+			'{$MM_EFFECT}'    => sanitizeStr((string)($tool['effect'] ?? 'none')),
+			'{$MM_REQUIRES}'  => sanitizeStr((string)($tool['requires'] ?? '')),
+			'{$MM_INDICATOR}' => sanitizeStr((string)($tool['indicator'] ?? '')),
+			'{$MM_FORM}'      => sanitizeStr((string)($tool['form'] ?? '')),
+			'{$MM_CONFIRM}'   => sanitizeStr((string)($tool['confirm'] ?? '')),
+			'{$MM_PARAMS}'    => sanitizeStr(json_encode((object)($tool['params'] ?? []))),
 		];
 	}
 
@@ -82,9 +83,9 @@ function generateMassModerateHtml(templateEngine $templateEngine, moduleEngine $
 
 	$stringAttributes = '';
 	foreach ($strings as $attribute => $value) {
-		$stringAttributes .= ' ' . $attribute . '="' . htmlspecialchars($value) . '"';
+		$stringAttributes .= ' ' . $attribute . '="' . sanitizeStr($value) . '"';
 	}
 
 	return '<template id="massModerateTemplate"' . $stringAttributes . '>' . $windowHtml . '</template>'
-		. '<script src="' . htmlspecialchars($scriptUrl) . '" defer></script>';
+		. '<script src="' . sanitizeStr($scriptUrl) . '" defer></script>';
 }

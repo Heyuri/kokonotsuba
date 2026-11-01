@@ -15,6 +15,7 @@ use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\Modules\fileBan\getFileBanService;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use AuditableTrait;
@@ -62,7 +63,7 @@ class moduleMain extends abstractModuleMain {
 
 		if ($entry !== null) {
 			$this->logTrigger((int) $entry['id'], $entry['file_md5']);
-			throw new BoardException(_T('file_ban_blocked', htmlspecialchars($entry['file_md5'])));
+			throw new BoardException(_T('file_ban_blocked', sanitizeStr($entry['file_md5'])));
 		}
 	}
 

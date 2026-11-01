@@ -122,12 +122,21 @@
 				clearTimeout(hideTimeout);
 				var wrapperRect = wrapper.getBoundingClientRect();
 				var menuRect = menu.getBoundingClientRect();
+				// measure at the page's left edge so a stale position can't squeeze its width
+				subMenu.style.left = '0px';
 				subMenu.hidden = false;
 
 				// shift up so the bottom stays inside the viewport, never past its top
 				var top = Math.min(wrapperRect.top, window.innerHeight - subMenu.offsetHeight);
 				subMenu.style.top = (window.scrollY + Math.max(top, 0)) + 'px';
-				subMenu.style.left = (window.scrollX + menuRect.right + 2) + 'px';
+
+				// open to the left when the right side has no room, clamped to the viewport edge
+				var viewportWidth = document.documentElement.clientWidth;
+				var left = menuRect.right + 2;
+				if (left + subMenu.offsetWidth > viewportWidth) {
+					left = Math.max(menuRect.left - 2 - subMenu.offsetWidth, 0);
+				}
+				subMenu.style.left = (window.scrollX + left) + 'px';
 			}
 
 			function scheduleHide() {

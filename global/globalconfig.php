@@ -36,9 +36,9 @@ $config = [
 	'STATIC_PATH' => $staticPath,
 	'WEBSITE_URL' => '/',
 
-	// Where the header's "Home" link points. Site-wide default: boards can override it from the
-	// board configuration editor, which takes this as its default (see configs/appearance.php).
-	'HOME' => 'index.html',
+	// The front page, which the header's "Home" link and the staff nav point at. Defaults to the
+	// backend directory, where index.php serves it; the config editor takes this as its default.
+	'HOME' => Kokonotsuba\front_pages\frontPageLinks::defaultHome($siteSettings['WEBSITE_URL'] ?? '/'),
 
 	'USE_CDN' => false, // Whether to use the "cdn" (storing all board upload storages in one central directory)
 
@@ -81,6 +81,8 @@ $config = [
 		'CAN_MANAGE_REBUILD' => Kokonotsuba\userRole::LEV_MODERATOR,
 		'CAN_EDIT_GLOBAL_MESSAGE' => Kokonotsuba\userRole::LEV_MANAGER,
 		'CAN_EDIT_BLOTTER' => Kokonotsuba\userRole::LEV_MANAGER,
+		'CAN_EDIT_NEWS' => Kokonotsuba\userRole::LEV_ADMIN,
+		'CAN_EDIT_PAGES' => Kokonotsuba\userRole::LEV_ADMIN,
 		'CAN_EDIT_SIDE_NAV' => Kokonotsuba\userRole::LEV_ADMIN,
 		'CAN_MANAGE_POSTS' => Kokonotsuba\userRole::LEV_JANITOR,
 		'CAN_VIEW_ACTION_LOG' => Kokonotsuba\userRole::LEV_MODERATOR,

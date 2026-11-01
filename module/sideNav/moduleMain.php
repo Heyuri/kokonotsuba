@@ -17,16 +17,6 @@ class moduleMain extends abstractModuleMain {
 	use ModuleHeaderListenerTrait;
 	use SideNavListenerTrait;
 
-	/** Hides the nav before it paints when the reader (or the board default) turned it off. */
-	private const HIDE_SCRIPT = '<script>(function(){var v=null;try{v=localStorage.getItem("sidenav")}catch(e){}'
-		. 'var d=window.KOKO_DEFAULT_SETTINGS||{};'
-		. 'if(v!==null?v==="false":d.sidenav===false)document.body.classList.add("sideNavHidden")})();</script>';
-
-	/** Closes the groups the reader collapsed, right after the nav is parsed so they never paint open. */
-	private const COLLAPSE_SCRIPT = '<script>(function(){var c=[];try{c=JSON.parse(localStorage.getItem("sideNavCollapsed"))||[]}catch(e){}'
-		. 'document.querySelectorAll(".sideNav .sideNavGroup").forEach(function(g){'
-		. 'if(c.indexOf(g.getAttribute("data-group"))!==-1)g.open=false})})();</script>';
-
 	private sideNavRepository $sideNavRepository;
 	private ?string $html = null;
 
@@ -69,6 +59,6 @@ class moduleMain extends abstractModuleMain {
 			$this->moduleContext->board->getBoardURL(true) . '?mode=overboard',
 			array_keys(getBoardStyleSet($this->moduleContext->board->loadBoardConfig())[1])
 		);
-		return self::HIDE_SCRIPT . $renderer->render($this->sideNavRepository->getLayout()) . self::COLLAPSE_SCRIPT;
+		return $renderer->renderForPage($this->sideNavRepository->getLayout());
 	}
 }

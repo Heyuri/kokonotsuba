@@ -13,6 +13,7 @@ use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\listeners\ManagePostsHostPanelListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\renderers\post\postMenu;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
@@ -79,7 +80,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->hostNotePolicy->setHostNoteService($this->hostNoteService);
 
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
-		$this->registerSimplePostWidget('postUid', 'leaveHostNote', _T('leave_host_note'));
+		$this->registerSimplePostWidget('postUid', 'leaveHostNote', _T('leave_host_note'), postMenu::GROUP_NOTES);
 
 		// noscript fallback: link to the host note form page
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(

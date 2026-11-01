@@ -7,6 +7,7 @@ require_once __DIR__ . '/postStatsDates.php';
 use Kokonotsuba\template\templateEngine;
 
 use function Kokonotsuba\libraries\_T;
+use function Puchiko\strings\sanitizeStr;
 
 /**
  * Turns a daily post series into the values the templates under templates/ are filled with.
@@ -50,6 +51,9 @@ class postStatsRenderer {
 
 	/** Most dates the x axis will carry before it starts skipping buckets. */
 	private const AXIS_LABELS = 6;
+
+	/** Gaps between post count markers on the y axis. */
+	private const Y_AXIS_STEPS = 5;
 
 	public function __construct(
 		private readonly templateEngine $templateEngine,
@@ -279,7 +283,7 @@ class postStatsRenderer {
 		}
 
 		return array_map(
-			fn($index) => ['{$LABEL}' => htmlspecialchars($buckets[$index]['label'])],
+			fn($index) => ['{$LABEL}' => sanitizeStr($buckets[$index]['label'])],
 			$indices
 		);
 	}
@@ -287,8 +291,8 @@ class postStatsRenderer {
 	/** One heading's worth of page. */
 	public function renderSection(string $anchor, string $heading, string $body): string {
 		return $this->templateEngine->ParseBlock('POSTSTATS_SECTION', [
-			'{$ANCHOR}' => htmlspecialchars($anchor),
-			'{$HEADING}' => htmlspecialchars($heading),
+			'{$ANCHOR}' => sanitizeStr($anchor),
+			'{$HEADING}' => sanitizeStr($heading),
 			'{$BODY}' => $body,
 		]);
 	}
@@ -296,8 +300,8 @@ class postStatsRenderer {
 	/** A standalone message where a chart would otherwise be. */
 	public function renderNotice(string $class, string $message): string {
 		return $this->templateEngine->ParseBlock('POSTSTATS_NOTICE', [
-			'{$CLASS}' => htmlspecialchars($class),
-			'{$MESSAGE}' => htmlspecialchars($message),
+			'{$CLASS}' => sanitizeStr($class),
+			'{$MESSAGE}' => sanitizeStr($message),
 		]);
 	}
 
@@ -313,9 +317,9 @@ class postStatsRenderer {
 		$partial = $this->isPartial($buckets);
 
 		return $this->templateEngine->ParseBlock('POSTSTATS_CHART', [
-			'{$CAPTION}' => htmlspecialchars($caption),
-			'{$PEAK}' => number_format($peak),
-			'{$MIDPOINT}' => number_format(intdiv($peak, 2)),
+			'{$CAPTION}' => sanitizeStr($caption),
+			'{$Y_AXIS}' => $this->yAxisLabels($peak),
+			'{$GRID}' => $this->gridPath(),
 			'{$WIDTH}' => self::PLOT_WIDTH,
 			'{$HEIGHT}' => self::PLOT_HEIGHT,
 			'{$AREA}' => $this->areaPath($top, $this->plotPoints(array_fill(0, count($values), 0), $peak)),
@@ -369,8 +373,8 @@ class postStatsRenderer {
 			$ceiling = array_map(fn($low, $value) => $low + $value, $floor, $values);
 			$bands[] = [
 				'{$CHART_ID}' => $chartId,
-				'{$HUE}' => htmlspecialchars($entry['hue']),
-				'{$TIER}' => htmlspecialchars($entry['tier']),
+				'{$HUE}' => sanitizeStr($entry['hue']),
+				'{$TIER}' => sanitizeStr($entry['tier']),
 				'{$HATCHED}' => $entry['tier'] !== '0',
 				'{$PATH}' => $this->areaPath($this->plotPoints($ceiling, $peak), $this->plotPoints($floor, $peak)),
 			];
@@ -385,10 +389,10 @@ class postStatsRenderer {
 		$shade = $this->isPartial($buckets) ? $this->partialSpan($count) : null;
 
 		return $this->templateEngine->ParseBlock('POSTSTATS_STACK', [
-			'{$CAPTION}' => htmlspecialchars($caption),
+			'{$CAPTION}' => sanitizeStr($caption),
 			'{$CHART_ID}' => $chartId,
-			'{$PEAK}' => number_format($peak),
-			'{$MIDPOINT}' => number_format(intdiv($peak, 2)),
+			'{$Y_AXIS}' => $this->yAxisLabels($peak),
+			'{$GRID}' => $this->gridPath(),
 			'{$WIDTH}' => self::PLOT_WIDTH,
 			'{$HEIGHT}' => self::PLOT_HEIGHT,
 			'{$BANDS}' => $bands,
@@ -402,6 +406,26 @@ class postStatsRenderer {
 	}
 
 	/** Whether the last of several buckets is still filling. */
+	/** Post counts from the peak down to 0, one span per marker. */
+	private function yAxisLabels(int $peak): string {
+		$html = '';
+		for ($step = self::Y_AXIS_STEPS; $step >= 0; $step--) {
+			$html .= '<span>' . number_format((int) round($peak * $step / self::Y_AXIS_STEPS)) . '</span>';
+		}
+
+		return $html;
+	}
+
+	/** One horizontal line per y axis marker. */
+	private function gridPath(): string {
+		$path = '';
+		for ($step = 0; $step <= self::Y_AXIS_STEPS; $step++) {
+			$path .= 'M0 ' . $this->coordinate(self::PLOT_HEIGHT * $step / self::Y_AXIS_STEPS) . 'H' . self::PLOT_WIDTH;
+		}
+
+		return $path;
+	}
+
 	private function isPartial(array $buckets): bool {
 		return count($buckets) > 1 && !empty($buckets[count($buckets) - 1]['partial']);
 	}
@@ -461,7 +485,7 @@ class postStatsRenderer {
 				'{$LEFT}' => $this->coordinate($single ? 50 : $x / self::PLOT_WIDTH * 100),
 				'{$TOP}' => $this->coordinate($y / self::PLOT_HEIGHT * 100),
 				'{$PARTIAL}' => !empty($buckets[$index]['partial']),
-				'{$TITLE}' => htmlspecialchars($title),
+				'{$TITLE}' => sanitizeStr($title),
 			];
 		}
 
@@ -493,10 +517,10 @@ class postStatsRenderer {
 			}
 
 			$items[] = [
-				'{$HUE}' => htmlspecialchars($entry['hue']),
-				'{$TIER}' => htmlspecialchars($entry['tier']),
-				'{$LABEL}' => htmlspecialchars($entry['label']),
-				'{$URL}' => htmlspecialchars($entry['url']),
+				'{$HUE}' => sanitizeStr($entry['hue']),
+				'{$TIER}' => sanitizeStr($entry['tier']),
+				'{$LABEL}' => sanitizeStr($entry['label']),
+				'{$URL}' => sanitizeStr($entry['url']),
 				'{$VALUE}' => number_format($totals[$uid]),
 			];
 		}
@@ -529,10 +553,6 @@ class postStatsRenderer {
 			'poststats_tile_first_post' => [null, $stats['firstDay'] === '' ? _T('poststats_none') : $stats['firstDay']],
 		];
 
-		if (($stats['undated'] ?? 0) > 0) {
-			$values['poststats_tile_undated'] = [null, number_format($stats['undated'])];
-		}
-
 		if ($showLastNumber) {
 			$values['poststats_tile_latest_no'] = [null, number_format($stats['lastNo'])];
 		}
@@ -540,8 +560,8 @@ class postStatsRenderer {
 		$tiles = [];
 		foreach ($values as $labelKey => [$argument, $value]) {
 			$tiles[] = [
-				'{$LABEL}' => htmlspecialchars($argument === null ? _T($labelKey) : _T($labelKey, $argument)),
-				'{$VALUE}' => htmlspecialchars($value),
+				'{$LABEL}' => sanitizeStr($argument === null ? _T($labelKey) : _T($labelKey, $argument)),
+				'{$VALUE}' => sanitizeStr($value),
 			];
 		}
 
@@ -601,27 +621,27 @@ class postStatsRenderer {
 		$values = [];
 		foreach ($rows as $row) {
 			$values[] = [
-				'{$URL}' => htmlspecialchars($row['url']),
-				'{$BOARD}' => htmlspecialchars($row['name']),
+				'{$URL}' => sanitizeStr($row['url']),
+				'{$BOARD}' => sanitizeStr($row['name']),
 				'{$TODAY}' => number_format($row['todayCount']),
 				'{$PER_MONTH}' => $this->formatRate($row['rate'] * self::DAYS_PER_MONTH),
 				'{$PER_DAY}' => $this->formatRate($row['rate']),
 				'{$PER_HOUR}' => $this->formatRate($row['rate'] / 24),
 				'{$TOTAL}' => number_format($row['total']),
-				'{$FIRST_DAY}' => htmlspecialchars($row['firstDay'] === '' ? _T('poststats_none') : $row['firstDay']),
+				'{$FIRST_DAY}' => sanitizeStr($row['firstDay'] === '' ? _T('poststats_none') : $row['firstDay']),
 			];
 		}
 
 		return $this->templateEngine->ParseBlock('POSTSTATS_TABLE', [
 			'{$ROWS}' => $values,
-			'{$CAPTION}' => htmlspecialchars(_T('poststats_table_caption', $windowDays)),
-			'{$COL_BOARD}' => htmlspecialchars(_T('poststats_col_board')),
-			'{$COL_TODAY}' => htmlspecialchars(_T('poststats_col_today')),
-			'{$COL_PER_MONTH}' => htmlspecialchars(_T('poststats_col_per_month')),
-			'{$COL_PER_DAY}' => htmlspecialchars(_T('poststats_col_per_day')),
-			'{$COL_PER_HOUR}' => htmlspecialchars(_T('poststats_col_per_hour')),
-			'{$COL_TOTAL}' => htmlspecialchars(_T('poststats_col_total')),
-			'{$COL_FIRST_POST}' => htmlspecialchars(_T('poststats_col_first_post')),
+			'{$CAPTION}' => sanitizeStr(_T('poststats_table_caption', $windowDays)),
+			'{$COL_BOARD}' => sanitizeStr(_T('poststats_col_board')),
+			'{$COL_TODAY}' => sanitizeStr(_T('poststats_col_today')),
+			'{$COL_PER_MONTH}' => sanitizeStr(_T('poststats_col_per_month')),
+			'{$COL_PER_DAY}' => sanitizeStr(_T('poststats_col_per_day')),
+			'{$COL_PER_HOUR}' => sanitizeStr(_T('poststats_col_per_hour')),
+			'{$COL_TOTAL}' => sanitizeStr(_T('poststats_col_total')),
+			'{$COL_FIRST_POST}' => sanitizeStr(_T('poststats_col_first_post')),
 		]);
 	}
 
@@ -631,8 +651,8 @@ class postStatsRenderer {
 
 		foreach (self::RANGES as $key => $range) {
 			$ranges[] = [
-				'{$URL}' => $baseUrl . '&amp;range=' . $key . ($anchor !== '' ? '#' . htmlspecialchars($anchor) : ''),
-				'{$LABEL}' => htmlspecialchars(_T($range['label'])),
+				'{$URL}' => $baseUrl . '&amp;range=' . $key . ($anchor !== '' ? '#' . sanitizeStr($anchor) : ''),
+				'{$LABEL}' => sanitizeStr(_T($range['label'])),
 				'{$CURRENT}' => $key === $currentRange,
 			];
 		}

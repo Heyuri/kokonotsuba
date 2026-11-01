@@ -1017,43 +1017,42 @@ const kkjs = {
 		$id("sage").checked = this.value.match("sage");
 	},
 	
-	// form switch
+	// form switch: 0 = top (#postarea), 1 = bottom (#postarea2), remembered under "formbottom"
 	form_index: 0,
-	previous_position: {
-		parent: null,
-		nextSibling: null
+	form_home: null,
+	/*
+	 * Called inline just above the form. When the form is going to the bottom, hide it
+	 * before it is parsed so the page never paints it at the top and shifts.
+	 */
+	form_position_early: function () {
+		var v = null;
+		try { v = localStorage.getItem("formbottom"); } catch (e) {}
+		if (v === "true") document.body.classList.add("formAtBottom");
+	},
+	/* Called inline right after #postarea2: moves the form there if that is the stored position. */
+	form_position_apply: function () {
+		if (document.body.classList.contains("formAtBottom")) kkjs.form_place(1, false);
+		document.body.classList.remove("formAtBottom");
+	},
+	form_place: function (index, scroll) {
+		const pform = document.getElementById("postform");
+		const bottom = document.getElementById("postarea2");
+		if (!pform || !bottom || index === kkjs.form_index) return false;
+
+		if (index) {
+			kkjs.form_home = { parent: pform.parentNode, next: pform.nextSibling };
+			bottom.appendChild(pform);
+		} else {
+			kkjs.form_home.parent.insertBefore(pform, kkjs.form_home.next);
+		}
+		kkjs.form_index = index;
+
+		if (scroll) pform.scrollIntoView({ behavior: "smooth", block: "center" });
+		return true;
 	},
 	form_switch: function () {
-		const a = Array($id("postarea"), $id("postarea2"));
-		if (!(a[0] && a[1])) return;
-
-		const pform = $id("postform");
-
-		// Store the current position before moving
-		if (!kkjs.previous_position.parent) {
-			kkjs.previous_position.parent = pform.parentNode;
-			kkjs.previous_position.nextSibling = pform.nextSibling;
-		}
-
-		// Determine the target container
-		const targetContainer = a[kkjs.form_index = kkjs.form_index ? 0 : 1];
-
-		// Move the form to the new location
-		targetContainer.appendChild(pform);
-		pform.scrollIntoView({ behavior: "smooth", block: "center" });
-
-		// Swap logic: if moved back, restore to the original position
-		if (kkjs.form_index === 0 && kkjs.previous_position.parent) {
-			if (kkjs.previous_position.nextSibling) {
-				kkjs.previous_position.parent.insertBefore(pform, kkjs.previous_position.nextSibling);
-			} else {
-				kkjs.previous_position.parent.appendChild(pform);
-			}
-
-			// Clear the stored position after restoring
-			kkjs.previous_position.parent = null;
-			kkjs.previous_position.nextSibling = null;
-		}
+		if (!kkjs.form_place(kkjs.form_index ? 0 : 1, true)) return;
+		try { localStorage.setItem("formbottom", kkjs.form_index ? "true" : "false"); } catch (e) {}
 	},
 
 	

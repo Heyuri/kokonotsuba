@@ -13,6 +13,7 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getMedianTime;
 use function Kokonotsuba\libraries\createVideoThumbnail;
 use function Kokonotsuba\libraries\isVideo;
+use function Puchiko\strings\sanitizeStr;
 
 class postFileUploadController {
 	// config
@@ -176,7 +177,7 @@ class postFileUploadController {
 				return '?';
 			}
 
-			return htmlspecialchars(mb_substr($value, 0, 32), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+			return sanitizeStr(mb_substr($value, 0, 32));
 		};
 
 		return [$describe($fileExtention), $describe($mimeType)];

@@ -74,6 +74,7 @@ Everything lives under that one directory:
 ```
 /var/www/html/kokonotsuba/
 ├── install.php   open this in a browser, then delete it
+├── index.php     the site front page (news, pages, board list)
 ├── koko.php      backend entry point (each board's koko.php requires it)
 ├── static/       css, js and images, served directly
 ├── global/       site settings, error log, board storage - must not be web-readable
@@ -83,6 +84,8 @@ Everything lives under that one directory:
 
 Boards are served from inside it: a board called `b` ends up at
 `https://example.net/kokonotsuba/boards/b/`.
+
+The front page is `index.php`, so it is at `https://example.net/kokonotsuba/`
 
 ### 3. Permissions
 
@@ -163,8 +166,9 @@ run if the web server hands any of them out.
    - **First board** - its identifier (the directory name under `boards/`, such as `b`), title and
      sub-title.
    - **URLs** - filled in from the address you are reading the page on, so leave them alone unless
-     the site is served from somewhere else. The one to look at is the home link: it defaults to the
-     site root and is where the "Home" link in every board's header goes.
+     the site is served from somewhere else. The one to look at is the front page / home URL: it
+     defaults to the backend directory (where `index.php` serves the front page), and is where every
+     board's "Home" link and the staff nav's front page entries go.
 
 4. Click the install button at the bottom of the installation page.
 

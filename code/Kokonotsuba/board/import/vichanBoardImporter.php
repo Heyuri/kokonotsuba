@@ -23,6 +23,7 @@ use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\generatePostHash;
 use function Puchiko\strings\autoLink;
 use function Puchiko\strings\generateUid;
+use function Puchiko\strings\sanitizeStr;
 
 set_time_limit(0);
 
@@ -104,7 +105,7 @@ class vichanBoardImporter {
 				} catch (\Throwable $e) {
 					fclose($handle);
 					throw new \RuntimeException(
-						"Failed executing SQL:\n" . htmlspecialchars($buffer) .
+						"Failed executing SQL:\n" . sanitizeStr($buffer) .
 						"\n\nError: " . $e->getMessage(), 0, $e
 					);
 				}

@@ -29,6 +29,9 @@ return [
 	'BOARD_CONFIG_TABLE' => 'board_configs',
 	'BOARD_PATH_CACHE_TABLE' => 'board_paths',
 
+	'NEWS_TABLE' => 'news',
+	'FRONT_PAGES_TABLE' => 'front_pages',
+
 	'ACCOUNT_TABLE' => 'accounts',
 	'LOGIN_ATTEMPT_TABLE' => 'login_attempts',
 	'ACTIONLOG_TABLE' => 'actionlog',

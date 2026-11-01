@@ -17,9 +17,9 @@ return [
 	'_module' => 'Report',
 
 	'REASON_MAX_LENGTH' => intField('config_label_modules.report.REASON_MAX_LENGTH', 1000, 'config_desc_modules.report.REASON_MAX_LENGTH', min: 1),
-	'ENABLE_NOTIFICATIONS' => boolField('config_label_modules.report.ENABLE_NOTIFICATIONS', true, 'config_desc_modules.report.ENABLE_NOTIFICATIONS'),
-	'NOTIFICATION_WINDOW_MINUTES' => intField('config_label_modules.report.NOTIFICATION_WINDOW_MINUTES', 60, 'config_desc_modules.report.NOTIFICATION_WINDOW_MINUTES', min: 1),
-	'NOTIFICATION_POLL_SECONDS' => intField('config_label_modules.report.NOTIFICATION_POLL_SECONDS', 60, 'config_desc_modules.report.NOTIFICATION_POLL_SECONDS', min: 10),
+	'ENABLE_NOTIFICATIONS' => boolField('config_label_modules.report.ENABLE_NOTIFICATIONS', true, 'config_desc_modules.report.ENABLE_NOTIFICATIONS', global: true),
+	'NOTIFICATION_WINDOW_MINUTES' => intField('config_label_modules.report.NOTIFICATION_WINDOW_MINUTES', 60, 'config_desc_modules.report.NOTIFICATION_WINDOW_MINUTES', min: 1, global: true),
+	'NOTIFICATION_POLL_SECONDS' => intField('config_label_modules.report.NOTIFICATION_POLL_SECONDS', 60, 'config_desc_modules.report.NOTIFICATION_POLL_SECONDS', min: 10, global: true),
 	'REPORT_POST_TEMPLATE' => templateField('config_label_modules.report.REPORT_POST_TEMPLATE', 'kokoimg', 'config_desc_modules.report.REPORT_POST_TEMPLATE'),
 
 	// menu entries this module adds, see widgetMenuPolicy

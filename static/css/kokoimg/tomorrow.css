@@ -9,6 +9,8 @@
   --font-family-main: var(--font-family-serif);
   --font-size-main: 12pt;
   color-scheme: dark;
+  /* no front page background image on dark styles */
+  --front-page-bg: none;
   --color-bg-main: #1d1f21;
   --color-bg-main-gradient: #111314;
   --color-fg-main: #c5c8c6;

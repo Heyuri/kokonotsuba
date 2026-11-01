@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\rawHtml;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\post\textFormat;
 use Kokonotsuba\userRole;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
 	public function getRequiredRole(): userRole {
@@ -47,7 +48,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// checkbox html
 		$adminPostFormCheckbox .= '
 			<span class="postFormAdminFunc rawHtml">
-				<label title="Inserts post comment unsanitized. It may potentially break things if you\'re not careful!"><input name="formRawHtml" type="checkbox" value="on" ' . htmlspecialchars($checked) . '>Raw HTML</label>
+				<label title="Inserts post comment unsanitized. It may potentially break things if you\'re not careful!"><input name="formRawHtml" type="checkbox" value="on" ' . sanitizeStr($checked) . '>Raw HTML</label>
 			</span>';
 	}
 

@@ -1,7 +1,7 @@
 /**
- * sideNav.js - the side navigation's hide setting, remembered collapsed groups and style selector.
- * The nav itself is rendered and shown by the server; the inline script before it applies
- * .sideNavHidden before paint.
+ * sideNav.js - the side navigation's hide setting, board directories toggle, remembered collapsed
+ * groups and style selector. The nav itself is rendered and shown by the server; the inline script
+ * before it applies .sideNavHidden and .sideNavShowDirs before paint.
  *
  * Depends on: koko.js (kkSetting)
  */
@@ -26,6 +26,14 @@
 		e.preventDefault();
 		try { localStorage.setItem('sidenav', 'false'); } catch (err) {}
 		document.body.classList.add('sideNavHidden');
+	});
+
+	/** Shows each board link as "/id/ - Title"; the inline script before the nav applies it before paint. */
+	var dirs = nav.querySelector('.sideNavDirsToggle a');
+	if (dirs) dirs.addEventListener('click', function (e) {
+		e.preventDefault();
+		var on = document.body.classList.toggle('sideNavShowDirs');
+		try { localStorage.setItem('sideNavDirs', on ? 'true' : 'false'); } catch (err) {}
 	});
 
 	/** The style selector is drawn by the server; this switches the style and keeps it in step with the footer's. */

@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\renderers;
 
+use function Puchiko\strings\sanitizeStr;
+
 /**
  * The bracketed link row a menu falls back to when JavaScript is off.
  *
@@ -28,10 +30,10 @@ final class noscriptWidgetMenu {
 
 			$targetAttr = '';
 			if (!empty($w['params']['target'])) {
-				$targetAttr = ' target="' . htmlspecialchars((string)$w['params']['target']) . '"';
+				$targetAttr = ' target="' . sanitizeStr((string)$w['params']['target']) . '"';
 			}
 
-			$links[] = '[<a href="' . htmlspecialchars($href) . '"' . $targetAttr . '>' . htmlspecialchars($label) . '</a>]';
+			$links[] = '[<a href="' . sanitizeStr($href) . '"' . $targetAttr . '>' . sanitizeStr($label) . '</a>]';
 		}
 
 		return implode(' ', $links);

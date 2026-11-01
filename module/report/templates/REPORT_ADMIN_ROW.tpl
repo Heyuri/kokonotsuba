@@ -3,7 +3,7 @@
 		<td class="colPost"><div class="reportPostPreview modPagePostContainer">{$POST_PREVIEW}</div></td>
 		<td class="colBoard">{$BOARD_TITLE}</td>
 		<td class="colReason">{$REPORTER_REASON}</td>
-		<td class="colIp"><a class="reportIpLink" href="{$IP_REPORTS_URL}" title="{$IP_REPORTS_TEXT}">{$REPORTER_IP}</a></td>
+		<td class="colIp"><a class="reportIpLink" href="{$IP_REPORTS_URL}" title="{$IP_REPORTS_TEXT}">{$REPORTER_IP}</a>{$REPORTER_IP_TOOLS}</td>
 		<td class="colDate">{$DATE_REPORTED}</td>
 		<td class="colStatus">
 			<!--&IF($SHOW_STATUS,'<span class="reportStatusLabel">{$STATUS_LABEL}</span>','')-->

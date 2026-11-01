@@ -21,6 +21,7 @@ use function Kokonotsuba\libraries\getFiltersFromRequest;
 use function Puchiko\strings\buildSmartQuery;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
+use function Puchiko\strings\sanitizeStr;
 
 class actionLogRoute implements route {
 	/** Columns the table headers may sort on, matching the repository's allowlist. */
@@ -103,11 +104,11 @@ class actionLogRoute implements route {
 				$tableEntries .= "
 				<tr>
 					<td>" . $actionLogEntry->getBoardTitle() . "</td>
-					<td>" . htmlspecialchars($actionLogEntry->getBoardUID()) . "</td>
-					<td>" . htmlspecialchars($actionLogEntry->getName()) . "</td>
-					<td>" . htmlspecialchars($roleEnum->displayRoleName()) . "</td>
-					<td>" . htmlspecialchars($actionLogEntry->getIpAddress()) . "</td>
-					<td>" . htmlspecialchars($typeRegistry->labelFor($actionLogEntry->getActionType())) . "</td>
+					<td>" . sanitizeStr($actionLogEntry->getBoardUID()) . "</td>
+					<td>" . sanitizeStr($actionLogEntry->getName()) . "</td>
+					<td>" . sanitizeStr($roleEnum->displayRoleName()) . "</td>
+					<td>" . sanitizeStr($actionLogEntry->getIpAddress()) . "</td>
+					<td>" . sanitizeStr($typeRegistry->labelFor($actionLogEntry->getActionType())) . "</td>
 					<td>" . $references->toHtml($actionLogEntry->getLogAction(), $actionLogEntry->getBoardUID()) . "</td>
 					<td>" . $this->postDateFormatter->formatFromDateString($actionLogEntry->getTimeAdded()) . "</td>
    			 	</tr>";
@@ -174,7 +175,7 @@ class actionLogRoute implements route {
 
 		$arrow = $isActive ? ($sortDirection === 'DESC' ? ' &#9662;' : ' &#9652;') : '';
 
-		return '<th class="sortableColumn' . ($isActive ? ' sortedColumn' : '') . '"><a href="' . htmlspecialchars($url) . '">' . htmlspecialchars($label) . $arrow . '</a></th>';
+		return '<th class="sortableColumn' . ($isActive ? ' sortedColumn' : '') . '"><a href="' . sanitizeStr($url) . '">' . sanitizeStr($label) . $arrow . '</a></th>';
 	}
 
 	private function initializeActionLogFilters(actionTypeRegistry $typeRegistry): array {

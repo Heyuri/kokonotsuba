@@ -16,7 +16,6 @@
 			{$LAST_RUN}
 		</p>
 
-		<!--&IF($SCHEDULE_NOTE,'<p class="anonIpScheduleNote">{$SCHEDULE_NOTE}</p>','')-->
 
 		<form method="POST" action="{$MODULE_URL}" id="anonIpScheduleForm">
 			{$CSRF_TOKEN}

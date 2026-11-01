@@ -5,7 +5,7 @@ Backend of the Kokonotsuba imageboard engine, cloned into the web root. Boards l
 
 | Folder | What it holds |
 |---|---|
-| `bootstrap/` | Boot sequence `koko.php` requires in order; populates the DI container (`di.php` is the empty final hook) |
+| `bootstrap/` | Only `background.php`, the context a background task boots in; the boot itself is `code/Kokonotsuba/kernel/` |
 | `code/Kokonotsuba/` | Core application, `Kokonotsuba\` namespace, one directory per concern (`ban/`, `post/`, `routers/`, ...) |
 | `code/Puchiko/` | Low-level utility functions (`Puchiko\` namespace) and the background-task classes |
 | `configs/` | Editable config schema and defaults, one file per group, built with `_fieldTypes.php` helpers |
@@ -23,6 +23,7 @@ untracked, copied from `databaseSettings.example.php`).
 
 ## Where do I find X
 
+- Boot and the DI container wiring: `code/Kokonotsuba/kernel/kernel.php` and `kernel/providers/`
 - Mode dispatch and route classes: `code/Kokonotsuba/routers/modeHandler.php`, the mode table `routers/routeTable.php`, `code/Kokonotsuba/routers/routes/`
 - Config resolution: `code/Kokonotsuba/config/`; schema files in `configs/` and `module/{name}/config.php`
 - Repositories and the PDO wrapper: `code/Kokonotsuba/database/`

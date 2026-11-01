@@ -6,6 +6,7 @@ use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
+use Kokonotsuba\renderers\post\postMenu;
 use Kokonotsuba\module_classes\traits\IndicatorTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\module_classes\traits\listeners\StaffAlertsListenerTrait;
@@ -311,7 +312,9 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->getPostReportsUrl($post->getUid()),
 			'viewReports',
 			_T('report_widget_view_reports'),
-			''
+			'',
+			[],
+			postMenu::GROUP_REPORT
 		);
 	}
 
@@ -1055,6 +1058,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$REPORTER_IP}' => sanitizeStr($this->maskIp((string) $report['reporter_ip'])),
 			'{$IP_REPORTS_URL}' => sanitizeStr($this->getIpReportsUrl((int) $report['report_id'])),
 			'{$REPORTER_POSTS_URL}' => sanitizeStr($this->getReporterPostsUrl((string) $report['reporter_ip'])),
+			'{$REPORTER_IP_TOOLS}' => $this->renderReporterIpTools((string) $report['reporter_ip']),
 			'{$DATE_REPORTED}' => $this->formatDate($report['date_reported'] ?? null),
 			'{$STATUS_LABEL}' => sanitizeStr($status->label()),
 			'{$STATUS_CLASS}' => $status->rowCssClass(),
@@ -1086,6 +1090,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$REPORTER_IP}' => sanitizeStr($this->maskIp((string) $report['reporter_ip'])),
 			'{$IP_REPORTS_URL}' => sanitizeStr($this->getIpReportsUrl((int) $report['report_id'])),
 			'{$REPORTER_POSTS_URL}' => sanitizeStr($this->getReporterPostsUrl((string) $report['reporter_ip'])),
+			'{$REPORTER_IP_TOOLS}' => $this->renderReporterIpTools((string) $report['reporter_ip']),
 			'{$DATE_REPORTED}' => $this->formatDate($report['date_reported'] ?? null),
 			'{$STATUS_LABEL}' => sanitizeStr($status->label()),
 			'{$STATUS_CLASS}' => $status->rowCssClass(),
@@ -1348,6 +1353,27 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		return managePostsLink::forIp($this->moduleContext->request->getCurrentUrlNoQuery(), $reporterIp);
+	}
+
+	/**
+	 * The lookup and see-all-posts buttons beside a reporter IP, as on manage-posts.
+	 * Empty for staff who may not see addresses.
+	 */
+	private function renderReporterIpTools(string $reporterIp): string {
+		$postsUrl = $this->getReporterPostsUrl($reporterIp);
+		if ($postsUrl === '') {
+			return '';
+		}
+
+		$html = '';
+
+		// an anonymized address has no host to look up
+		if (filter_var($reporterIp, FILTER_VALIDATE_IP)) {
+			$html .= ' <a target="_blank" href="https://whatismyipaddress.com/ip/' . rawurlencode($reporterIp) . '" title="Resolve hostname">'
+				. '<img height="12" src="' . sanitizeStr((string) $this->getConfig('STATIC_URL')) . 'image/glass.png" alt="🔎"></a>';
+		}
+
+		return $html . ' <a href="' . sanitizeStr($postsUrl) . '" title="' . sanitizeStr(_T('report_reporter_posts_hint')) . '">★</a>';
 	}
 
 	/** The reporter IP behind a report id, or null when the report doesn't exist. */

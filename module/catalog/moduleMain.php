@@ -17,6 +17,7 @@ use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\_T;
 use function Puchiko\json\renderCachedJsonPage;
 use function Puchiko\request\redirect;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use TopLinksListenerTrait;
@@ -311,14 +312,14 @@ class moduleMain extends abstractModuleMain {
 
 		// Assemble template values
 		$templateValues = [
-			'{$STATIC_INDEX_FILE}' => htmlspecialchars($this->staticIndexFile),
+			'{$STATIC_INDEX_FILE}' => sanitizeStr($this->staticIndexFile),
 			'{$CACHE_BUST}' => time(),
 			'{$MODULE_PAGE_URL}' => $this->modulePageUrl,
 			'{$SORT_BUMP_SELECTED}' => ($sort === 'bump'),
 			'{$SORT_TIME_SELECTED}' => ($sort === 'time'),
 			'{$FW_CHECKED}' => $catFw,
 			'{$CAT_COLS_VALUE}' => $catCols ?: '',
-			'{$TABLE_CLASSES}' => htmlspecialchars($tableClasses),
+			'{$TABLE_CLASSES}' => sanitizeStr($tableClasses),
 			'{$CAT_COLS}' => max(1, $catCols),
 			'{$THREADS}' => $threadRows,
 		];

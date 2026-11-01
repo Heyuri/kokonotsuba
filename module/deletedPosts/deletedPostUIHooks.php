@@ -7,9 +7,11 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\module_classes\traits\IndicatorTrait;
+use Kokonotsuba\renderers\post\postMenu;
 use Kokonotsuba\renderers\widgetMenuPolicy;
 
 use function Kokonotsuba\libraries\_T;
+use function Puchiko\strings\sanitizeStr;
 
 class deletedPostUIHooks {
 	use IndicatorTrait;
@@ -32,7 +34,7 @@ class deletedPostUIHooks {
 			$requiredRole,
 			'LinksAboveBar',
 			function(string &$linkHtml) {
-				$linkHtml .= '<li class="adminNavLink"><a title="' . htmlspecialchars(_T('admin_nav_deleted_posts_title')) . '" href="' . htmlspecialchars($this->modulePageUrl) . '">' . htmlspecialchars(_T('admin_nav_deleted_posts')) . '</a></li>';
+				$linkHtml .= '<li class="adminNavLink"><a title="' . sanitizeStr(_T('admin_nav_deleted_posts_title')) . '" href="' . sanitizeStr($this->modulePageUrl) . '">' . sanitizeStr(_T('admin_nav_deleted_posts')) . '</a></li>';
 			}
 		);
 
@@ -240,14 +242,14 @@ class deletedPostUIHooks {
 
 		$html = '';
 		foreach ($entries as $w) {
-			$href    = htmlspecialchars($w['href'] ?? '');
-			$action  = htmlspecialchars($w['action'] ?? '');
-			$label   = htmlspecialchars($w['label'] ?? '');
-			$subMenu = htmlspecialchars($w['subMenu'] ?? '');
+			$href    = sanitizeStr($w['href'] ?? '');
+			$action  = sanitizeStr($w['action'] ?? '');
+			$label   = sanitizeStr($w['label'] ?? '');
+			$subMenu = sanitizeStr($w['subMenu'] ?? '');
 			$params  = $w['params'] ?? [];
 			$paramAttrs = '';
 			foreach ($params as $k => $v) {
-				$paramAttrs .= ' data-param-' . htmlspecialchars($k) . '="' . htmlspecialchars((string)$v) . '"';
+				$paramAttrs .= ' data-param-' . sanitizeStr($k) . '="' . sanitizeStr((string)$v) . '"';
 			}
 			$html .= '<a href="' . $href . '" data-action="' . $action . '" data-label="' . $label . '" data-subMenu="' . $subMenu . '"' . $paramAttrs . '></a>';
 		}
@@ -258,7 +260,7 @@ class deletedPostUIHooks {
 		($this->includeScript)('deletedPosts.js', $moduleHeader);
 
 		// where the window reads an entry from, and posts its actions to
-		$moduleHeader .= '<meta name="deletedPostsModuleUrl" content="' . htmlspecialchars($this->modulePageUrl) . '">';
+		$moduleHeader .= '<meta name="deletedPostsModuleUrl" content="' . sanitizeStr($this->modulePageUrl) . '">';
 
 		// the window's own markup
 		$moduleHeader .= $this->entryWindowHtml;
@@ -319,7 +321,8 @@ class deletedPostUIHooks {
 			'viewDeletedPost',
 			'View entry',
 			self::DELETION_SUBMENU,
-			['deletedPostId' => $deletedPostId]
+			['deletedPostId' => $deletedPostId],
+			postMenu::GROUP_DELETION
 		);
 
 		// Restore action (POST with CSRF) under the "Deletion" submenu
@@ -328,7 +331,8 @@ class deletedPostUIHooks {
 			'restoreDeletedPost',
 			'Restore post',
 			self::DELETION_SUBMENU,
-			['deletedPostId' => $deletedPostId, 'action' => 'restore']
+			['deletedPostId' => $deletedPostId, 'action' => 'restore'],
+			postMenu::GROUP_DELETION
 		);
 
 		// Purge action (POST with CSRF) under the "Deletion" submenu
@@ -337,7 +341,8 @@ class deletedPostUIHooks {
 			'purgeDeletedPost',
 			'Purge post',
 			self::DELETION_SUBMENU,
-			['deletedPostId' => $deletedPostId, 'action' => 'purge']
+			['deletedPostId' => $deletedPostId, 'action' => 'purge'],
+			postMenu::GROUP_DELETION
 		);
 	}
 

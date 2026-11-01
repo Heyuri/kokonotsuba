@@ -37,12 +37,9 @@ final class installDefaults {
 		return $this->baseUrl().'boards/';
 	}
 
-	/**
-	 * HOME: where the header's "Home" link goes. The site root is the best guess — the boards
-	 * directory is rarely the front page of the site it is installed on.
-	 */
+	/** HOME: the front page, which index.php serves from the backend directory. */
 	public function homeUrl(): string {
-		return $this->scheme.'://'.$this->host.'/';
+		return $this->baseUrl();
 	}
 
 	/** STATIC_URL: static/ sits inside the backend now, so it is served from the same prefix. */

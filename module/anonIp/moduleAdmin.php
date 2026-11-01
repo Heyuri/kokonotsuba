@@ -205,18 +205,6 @@ class moduleAdmin extends abstractModuleAdmin {
 		return (int) ($values[self::SCHEDULE_EVERY_KEY] ?? 0);
 	}
 
-	/**
-	 * Warn when this board overrides the interval, since the form writes the global scope and
-	 * would otherwise look like it had done nothing.
-	 */
-	private function renderScheduleOverrideNote(): string {
-		$boardEvery = (int) $this->getModuleConfig('AUTO_ANONYMIZE_DAYS', 0);
-
-		return $boardEvery === $this->globalScheduleInterval()
-			? ''
-			: sanitizeStr(_T('anon_ip_schedule_board_override'));
-	}
-
 	public function ModulePage(): void {
 		// No cron: the interval is checked here as well as on new posts, so a quiet board still
 		// anonymizes whenever staff look in on it.
@@ -261,7 +249,6 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$SUCCESS_MESSAGE}' => $successMessage,
 			'{$LAST_RUN}'        => $this->renderLastRun(),
 			'{$SCHEDULE_STATUS}' => sanitizeStr($this->renderScheduleStatus()),
-			'{$SCHEDULE_NOTE}'   => $this->renderScheduleOverrideNote(),
 			'{$SCHEDULE_HEADING}'      => sanitizeStr(_T('anon_ip_schedule_heading')),
 			'{$SCHEDULE_EVERY_LABEL}'  => sanitizeStr(_T('anon_ip_schedule_every_label')),
 			'{$SCHEDULE_EVERY_DESC}'   => sanitizeStr(_T('anon_ip_schedule_every_desc')),

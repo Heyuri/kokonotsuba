@@ -4,6 +4,7 @@ namespace Kokonotsuba\libraries\html;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\request\request;
+use function Puchiko\strings\sanitizeStr;
 
 /**
  * Read a 1-based page number from the request, defaulting to 1.
@@ -88,26 +89,26 @@ function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int
 
 	$getLink = function($page) use ($url, $staticUntil, $isStaticAll, $liveIndexFile, $staticIndexFile) {
 		if ($page === 1) {
-			return htmlspecialchars($url . $staticIndexFile);
+			return sanitizeStr($url . $staticIndexFile);
 		}
 		if (!$isStaticAll && $page > $staticUntil) {
-			return htmlspecialchars($url . $liveIndexFile) . '?page=' . $page;
+			return sanitizeStr($url . $liveIndexFile) . '?page=' . $page;
 		}
 		return $page . '.html';
 	};
 
 	$getForm = function($page, $label) use ($url, $staticUntil, $isStaticAll, $liveIndexFile, $staticIndexFile) {
 		if ($page === 1) {
-			return '<form action="' . htmlspecialchars($url . $staticIndexFile) . '" method="get"><button type="submit">' . htmlspecialchars($label) . '</button></form>';
+			return '<form action="' . sanitizeStr($url . $staticIndexFile) . '" method="get"><button type="submit">' . sanitizeStr($label) . '</button></form>';
 		}
 		if (!$isStaticAll && $page > $staticUntil) {
-			return '<form action="' . htmlspecialchars($url . $liveIndexFile) . '" method="get">
+			return '<form action="' . sanitizeStr($url . $liveIndexFile) . '" method="get">
 				<input type="hidden" name="page" value="' . intval($page) . '">
-				<button type="submit">' . htmlspecialchars($label) . '</button>
+				<button type="submit">' . sanitizeStr($label) . '</button>
 			</form>';
 		}
 
-		return '<form action="' . htmlspecialchars($page . '.html') . '" method="get"><button type="submit">' . htmlspecialchars($label) . '</button></form>';
+		return '<form action="' . sanitizeStr($page . '.html') . '" method="get"><button type="submit">' . sanitizeStr($label) . '</button></form>';
 	};
 
 	return renderPager($currentPage, $totalPages, $getLink, $getForm);
@@ -147,15 +148,15 @@ function drawPager(int $entriesPerPage, int $totalEntries, string $url, request 
 		foreach ($params as $key => $val) {
 			if (is_array($val)) {
 				foreach ($val as $subVal) {
-					$inputs .= '<input type="hidden" name="' . htmlspecialchars($key) . '[]" value="' . htmlspecialchars($subVal) . '">' . "\n";
+					$inputs .= '<input type="hidden" name="' . sanitizeStr($key) . '[]" value="' . sanitizeStr($subVal) . '">' . "\n";
 				}
 			} else {
-				$inputs .= '<input type="hidden" name="' . htmlspecialchars($key) . '" value="' . htmlspecialchars($val) . '">' . "\n";
+				$inputs .= '<input type="hidden" name="' . sanitizeStr($key) . '" value="' . sanitizeStr($val) . '">' . "\n";
 			}
 		}
 
-		return '<form action="' . htmlspecialchars($url) . '" method="get">' . $inputs . '
-			<button type="submit">' . htmlspecialchars($label) . '</button>
+		return '<form action="' . sanitizeStr($url) . '" method="get">' . $inputs . '
+			<button type="submit">' . sanitizeStr($label) . '</button>
 		</form>';
 	};
 

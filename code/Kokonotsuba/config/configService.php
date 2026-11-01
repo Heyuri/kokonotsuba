@@ -52,7 +52,7 @@ class configService {
 		// so the first miss reads every row at once rather than one row per board.
 		if (!$this->allOverridesLoaded) {
 			foreach ($this->configRepository->getAllOverrides() as $uid => $stored) {
-				$this->overridesCache[$uid] = self::knownFields($stored);
+				$this->overridesCache[$uid] = self::knownFields($stored, $uid);
 			}
 			$this->allOverridesLoaded = true;
 			$this->staleOverrides = [];
@@ -68,14 +68,15 @@ class configService {
 		}
 		unset($this->staleOverrides[$boardUid]);
 
-		return $this->overridesCache[$boardUid] = self::knownFields($this->configRepository->getOverridesByBoardUid($boardUid));
+		return $this->overridesCache[$boardUid] = self::knownFields($this->configRepository->getOverridesByBoardUid($boardUid), $boardUid);
 	}
 
-	/** Stored overrides filtered to fields still present in the schema. */
-	private static function knownFields(array $stored): array {
+	/** Stored overrides filtered to fields still present in the schema, minus site-wide ones on a board. */
+	private static function knownFields(array $stored, int $boardUid): array {
 		$overrides = [];
 		foreach ($stored as $dotpath => $value) {
-			if (configSchema::hasField((string)$dotpath)) {
+			if (configSchema::hasField((string)$dotpath)
+				&& ($boardUid === GLOBAL_BOARD_UID || !configSchema::isGlobalOnly((string)$dotpath))) {
 				$overrides[$dotpath] = $value;
 			}
 		}
@@ -202,6 +203,11 @@ class configService {
 		$existing = $this->getOverrides($boardUid);
 
 		foreach (configSchema::getAllFields() as $dotpath => $meta) {
+			// A board's form never carries site-wide fields, and a board may not store them.
+			if ($boardUid !== GLOBAL_BOARD_UID && $meta['global']) {
+				continue;
+			}
+
 			$type = $meta['type'];
 			$inheritedValue = $inherited[$dotpath] ?? $meta['default'];
 			$inputKey = configSchema::inputKey((string)$dotpath);
@@ -256,7 +262,7 @@ class configService {
 	 * @param string $dotpath  Schema dot-path of the setting.
 	 * @param mixed  $rawValue Raw value (a string as it would arrive from a form, a bool, etc.).
 	 * @return void
-	 * @throws InvalidArgumentException If the field is not in the schema, or an array field's JSON
+	 * @throws InvalidArgumentException If the field is not in the schema, is site-wide on a board scope, or an array field's JSON
 	 *                                  is invalid.
 	 */
 	public function setOverride(int $boardUid, string $dotpath, mixed $rawValue): void {
@@ -264,6 +270,7 @@ class configService {
 		if ($meta === null) {
 			throw new InvalidArgumentException("Unknown setting: '{$dotpath}'.");
 		}
+		self::assertScopeMayOverride($boardUid, $dotpath);
 
 		$value = self::coerce($rawValue, $meta['type'], $dotpath, $meta);
 		$inherited = $this->getInheritedValues($boardUid)[$dotpath] ?? $meta['default'];
@@ -287,8 +294,11 @@ class configService {
 	 * @param int    $boardUid Board UID, or GLOBAL_BOARD_UID for the global config.
 	 * @param string $dotpath  Schema dot-path of the setting.
 	 * @return void
+	 * @throws InvalidArgumentException If the setting is site-wide and the scope is a board.
 	 */
 	public function unsetOverride(int $boardUid, string $dotpath): void {
+		self::assertScopeMayOverride($boardUid, $dotpath);
+
 		$overrides = $this->getOverrides($boardUid);
 
 		if (!array_key_exists($dotpath, $overrides)) {
@@ -297,6 +307,13 @@ class configService {
 
 		unset($overrides[$dotpath]);
 		$this->persistOverrides($boardUid, $overrides);
+	}
+
+	/** @throws InvalidArgumentException for a site-wide setting on a board scope */
+	private static function assertScopeMayOverride(int $boardUid, string $dotpath): void {
+		if ($boardUid !== GLOBAL_BOARD_UID && configSchema::isGlobalOnly($dotpath)) {
+			throw new InvalidArgumentException("'{$dotpath}' is site-wide; set it on the global scope.");
+		}
 	}
 
 	/**

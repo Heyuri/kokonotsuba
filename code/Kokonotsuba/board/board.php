@@ -75,7 +75,7 @@ class board implements IBoard {
 	 * The board's subdomain lives on its database row ('cgi', 'dis', …); a board without one keeps
 	 * the site-wide WEBSITE_URL untouched. Rewriting the config value once, here, rather than at
 	 * each call site means everything downstream agrees on this board's host: getBoardURL(), the
-	 * local upload URL, the request's $config (bootstrap/requestBoard.php reads it back out of the
+	 * local upload URL, the request's $config (kernel/providers/boardProvider.php reads it back out of the
 	 * board), the template engine, and any module reading WEBSITE_URL. Because every board object
 	 * carries its own config, a link one board renders to another — the board list, the overboard,
 	 * a cross-board quote — is built from the target board's host, not the current one's.
