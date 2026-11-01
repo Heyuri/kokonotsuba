@@ -32,14 +32,19 @@ use function Puchiko\json\renderJsonErrorPage;
 final class kernel {
 	private static bool $librariesLoaded = false;
 
-	/** Constants, path helpers and the function libraries the autoloader can't reach. */
-	public static function loadLibraries(): void {
+	/**
+	 * Constants, path helpers and the function libraries the autoloader can't reach.
+	 * 
+	 * @param string|null $root The entry point's directory; defaults to an already loaded paths.php.
+	 */
+	public static function loadLibraries(?string $root = null): void {
 		if (self::$librariesLoaded) {
 			return;
 		}
 		self::$librariesLoaded = true;
 
-		$root = dirname(__DIR__, 3) . '/';
+		$root ??= function_exists('getBackendDir') ? getBackendDir() : dirname(__DIR__, 3);
+		$root = rtrim($root, '/') . '/';
 		require_once $root . 'code/Kokonotsuba/constants.php';
 		require_once $root . 'paths.php';
 

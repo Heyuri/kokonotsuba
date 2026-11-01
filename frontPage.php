@@ -11,7 +11,7 @@ ignore_user_abort(true);
 
 require __DIR__ . '/autoload.php';
 
-kernel::loadLibraries();
+kernel::loadLibraries(__DIR__);
 
 if (PHP_SAPI !== 'cli' && \Puchiko\request\isDirectRequestFor(__FILE__, $_SERVER)) {
 	http_response_code(403);
