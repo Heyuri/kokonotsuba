@@ -9,6 +9,8 @@ use Kokonotsuba\template\templateEngine;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Puchiko\strings\sanitizeStr;
+use function Kokonotsuba\libraries\html\pagerLinkForm;
+use function Kokonotsuba\libraries\html\renderPager;
 
 /**
  * The front page's staff screens: the news and page lists, and the editors. Form values come in
@@ -191,13 +193,14 @@ final class frontAdminRenderer {
 			return '';
 		}
 
-		$parts = [];
-		for ($page = 1; $page <= $newsPage->pageCount; $page++) {
-			$parts[] = $page === $newsPage->page
-				? '[<b>' . $page . '</b>]'
-				: '[<a href="' . sanitizeStr($this->links->with(['mode' => 'admin', 'page' => $page])) . '">' . $page . '</a>]';
-		}
+		$link = fn(int $page): string => $this->links->with(['mode' => 'admin', 'page' => $page]);
+		$pager = renderPager(
+			$newsPage->page,
+			$newsPage->pageCount,
+			fn(int $page): string => sanitizeStr($link($page)),
+			fn(int $page, string $label): string => pagerLinkForm($link($page), $label)
+		);
 
-		return '<div class="frontPager">' . implode(' ', $parts) . '</div>';
+		return '<div class="frontPager">' . $pager . '</div>';
 	}
 }

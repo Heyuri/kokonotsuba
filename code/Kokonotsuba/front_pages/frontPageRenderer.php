@@ -17,6 +17,8 @@ use function Kokonotsuba\libraries\html\getBoardStylesheetsFromConfig;
 use function Kokonotsuba\libraries\getCsrfMetaTag;
 use function Kokonotsuba\libraries\html\getDefaultFooterLinks;
 use function Puchiko\strings\sanitizeStr;
+use function Kokonotsuba\libraries\html\pagerLinkForm;
+use function Kokonotsuba\libraries\html\renderPager;
 
 /**
  * Draws the front page: the shell (head, logo, nav, footer) around a news list, one news entry
@@ -308,19 +310,14 @@ final class frontPageRenderer {
 			return '';
 		}
 
-		$parts = [];
-		if ($newsPage->page > 1) {
-			$parts[] = '[<a href="' . sanitizeStr($this->links->newsPage($newsPage->page - 1)) . '">' . _T('front_news_newer') . '</a>]';
-		}
-		for ($page = 1; $page <= $newsPage->pageCount; $page++) {
-			$parts[] = $page === $newsPage->page
-				? '[<b>' . $page . '</b>]'
-				: '[<a href="' . sanitizeStr($this->links->newsPage($page)) . '">' . $page . '</a>]';
-		}
-		if ($newsPage->page < $newsPage->pageCount) {
-			$parts[] = '[<a href="' . sanitizeStr($this->links->newsPage($newsPage->page + 1)) . '">' . _T('front_news_older') . '</a>]';
-		}
+		$link = fn(int $page): string => $this->links->newsPage($page);
+		$pager = renderPager(
+			$newsPage->page,
+			$newsPage->pageCount,
+			fn(int $page): string => sanitizeStr($link($page)),
+			fn(int $page, string $label): string => pagerLinkForm($link($page), $label)
+		);
 
-		return '<div class="frontPager">' . implode(' ', $parts) . '</div>';
+		return '<div class="frontPager">' . $pager . '</div>';
 	}
 }
