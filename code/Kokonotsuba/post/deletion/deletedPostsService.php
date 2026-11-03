@@ -507,7 +507,7 @@ class deletedPostsService {
 			$purgeActionString = $this->generateFilePurgeLoggingString($postNumber);
 
 			// Log the purge action to the logging table
-			$this->logAction($purgeActionString, $attachment->getBoardUid());
+			$this->logAction($purgeActionString, $attachment->getBoardUid(), actionType::POST_PURGE);
 		});
 	}
 

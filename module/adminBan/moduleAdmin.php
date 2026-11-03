@@ -957,7 +957,10 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	/** Turn the stored <br /> back into newlines so a textarea round-trips cleanly. */
 	private function unformatReason(string $reason): string {
-		return preg_replace('/<br\s*\/?>/i', "\n", $reason) ?? $reason;
+		$reason = preg_replace('/<br\s*\/?>/i', "\n", $reason) ?? $reason;
+
+		// Quote entities read the same decoded, so the textarea shows them plainly.
+		return str_replace(['&#039;', '&#39;', '&apos;', '&quot;', '&#44;'], ["'", "'", "'", '"', ','], $reason);
 	}
 
 	/**
