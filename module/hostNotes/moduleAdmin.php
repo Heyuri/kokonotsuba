@@ -611,9 +611,9 @@ class moduleAdmin extends abstractModuleAdmin {
 			return '';
 		}
 
-		$post = $this->moduleContext->postRepository->getPostByUid($postUid);
+		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
 
-		return $post ? $post->getVisitorTokenHash() : '';
+		return $post ?$post->getVisitorTokenHash() : '';
 	}
 
 	public function ModulePage() {
