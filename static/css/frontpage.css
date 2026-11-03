@@ -106,7 +106,6 @@ body.frontpage::before {
 .frontpage .newsbody img,
 .frontpage .frontPageBody img {
 	max-width: 100%;
-	height: auto;
 }
 
 .frontpage .newsbody :is(table, pre),
