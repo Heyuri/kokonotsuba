@@ -160,6 +160,11 @@ class sideNavRenderer {
 		if ($source !== null) {
 			return $this->item($label, sanitizeStr($link['default_url']), $label);
 		}
+		$slug = (string) ($link['slug'] ?? '');
+		if ($slug !== '') {
+			$prefix = '<span class="sideNavBoardDir">' . sanitizeStr('/' . $slug . '/') . ' - </span>';
+			return $this->item($prefix . $label, sanitizeStr($link['url']), $label);
+		}
 		return $this->item($label, sanitizeStr($link['url']), $label);
 	}
 

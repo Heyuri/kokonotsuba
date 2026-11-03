@@ -1,6 +1,7 @@
 	<li class="sideNavRow" data-key="{$KEY}">
 		<span class="sideNavGrip js-only" title="Drag to move">&#9776;</span>
 		<input type="text" class="inputtext sideNavRowLabel" name="link[{$KEY}][label]" value="{$LABEL}" placeholder="Label" maxlength="255" required>
+		<input type="text" class="inputtext sideNavRowSlug" name="link[{$KEY}][slug]" value="{$SLUG}" placeholder="Slug" title="Shown as /slug/ when the board dirs are on; optional" maxlength="64">
 		<input type="text" class="inputtext sideNavRowUrl" name="link[{$KEY}][url]" value="{$URL}" placeholder="URL" maxlength="2048" required>
 		<select class="sideNavRowGroup" name="link[{$KEY}][group]" title="Group">{$GROUP_OPTIONS}</select>
 		<button type="submit" class="sideNavMoveUp" name="action" value="link_up:{$KEY}" title="Move up" formnovalidate>&uarr;</button>

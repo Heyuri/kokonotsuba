@@ -100,7 +100,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$DATA}' => json_encode([
 				'templates' => $navRenderer->templates() + [
 					'adminGroup' => $this->renderGroup('%%KEY%%', ['title' => '%%TITLE%%', 'kind' => 'links', 'links' => []], [], true),
-					'adminLink' => $this->renderLink('%%KEY%%', ['label' => '%%LABEL%%', 'url' => '%%URL%%'], '%%GROUP_OPTIONS%%'),
+					'adminLink' => $this->renderLink('%%KEY%%', ['label' => '%%LABEL%%', 'url' => '%%URL%%', 'slug' => '%%SLUG%%'], '%%GROUP_OPTIONS%%'),
 				],
 			], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
 		]);
@@ -169,6 +169,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$KEY}' => sanitizeStr($key),
 			'{$LABEL}' => sanitizeStr($link['label']),
 			'{$URL}' => sanitizeStr($link['url']),
+			'{$SLUG}' => sanitizeStr($link['slug'] ?? ''),
 			'{$GROUP_OPTIONS}' => $groupOptions,
 		]);
 	}
@@ -230,6 +231,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				'id' => ctype_digit($key) && isset($existingLinks[(int) $key]) ? (int) $key : null,
 				'label' => (string) ($fields['label'] ?? ''),
 				'url' => (string) ($fields['url'] ?? ''),
+				'slug' => (string) ($fields['slug'] ?? ''),
 				'source' => $source,
 				'hidden' => empty($fields['hidden']) ? 0 : 1,
 			];
@@ -254,7 +256,7 @@ class moduleAdmin extends abstractModuleAdmin {
 					throw new BoardException(_T('sidenav_invalid_group'));
 				}
 				$fields = (array) (((array) $request->getParameter('new_link', 'POST', []))[$target] ?? []);
-				$layout[$groupIndex]['links'][] = ['key' => $this->newKey(), 'id' => null, 'label' => (string) ($fields['label'] ?? ''), 'url' => (string) ($fields['url'] ?? ''), 'source' => null, 'hidden' => 0];
+				$layout[$groupIndex]['links'][] = ['key' => $this->newKey(), 'id' => null, 'label' => (string) ($fields['label'] ?? ''), 'url' => (string) ($fields['url'] ?? ''), 'slug' => (string) ($fields['slug'] ?? ''), 'source' => null, 'hidden' => 0];
 				break;
 			case 'delete_group':
 				if ($groupIndex !== false) {
@@ -320,9 +322,12 @@ class moduleAdmin extends abstractModuleAdmin {
 					// an automatic link keeps only its label override; its URL is derived
 					$layout[$g]['links'][$l]['label'] = mb_substr(trim($link['label']), 0, 255);
 					$layout[$g]['links'][$l]['url'] = '';
+					$layout[$g]['links'][$l]['slug'] = '';
 				} else {
 					$layout[$g]['links'][$l]['label'] = $this->requireText($link['label']);
 					$layout[$g]['links'][$l]['url'] = $this->requireUrl($link['url']);
+					// typed with or without its slashes, stored without
+					$layout[$g]['links'][$l]['slug'] = mb_substr(trim(trim((string) ($link['slug'] ?? '')), '/'), 0, 64);
 				}
 			}
 		}

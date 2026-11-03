@@ -58,6 +58,7 @@
 						label: row.querySelector('.sideNavRowLabel').value.trim(),
 						// an automatic link's URL and default label come from the server (the label as HTML)
 						url: auto ? row.dataset.defaultUrl : row.querySelector('.sideNavRowUrl').value.trim(),
+						slug: auto ? '' : row.querySelector('.sideNavRowSlug').value.trim().replace(/^\/+|\/+$/g, ''),
 						defaultLabel: auto ? row.dataset.defaultLabel : '',
 						title: auto ? row.dataset.linkTitle : '',
 						hidden: auto ? row.querySelector('.sideNavRowHidden input').checked : false
@@ -90,7 +91,8 @@
 				var label = l.label ? escapeHtml(l.label) : l.defaultLabel;
 				if (l.source === 'hide') return fill(t.hide, { LABEL: label });
 				if (l.source === 'dirs') return fill(t.dirs, { LABEL: label });
-				return fill(t.item, { URL: escapeHtml(l.url), LABEL: label, LINK_TITLE: escapeHtml(l.label || l.title) });
+				var dir = l.slug ? '<span class="sideNavBoardDir">' + escapeHtml('/' + l.slug + '/') + ' - </span>' : '';
+				return fill(t.item, { URL: escapeHtml(l.url), LABEL: dir + label, LINK_TITLE: escapeHtml(l.label || l.title) });
 			});
 			if (!items.length) return '';
 			return fill(t.group, { ID: /^\d+$/.test(group.key) ? group.key : '0', TITLE: escapeHtml(group.title), ITEMS: items.join('') });
@@ -132,15 +134,17 @@
 	function addLink(box) {
 		var label = box.querySelector('.sideNavNewLabel');
 		var url = box.querySelector('.sideNavNewUrl');
+		var slug = box.querySelector('.sideNavNewSlug');
 		if (!label.value.trim() || !url.value.trim()) {
 			(label.value.trim() ? url : label).focus();
 			return;
 		}
-		var row = fromHtml(fill(t.adminLink, { KEY: newKey(), LABEL: escapeHtml(label.value.trim()), URL: escapeHtml(url.value.trim()), GROUP_OPTIONS: '' }));
+		var row = fromHtml(fill(t.adminLink, { KEY: newKey(), LABEL: escapeHtml(label.value.trim()), URL: escapeHtml(url.value.trim()), SLUG: escapeHtml(slug.value.trim()), GROUP_OPTIONS: '' }));
 		box.querySelector('.sideNavBoxLinks').appendChild(row);
 		validateUrl(row.querySelector('.sideNavRowUrl'));
 		label.value = '';
 		url.value = '';
+		slug.value = '';
 		label.focus();
 		changed();
 	}
@@ -257,7 +261,7 @@
 	// ─── Changes and saving ──────────────────────────────────────────────────
 
 	function linkText(link) {
-		return (link.label || link.title) + (link.hidden ? ' (hidden)' : link.url ? ' (' + link.url + ')' : '');
+		return (link.slug ? '/' + link.slug + '/ - ' : '') + (link.label || link.title) + (link.hidden ? ' (hidden)' : link.url ? ' (' + link.url + ')' : '');
 	}
 
 	/** Rows of [item, current, new] describing how layout differs from what was served. */
