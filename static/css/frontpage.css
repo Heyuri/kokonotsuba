@@ -7,15 +7,17 @@ body.frontpage::before {
 	top: 0;
 	left: 0;
 	z-index: -1;
-	width: 400px;
-	height: 400px;
-	background: url(../image/heyuribg.png) no-repeat top left;
+	width: min(400px, 100vw);
+	height: min(400px, 100vw);
+	background: url(../image/heyuribg.png) no-repeat top left / contain;
 	pointer-events: none;
 }
 
-/* beside the side nav, not under it */
-body.frontpage:not(.sideNavHidden)::before {
-	left: var(--side-nav-width, 0);
+/* beside the side nav, not under it; below 801px the nav is hidden (sideNav.css) */
+@media screen and (min-width: 801px) {
+	body.frontpage:not(.sideNavHidden)::before {
+		left: var(--side-nav-width, 0);
+	}
 }
 
 .frontpage .fronttitle {
@@ -89,6 +91,28 @@ body.frontpage:not(.sideNavHidden)::before {
 
 .frontpage .newsDraft {
 	color: var(--color-fg-warning);
+}
+
+.frontpage .newsbody,
+.frontpage .frontPageBody {
+	word-break: break-word;
+}
+
+.frontpage .newsbody,
+.frontpage .frontPageBody {
+	max-width: 100%;
+}
+
+.frontpage .newsbody img,
+.frontpage .frontPageBody img {
+	max-width: 100%;
+	height: auto;
+}
+
+.frontpage .newsbody :is(table, pre),
+.frontpage .frontPageBody :is(table, pre) {
+	display: block;
+	overflow-x: auto;
 }
 
 @media (max-width: 600px) {
