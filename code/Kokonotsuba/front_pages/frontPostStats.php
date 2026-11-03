@@ -8,16 +8,16 @@ use Kokonotsuba\post\postRepository;
 use function Puchiko\writeFileAtomically;
 
 /**
- * Posts made on listed boards in the last hour and the last 24 hours, for the front page.
+ * Posts made on listed boards in the last hour and since midnight (global TIME_ZONE), for the front page.
  * Kept in a small file for a minute so most front page hits run no query.
  */
 final class frontPostStats {
 	private const HOUR = 3600;
-	private const DAY = 86400;
 
 	/**
 	 * @param Closure(): int[] $listedBoardUids Listed boards, asked for only when the counts are refreshed.
 	 * @param Closure(): int   $clock           Current Unix time.
+	 * @param string          $timeZone        The global TIME_ZONE; the day count starts at its midnight.
 	 */
 	public function __construct(
 		private readonly postRepository $postRepository,
@@ -25,14 +25,18 @@ final class frontPostStats {
 		private readonly string $file,
 		private readonly int $ttl = 60,
 		private readonly ?Closure $clock = null,
+		private readonly string $timeZone = '0',
 	) {}
 
 	/** @return array{hour: int, day: int} */
 	public function counts(): array {
 		$now = $this->clock !== null ? ($this->clock)() : time();
 
+		$dayStart = localDay::startOf($now, $this->timeZone);
+
 		$cached = $this->read();
-		if ($cached !== null && $now - $cached['at'] < $this->ttl && $cached['at'] <= $now) {
+		
+		if ($cached !== null && $now - $cached['at'] < $this->ttl && $cached['at'] <= $now && $cached['at'] >= $dayStart) {
 			return ['hour' => $cached['hour'], 'day' => $cached['day']];
 		}
 
@@ -40,7 +44,7 @@ final class frontPostStats {
 		$counts = $this->postRepository->countRecentPosts(
 			($this->listedBoardUids)(),
 			gmdate('Y-m-d H:i:s', $now - self::HOUR),
-			gmdate('Y-m-d H:i:s', $now - self::DAY),
+			gmdate('Y-m-d H:i:s', $dayStart),
 		);
 		$this->write(['at' => $now] + $counts);
 

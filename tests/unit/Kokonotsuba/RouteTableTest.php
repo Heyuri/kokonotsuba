@@ -60,10 +60,11 @@ class RouteTableTest extends TestCase {
 
 	public function testFrontPageModes(): void {
 		$routes = frontPageRouteTable::routes();
-		$this->assertSame(['', 'admin', 'logo', 'editNews', 'editPage'], array_keys($routes));
+		$this->assertSame(['', 'admin', 'logo', 'rebuildCache', 'editNews', 'editPage'], array_keys($routes));
 		$this->assertSame(csrfRule::ON_POST, $routes['editNews']->csrf);
 		$this->assertSame(csrfRule::ON_POST, $routes['editPage']->csrf);
 		$this->assertSame(csrfRule::POST_ONLY, $routes['logo']->csrf);
+		$this->assertSame(csrfRule::POST_ONLY, $routes['rebuildCache']->csrf);
 		$this->assertEveryFactoryBuildsARoute($routes);
 	}
 

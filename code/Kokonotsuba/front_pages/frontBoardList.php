@@ -14,13 +14,13 @@ use function Puchiko\writeFileAtomically;
  */
 final class frontBoardList {
 	private const HOUR = 3600;
-	private const DAY = 86400;
 	private const USERS_WINDOW = 3 * 86400;
 
 	/**
 	 * @param Closure(): board[] $listedBoards   Listed boards, asked for on every draw.
 	 * @param ?postRepository    $postRepository Null when the stat columns are off.
 	 * @param Closure(): int     $clock          Current Unix time.
+	 * @param string            $timeZone       The global TIME_ZONE; the day counts start at its midnight.
 	 */
 	public function __construct(
 		private readonly Closure $listedBoards,
@@ -28,6 +28,7 @@ final class frontBoardList {
 		private readonly string $file,
 		private readonly int $ttl = 60,
 		private readonly ?Closure $clock = null,
+		private readonly string $timeZone = '0',
 	) {}
 
 	public function hasStats(): bool {
@@ -63,8 +64,11 @@ final class frontBoardList {
 	private function activity(array $boardUids): array {
 		$now = $this->clock !== null ? ($this->clock)() : time();
 
+		$dayStart = localDay::startOf($now, $this->timeZone);
+
 		$cached = $this->read();
-		if ($cached !== null && $now - $cached['at'] < $this->ttl && $cached['at'] <= $now) {
+		
+		if ($cached !== null && $now - $cached['at'] < $this->ttl && $cached['at'] <= $now && $cached['at'] >= $dayStart) {
 			return $cached['boards'];
 		}
 
@@ -72,7 +76,7 @@ final class frontBoardList {
 		$activity = $this->postRepository->boardActivity(
 			$boardUids,
 			gmdate('Y-m-d H:i:s', $now - self::HOUR),
-			gmdate('Y-m-d H:i:s', $now - self::DAY),
+			gmdate('Y-m-d H:i:s', $dayStart),
 			gmdate('Y-m-d H:i:s', $now - self::USERS_WINDOW),
 		);
 		$this->write(['at' => $now, 'boards' => $activity]);
