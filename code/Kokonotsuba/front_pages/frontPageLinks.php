@@ -52,6 +52,10 @@ final class frontPageLinks {
 		return $this->with(['mode' => 'logo']);
 	}
 
+	public function rebuildCache(): string {
+		return $this->with(['mode' => 'rebuildCache']);
+	}
+
 	/** The news editor; a new entry without an id. */
 	public function editNews(?int $id = null): string {
 		return $this->with($id === null ? ['mode' => 'editNews'] : ['mode' => 'editNews', 'id' => $id]);

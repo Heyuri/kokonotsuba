@@ -95,6 +95,7 @@ final class frontPageProvider {
 			static fn(): array => $container->get('boardService')->getAllListedBoards() ?? [],
 			empty($site['BOARD_LIST_STATS']) ? null : $container->get('postRepository'),
 			getBackendGlobalDir() . 'front-page-cache/board-list.json',
+			timeZone: (string)($container->get('siteConfig')['TIME_ZONE'] ?? '0'),
 		);
 	}
 
@@ -108,6 +109,7 @@ final class frontPageProvider {
 			$container->get('postRepository'),
 			static fn(): array => $container->get('boardRepository')->getAllListedBoardUIDs(),
 			getBackendGlobalDir() . 'front-page-cache/post-stats.json',
+			timeZone: (string)($container->get('siteConfig')['TIME_ZONE'] ?? '0'),
 		);
 	}
 }

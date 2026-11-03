@@ -4,6 +4,7 @@ namespace Kokonotsuba\routers;
 
 use Kokonotsuba\containers\appContainer;
 use Kokonotsuba\routers\routes\frontAdminRoute;
+use Kokonotsuba\routers\routes\frontCacheRoute;
 use Kokonotsuba\routers\routes\frontLogoRoute;
 use Kokonotsuba\routers\routes\frontNewsEditRoute;
 use Kokonotsuba\routers\routes\frontPageEditRoute;
@@ -11,7 +12,7 @@ use Kokonotsuba\routers\routes\frontPageRoute;
 
 /**
  * Every front page mode. The empty mode is news, a news entry, a page or a module's page; admin,
- * editNews, editPage and logo are the staff screens. A mode missing here is a 404.
+ * editNews, editPage, logo and rebuildCache are the staff screens. A mode missing here is a 404.
  */
 final class frontPageRouteTable {
 	/**
@@ -46,6 +47,11 @@ final class frontPageRouteTable {
 				$c->get('frontPageLinks'),
 				$c->get('frontPagePolicy'),
 				$c->get('request'),
+			), csrfRule::POST_ONLY),
+			'rebuildCache' => new routeEntry(fn(appContainer $c) => new frontCacheRoute(
+				$c->get('frontPageCache'),
+				$c->get('frontPageLinks'),
+				$c->get('frontPagePolicy'),
 			), csrfRule::POST_ONLY),
 			'editNews' => new routeEntry(fn(appContainer $c) => new frontNewsEditRoute(
 				$c->get('frontPageRenderer'),

@@ -93,6 +93,15 @@ final class frontAdminRenderer {
 				'{$REMOVE_LABEL}'   => _T('front_admin_logo_remove'),
 				'{$REMOVE_CONFIRM}' => _T('front_admin_logo_remove_confirm'),
 			]);
+
+			// The same right covers the cache, since only the site's own content fills it.
+			$sections .= $this->templateEngine->ParseBlock('FRONT_ADMIN_CACHE', [
+				'{$HEADING}'       => _T('front_admin_cache'),
+				'{$ACTION_URL}'    => sanitizeStr($this->links->rebuildCache()),
+				'{$CSRF_TOKEN}'    => getCsrfHiddenInput(),
+				'{$REBUILD_LABEL}' => _T('front_admin_cache_rebuild'),
+				'{$HINT}'          => _T('front_admin_cache_hint'),
+			]);
 		}
 
 		return $this->templateEngine->ParseBlock('FRONT_ADMIN', ['{$SECTIONS}' => $sections]);

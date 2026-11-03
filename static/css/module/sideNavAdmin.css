@@ -113,6 +113,12 @@
 	pointer-events: none;
 }
 
+/* a slug is a word or two */
+.sideNavRow .sideNavRowSlug,
+.sideNavBoxAdd .sideNavNewSlug {
+	flex: 0 1 7em;
+}
+
 .sideNavRowGroup {
 	flex: 0 1 auto;
 	max-width: 10em;
