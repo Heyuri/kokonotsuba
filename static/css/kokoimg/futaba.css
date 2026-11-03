@@ -67,7 +67,7 @@
 
 /************************ Front page ************************/
 .fronttitle {
-  font-family: Tahoma, sans-serif;
+  font-family: Tahoma, sans-serif !important;
 }
 
 /******** Neomenu ********/
