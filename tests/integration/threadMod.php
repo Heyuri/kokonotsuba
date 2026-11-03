@@ -318,6 +318,14 @@ testCase('the hint cookie round-trips roles', function () use ($serviceAs) {
 	assertSameValue(['abcd' => threadRole::OWNER, 'ef01' => threadRole::MOD], $service->rememberedThreads(), 'parsed, junk dropped');
 });
 
+testCase('the compact hint cookie keys by uid prefix and reads the old form too', function () use ($serviceAs) {
+	$uid = str_repeat('ab', 32);
+	$service = $serviceAs(OP_HASH, [threadModService::COOKIE => substr($uid, 0, 16) . '.o_ef01.m_bogus']);
+	assertSameValue([substr($uid, 0, 16) => threadRole::OWNER, 'ef01' => threadRole::MOD], $service->rememberedThreads(), 'compact form parsed');
+	assertTrueValue($service->remembers($uid), 'a full uid is found by its prefix');
+	assertTrueValue($serviceAs(OP_HASH, [threadModService::COOKIE => $uid . ':o'])->remembers($uid), 'an old full-uid entry still counts');
+});
+
 // ---------------------------------------------------------------------------
 
 echo "\n{$passed} passed";

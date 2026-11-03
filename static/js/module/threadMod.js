@@ -20,16 +20,26 @@
 	/** thread uid => 'owner' | 'mod' */
 	var roles = {};
 
-	/** The cookie's hint: thread uid => role, as the server last wrote it. */
+	/** Hex digits of a thread uid the cookie keeps (threadModService::COOKIE_UID_LENGTH). */
+	var COOKIE_UID_LENGTH = 16;
+
+	/**
+	 * The cookie's hint: uid prefix => role, as the server last wrote it.
+	 * Compact form `key.o_key.m`, or the older `uid:o,uid:m`.
+	 */
 	function readCookie() {
 		var match = document.cookie.match(new RegExp('(?:^|; )' + COOKIE + '=([^;]*)'));
 		var found = {};
 		if (!match) return found;
-		decodeURIComponent(match[1]).split(',').forEach(function (entry) {
-			var parts = entry.split(':');
-			if (parts.length === 2) found[parts[0]] = parts[1] === 'o' ? 'owner' : 'mod';
+		decodeURIComponent(match[1]).split(/[,_]/).forEach(function (entry) {
+			var parts = entry.split(/[:.]/);
+			if (parts.length === 2) found[cookieKey(parts[0])] = parts[1] === 'o' ? 'owner' : 'mod';
 		});
 		return found;
+	}
+
+	function cookieKey(uid) {
+		return String(uid).toLowerCase().slice(0, COOKIE_UID_LENGTH);
 	}
 
 	function csrfToken() {
@@ -84,8 +94,8 @@
 		var toAsk = [];
 
 		Object.keys(threads).forEach(function (uid) {
-			if (known[uid]) {
-				roles[uid] = known[uid];
+			if (known[cookieKey(uid)]) {
+				roles[uid] = known[cookieKey(uid)];
 			} else if (postedIn(threads[uid])) {
 				// posted here but not told yet: a grant may have arrived since
 				toAsk.push(uid);

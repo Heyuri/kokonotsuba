@@ -13,7 +13,7 @@ use Kokonotsuba\thread\threadRepository;
 /**
  * Who a visitor is to a thread, and the flags OP moderation leaves on posts.
  *
- * Ownership is live: the visitor's browser token matches the opening post's, or their post
+ * Ownership is live: the browser token matches the opening post's, or their post
  * password (the pwdc cookie, or one typed into a form) verifies against it. Once ownership has
  * been transferred the owner row in thread_mods replaces that, and the opening post's token and
  * password no longer count. Mods are always rows.
@@ -27,8 +27,17 @@ final class threadModService {
 
 	/** The UI hint cookie: thread uids this browser moderates. Never trusted server-side. */
 	public const COOKIE = 'koko_threadmod';
-	private const COOKIE_MAX_THREADS = 60;
+	private const COOKIE_MAX_THREADS = 40;
 	private const COOKIE_DAYS = 90;
+
+	/** Hex digits of the thread uid kept per entry; a hint, so a rare prefix clash only costs a status lookup. */
+	public const COOKIE_UID_LENGTH = 16;
+
+	/**
+	 * Byte budget for the value. The whole cookie goes out in the response headers of every new
+	 * thread, and a proxy refuses headers past its buffer (nginx: 4 KB) with a 502.
+	 */
+	private const COOKIE_MAX_BYTES = 1024;
 
 	/** @var array<string, threadRole> role cache per thread for this request */
 	private array $roles = [];
@@ -336,6 +345,8 @@ final class threadModService {
 	 * What the cookie says this browser moderates: thread uid => role. A hint for threadMod.js
 	 * only; the server never reads a role out of it.
 	 *
+	 * Keyed by cookieKey(). Reads the compact form (`key.o_key.m`) and the older full-uid one (`uid:o,uid:m`).
+	 *
 	 * @return array<string, threadRole>
 	 */
 	public function rememberedThreads(): array {
@@ -347,13 +358,23 @@ final class threadModService {
 
 		$roles = [];
 
-		foreach (explode(',', $raw) as $entry) {
-			if (preg_match('/^([a-f0-9]{1,64}):([om])$/', $entry, $m) === 1) {
-				$roles[$m[1]] = $m[2] === 'o' ? threadRole::OWNER : threadRole::MOD;
+		foreach (preg_split('/[,_]/', $raw) as $entry) {
+			if (preg_match('/^([a-f0-9]{1,64})[:.]([om])$/', $entry, $m) === 1) {
+				$roles[self::cookieKey($m[1])] = $m[2] === 'o' ? threadRole::OWNER : threadRole::MOD;
 			}
 		}
 
 		return $roles;
+	}
+
+	/** Whether the hint cookie already lists this thread. */
+	public function remembers(string $threadUid): bool {
+		return isset($this->rememberedThreads()[self::cookieKey($threadUid)]);
+	}
+
+	/** The short form of a thread uid the hint cookie stores. */
+	public static function cookieKey(string $threadUid): string {
+		return substr(strtolower($threadUid), 0, self::COOKIE_UID_LENGTH);
 	}
 
 	/**
@@ -372,8 +393,9 @@ final class threadModService {
 				continue;
 			}
 
-			unset($list[$threadUid]);
-			$list[$threadUid] = $role;
+			$key = self::cookieKey($threadUid);
+			unset($list[$key]);
+			$list[$key] = $role;
 		}
 
 		$this->writeCookie(array_slice($list, -self::COOKIE_MAX_THREADS, null, true));
@@ -381,7 +403,7 @@ final class threadModService {
 
 	public function forgetThread(string $threadUid): void {
 		$list = $this->rememberedThreads();
-		unset($list[$threadUid]);
+		unset($list[self::cookieKey($threadUid)]);
 		$this->writeCookie($list);
 	}
 
@@ -392,13 +414,26 @@ final class threadModService {
 		}
 
 		$entries = [];
-		foreach ($list as $threadUid => $role) {
-			$entries[] = $threadUid . ':' . ($role->isOwner() ? 'o' : 'm');
+		foreach ($list as $key => $role) {
+			$entries[] = $key . '.' . ($role->isOwner() ? 'o' : 'm');
 		}
 
-		$this->cookieService->set(
+		// oldest first, so they go first when over budget
+		while (count($entries) > 1 && strlen(implode('_', $entries)) > self::COOKIE_MAX_BYTES) {
+			array_shift($entries);
+		}
+
+		$value = implode('_', $entries);
+
+		// unchanged: no Set-Cookie at all, the response stays small
+		if ($value === $this->cookieService->get(self::COOKIE, '')) {
+			return;
+		}
+
+		// hex, '.' and '_' need no encoding; raw keeps the value at its real size
+		$this->cookieService->setRaw(
 			self::COOKIE,
-			implode(',', $entries),
+			$value,
 			$this->request->getRequestTime() + self::COOKIE_DAYS * 86400,
 			'/',
 			'',

@@ -261,7 +261,7 @@ class moduleMain extends abstractModuleMain {
 
 		$threadUid = $post->getThreadUid();
 
-		if (isset($this->service->rememberedThreads()[$threadUid])) {
+		if ($this->service->remembers($threadUid)) {
 			return;
 		}
 
