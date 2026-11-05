@@ -334,6 +334,24 @@ class ConfigServiceTest extends TestCase {
 		$this->assertSame(0, $this->service->getEffectiveConfig(self::BOARD)['MAX_KB']);
 	}
 
+	public function testSelectValuesAreStoredAsTheOptionsOwnValue(): void {
+		$this->service->saveOverrides(self::BOARD, $this->submission(['modules.displayIp.IPTOGGLE' => '2']));
+
+		$this->assertSame(2, $this->service->getOverrides(self::BOARD)['modules.displayIp.IPTOGGLE']);
+	}
+
+	/** A hand-crafted POST or CLI value outside the options is refused, not stored. */
+	public function testSelectRejectsAValueItDoesNotOffer(): void {
+		$this->assertThrows(
+			fn() => $this->service->saveOverrides(self::BOARD, $this->submission(['modules.countryFlags.FLAG_MODE' => '3'])),
+			\InvalidArgumentException::class
+		);
+		$this->assertThrows(
+			fn() => $this->service->setOverride(self::BOARD, 'modules.countryFlags.FLAG_MODE', '0'),
+			\InvalidArgumentException::class
+		);
+	}
+
 	public function testSetOverrideRejectsAnUnknownSetting(): void {
 		$this->assertThrows(
 			fn() => $this->service->setOverride(self::BOARD, 'NOT_A_SETTING', 'x'),

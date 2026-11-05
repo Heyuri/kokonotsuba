@@ -182,6 +182,10 @@ class legacyConfigConverter {
 			case configSchema::TYPE_BOOL:
 				return (bool)$legacyValue;
 
+			case configSchema::TYPE_SELECT:
+				// A value the select no longer offers falls back to the default.
+				return configSchema::matchOption($meta, $legacyValue) ?? $meta['default'];
+
 			case configSchema::TYPE_INT:
 				$int = (int)$legacyValue;
 				$min = $meta['min'] ?? configSchema::DEFAULT_INT_MIN;

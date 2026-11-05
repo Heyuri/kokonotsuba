@@ -340,6 +340,19 @@ function renderConfigInput(templateEngine $tpl, array $meta, string $inputKey, m
 				'{$TEMPLATE_OPTIONS}' => $options,
 			]);
 
+		case configSchema::TYPE_SELECT:
+			$options = '';
+			foreach ($meta['options'] as $value => $labelKey) {
+				$options .= $tpl->ParseBlock('CONFIG_SELECT_OPTION', [
+					'{$OPTION_VALUE}' => sanitizeStr((string)$value),
+					'{$OPTION_LABEL}' => sanitizeStr(_T($labelKey)),
+					'{$SELECTED}'     => (string)$value === (string)$current ? 'selected' : '',
+				]);
+			}
+			return $tpl->ParseBlock('CONFIG_INPUT_SELECT', $values + [
+				'{$SELECT_OPTIONS}' => $options,
+			]);
+
 		case configSchema::TYPE_STRING:
 		default:
 			return $tpl->ParseBlock('CONFIG_INPUT_STRING', $values + [

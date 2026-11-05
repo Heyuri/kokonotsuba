@@ -280,6 +280,9 @@ class LegacyConfigConverterTest extends TestCase {
 				case configSchema::TYPE_ARRAY:
 					$this->assertTrue(is_array($value), "{$dotpath} should be an array");
 					break;
+				case configSchema::TYPE_SELECT:
+					$this->assertSame($value, configSchema::matchOption($meta, $value), "{$dotpath} should be one of its options");
+					break;
 				default:
 					$this->assertTrue(is_string($value), "{$dotpath} should be a string");
 			}

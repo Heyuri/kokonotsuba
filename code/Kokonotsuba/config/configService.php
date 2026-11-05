@@ -357,6 +357,15 @@ class configService {
 				$min = $meta['min'] ?? configSchema::DEFAULT_INT_MIN;
 				return $min === null ? $int : max((int)$min, $int);
 
+			case configSchema::TYPE_SELECT:
+				$option = configSchema::matchOption($meta, $raw);
+				if ($option === null) {
+					throw new InvalidArgumentException(
+						"Invalid value for setting '{$dotpath}': choose one of " . implode(', ', array_keys($meta['options'])) . '.'
+					);
+				}
+				return $option;
+
 			case configSchema::TYPE_ARRAY:
 				$text = trim((string)$raw);
 				if ($text === '') {

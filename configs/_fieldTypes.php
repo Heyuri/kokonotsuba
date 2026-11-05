@@ -5,7 +5,7 @@
  * Each config file `require_once`s this and uses these to declare fields concisely instead of
  * repeating the ['default' => ..., 'type' => ..., 'label' => ..., 'desc' => ...] shape:
  *
- *   use function Kokonotsuba\config\fields\{boolField, intField, stringField, textField, arrayField};
+ *   use function Kokonotsuba\config\fields\{boolField, intField, stringField, textField, arrayField, selectField};
  *   return [
  *       '_group'      => 'Posting',
  *       'ALWAYS_NOKO' => boolField('config_label_ALWAYS_NOKO', false, 'config_desc_ALWAYS_NOKO'),
@@ -55,6 +55,17 @@ function textField(string $label, string $default, string $desc = '', bool $glob
 /** Build an array field definition; $map edits it as key => value rows even while it is empty. */
 function arrayField(string $label, array $default, string $desc = '', bool $global = false, bool $map = false): array {
 	return ['default' => $default, 'type' => 'array', 'label' => $label, 'desc' => $desc, 'global' => $global, 'map' => $map];
+}
+
+/**
+ * Build a select field: a <select> offering a fixed set of values, one per option.
+ *
+ * $options maps each stored value to the language key of its label, named
+ * 'config_option_' + dot-path + '.' + value (e.g. 'config_option_modules.displayIp.IPTOGGLE.1').
+ * Saving a value that is not one of the options is refused.
+ */
+function selectField(string $label, int|string $default, array $options, string $desc = '', bool $global = false): array {
+	return ['default' => $default, 'type' => 'select', 'label' => $label, 'desc' => $desc, 'options' => $options, 'global' => $global];
 }
 
 /**

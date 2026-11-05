@@ -37,6 +37,7 @@ class configSchema {
 	public const TYPE_TEXT     = 'text';
 	public const TYPE_ARRAY    = 'array';
 	public const TYPE_TEMPLATE = 'template';
+	public const TYPE_SELECT   = 'select';
 
 	/** Lower bound applied to int fields that don't declare their own 'min'. */
 	public const DEFAULT_INT_MIN = 0;
@@ -148,7 +149,7 @@ class configSchema {
 	 * @param string $dotpath     Config dot-path key.
 	 * @param mixed  $meta        Raw metadata array from a schema file.
 	 * @param string $moduleLabel Owning module's sub-header label ('' for core fields).
-	 * @return array{default: mixed, type: string, label: string, desc: string, module: string, min: int|null, global: bool, map: bool}
+	 * @return array{default: mixed, type: string, label: string, desc: string, module: string, min: int|null, global: bool, map: bool, options: array}
 	 */
 	private static function normalizeField(string $dotpath, mixed $meta, string $moduleLabel = ''): array {
 		$meta = is_array($meta) ? $meta : ['default' => $meta];
@@ -171,7 +172,28 @@ class configSchema {
 			'min'     => $min,
 			'global'  => (bool)($meta['global'] ?? false),
 			'map'     => $type === self::TYPE_ARRAY && !empty($meta['map']),
+			'options' => $type === self::TYPE_SELECT ? (array)($meta['options'] ?? []) : [],
 		];
+	}
+
+	/**
+	 * Find the select option a raw value names, compared as strings since form posts are strings.
+	 *
+	 * @param array $meta Normalized field metadata.
+	 * @param mixed $raw  Submitted or stored value.
+	 * @return int|string|null The option's own value (keeping its int type), or null when it is not an option.
+	 */
+	public static function matchOption(array $meta, mixed $raw): int|string|null {
+		if (!is_scalar($raw)) {
+			return null;
+		}
+		$wanted = trim((string)$raw);
+		foreach (array_keys($meta['options'] ?? []) as $value) {
+			if ((string)$value === $wanted) {
+				return $value;
+			}
+		}
+		return null;
 	}
 
 	/**

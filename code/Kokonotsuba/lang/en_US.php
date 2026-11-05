@@ -920,8 +920,10 @@ $language['config_desc_modules.antiSpam.FILTER_BAN_TIME'] = 'Ban duration when a
 $language['config_desc_modules.blotter.BLOTTER_PREVIEW_AMOUNT'] = 'Number of blotter entries previewed on the index and thread view.';
 
 // module/countryFlags/config.php
-$language['config_desc_modules.countryFlags.FLAG_MODE'] = '1 = hide flags on posts with "flag" in the email field, 2 = show them. In mode 2, "displayflag" in the OP\'s email field shows flags on every post in that thread.';
-$language['config_desc_modules.countryFlags.DISPLAYFLAG_TOGGLE'] = 'In mode 2, let OPs show flags on every post in their thread with "displayflag" in the email field.';
+$language['config_desc_modules.countryFlags.FLAG_MODE'] = 'Whether flags are shown by default, and what "flag" in a poster\'s email field does.';
+$language['config_option_modules.countryFlags.FLAG_MODE.1'] = 'Shown; posters hide theirs with "flag"';
+$language['config_option_modules.countryFlags.FLAG_MODE.2'] = 'Hidden; posters show theirs with "flag"';
+$language['config_desc_modules.countryFlags.DISPLAYFLAG_TOGGLE'] = 'When flags are hidden by default, let OPs show flags on every post in their thread with "displayflag" in the email field.';
 
 // module/deletedPosts/config.php
 $language['config_desc_modules.deletedPosts.DELETED_POSTS_TEMPLATE'] = 'Template used to render deleted posts.';
@@ -940,7 +942,9 @@ $language['config_desc_modules.dice.COMMENT_DICE_ROLL'] = 'Allow rolling dice fr
 $language['config_desc_modules.displayId.DISP_ID'] = 'When poster IDs are enabled: false = OPs opt in via mail, true = always on.';
 
 // module/displayIp/config.php
-$language['config_desc_modules.displayIp.IPTOGGLE'] = '1 = OPs toggle IP display, 2 = enabled for all posts.';
+$language['config_desc_modules.displayIp.IPTOGGLE'] = 'Which posts show part of the poster\'s IP address.';
+$language['config_option_modules.displayIp.IPTOGGLE.1'] = 'Threads whose OP has "displayip" in the email field';
+$language['config_option_modules.displayIp.IPTOGGLE.2'] = 'Every post';
 $language['config_desc_modules.viewPosts.SHOW_VISITOR_TOKEN'] = 'Show a short label for the browser each post was made with, beside its IP. Tells apart people sharing one address.';
 
 // module/emotes/config.php
