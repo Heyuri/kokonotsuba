@@ -921,6 +921,7 @@ $language['config_desc_modules.blotter.BLOTTER_PREVIEW_AMOUNT'] = 'Number of blo
 
 // module/countryFlags/config.php
 $language['config_desc_modules.countryFlags.FLAG_MODE'] = '1 = hide flags on posts with "flag" in the email field, 2 = show them. In mode 2, "displayflag" in the OP\'s email field shows flags on every post in that thread.';
+$language['config_desc_modules.countryFlags.DISPLAYFLAG_TOGGLE'] = 'In mode 2, let OPs show flags on every post in their thread with "displayflag" in the email field.';
 
 // module/deletedPosts/config.php
 $language['config_desc_modules.deletedPosts.DELETED_POSTS_TEMPLATE'] = 'Template used to render deleted posts.';
@@ -1260,6 +1261,7 @@ $language['config_label_modules.blotter.BLOTTER_PREVIEW_AMOUNT'] = 'Blotter prev
 
 // module/countryFlags/config.php
 $language['config_label_modules.countryFlags.FLAG_MODE'] = 'Country flag mode';
+$language['config_label_modules.countryFlags.DISPLAYFLAG_TOGGLE'] = 'Allow displayflag threads';
 
 // module/deletedPosts/config.php
 $language['config_label_modules.deletedPosts.DELETED_POSTS_TEMPLATE'] = 'Deleted posts template';

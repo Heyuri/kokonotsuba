@@ -55,7 +55,7 @@ class moduleMain extends abstractModuleMain {
 
 	/** Mode 2: the OP turned flags on for the whole thread with "displayflag" in the email field. */
 	private function isThreadOptedIn(Post $opPost): bool {
-		return str_contains($opPost->getEmail(), 'displayflag');
+		return $this->getModuleConfig('DISPLAYFLAG_TOGGLE', true) && str_contains($opPost->getEmail(), 'displayflag');
 	}
 
 	/** Whether the OP of the thread these posts belong to turned flags on for every post. */
