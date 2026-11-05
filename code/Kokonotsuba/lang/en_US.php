@@ -248,6 +248,8 @@ $language['no_search_field'] = "No target search field was selected!";
 $language['no_search_method'] = "No search method was selected!";
 // displayIp
 $language['posts_itt_display_ip'] = "Posts in this thread will display IP addresses.";
+// countryFlags
+$language['posts_itt_display_flag'] = "Posts in this thread will display country flags.";
 
 // mainscript.js // regist_withoutcomment,regist_upload_notsupport,js_convert_sakura
 $language['js_convert_sakura']			= 'Big5 sakura Japanese characters detected, please try to convert to standard one.';
@@ -918,7 +920,7 @@ $language['config_desc_modules.antiSpam.FILTER_BAN_TIME'] = 'Ban duration when a
 $language['config_desc_modules.blotter.BLOTTER_PREVIEW_AMOUNT'] = 'Number of blotter entries previewed on the index and thread view.';
 
 // module/countryFlags/config.php
-$language['config_desc_modules.countryFlags.FLAG_MODE'] = '1 = hide flags on posts with "flag" in the email field, 2 = show them.';
+$language['config_desc_modules.countryFlags.FLAG_MODE'] = '1 = hide flags on posts with "flag" in the email field, 2 = show them. In mode 2, "displayflag" in the OP\'s email field shows flags on every post in that thread.';
 
 // module/deletedPosts/config.php
 $language['config_desc_modules.deletedPosts.DELETED_POSTS_TEMPLATE'] = 'Template used to render deleted posts.';
