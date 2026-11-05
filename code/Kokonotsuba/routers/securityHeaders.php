@@ -33,12 +33,16 @@ final class securityHeaders {
 
 	/** The staff CSP, with the configured origins added to 'self'. */
 	public static function staffPolicy(string $staticUrl, string $websiteUrl, ?string $cdnUrl = null, string $pageHost = ''): string {
+		// accepted URLs that scripts can be loaded from
 		$scriptSources = self::sources(["'self'"], [$staticUrl, $cdnUrl ?? '']);
+		
+		// add the page's base domain and its subdomains to the accepted script sources (skipping any already listed)
 		foreach (self::domainSources($pageHost) as $source) {
 			if (!in_array($source, explode(' ', $scriptSources), true)) {
 				$scriptSources .= ' ' . $source;
 			}
 		}
+		
 		$formTargets = self::sources(["'self'"], [$websiteUrl]);
 
 		return "script-src $scriptSources 'unsafe-inline' 'wasm-unsafe-eval'; "
