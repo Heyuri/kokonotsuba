@@ -248,6 +248,8 @@ $language['no_search_field'] = "No target search field was selected!";
 $language['no_search_method'] = "No search method was selected!";
 // displayIp
 $language['posts_itt_display_ip'] = "Posts in this thread will display IP addresses.";
+// countryFlags
+$language['posts_itt_display_flag'] = "Posts in this thread will display country flags.";
 
 // mainscript.js // regist_withoutcomment,regist_upload_notsupport,js_convert_sakura
 $language['js_convert_sakura']			= 'Big5 sakura Japanese characters detected, please try to convert to standard one.';
@@ -918,7 +920,10 @@ $language['config_desc_modules.antiSpam.FILTER_BAN_TIME'] = 'Ban duration when a
 $language['config_desc_modules.blotter.BLOTTER_PREVIEW_AMOUNT'] = 'Number of blotter entries previewed on the index and thread view.';
 
 // module/countryFlags/config.php
-$language['config_desc_modules.countryFlags.FLAG_MODE'] = '1 = hide flags on posts with "flag" in the email field, 2 = show them.';
+$language['config_desc_modules.countryFlags.FLAG_MODE'] = 'Whether flags are shown by default, and what "flag" in a poster\'s email field does.';
+$language['config_option_modules.countryFlags.FLAG_MODE.1'] = 'Shown; posters hide theirs with "flag"';
+$language['config_option_modules.countryFlags.FLAG_MODE.2'] = 'Hidden; posters show theirs with "flag"';
+$language['config_desc_modules.countryFlags.DISPLAYFLAG_TOGGLE'] = 'When flags are hidden by default, let OPs show flags on every post in their thread with "displayflag" in the email field.';
 
 // module/deletedPosts/config.php
 $language['config_desc_modules.deletedPosts.DELETED_POSTS_TEMPLATE'] = 'Template used to render deleted posts.';
@@ -937,7 +942,9 @@ $language['config_desc_modules.dice.COMMENT_DICE_ROLL'] = 'Allow rolling dice fr
 $language['config_desc_modules.displayId.DISP_ID'] = 'When poster IDs are enabled: false = OPs opt in via mail, true = always on.';
 
 // module/displayIp/config.php
-$language['config_desc_modules.displayIp.IPTOGGLE'] = '1 = OPs toggle IP display, 2 = enabled for all posts.';
+$language['config_desc_modules.displayIp.IPTOGGLE'] = 'Which posts show part of the poster\'s IP address.';
+$language['config_option_modules.displayIp.IPTOGGLE.1'] = 'Threads whose OP has "displayip" in the email field';
+$language['config_option_modules.displayIp.IPTOGGLE.2'] = 'Every post';
 $language['config_desc_modules.viewPosts.SHOW_VISITOR_TOKEN'] = 'Show a short label for the browser each post was made with, beside its IP. Tells apart people sharing one address.';
 
 // module/emotes/config.php
@@ -1258,6 +1265,7 @@ $language['config_label_modules.blotter.BLOTTER_PREVIEW_AMOUNT'] = 'Blotter prev
 
 // module/countryFlags/config.php
 $language['config_label_modules.countryFlags.FLAG_MODE'] = 'Country flag mode';
+$language['config_label_modules.countryFlags.DISPLAYFLAG_TOGGLE'] = 'Allow displayflag threads';
 
 // module/deletedPosts/config.php
 $language['config_label_modules.deletedPosts.DELETED_POSTS_TEMPLATE'] = 'Deleted posts template';

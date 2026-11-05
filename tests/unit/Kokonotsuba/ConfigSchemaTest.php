@@ -73,6 +73,7 @@ class ConfigSchemaTest extends TestCase {
 			configSchema::TYPE_TEXT,
 			configSchema::TYPE_ARRAY,
 			configSchema::TYPE_TEMPLATE,
+			configSchema::TYPE_SELECT,
 		];
 
 		foreach (configSchema::getAllFields() as $dotpath => $meta) {
@@ -164,6 +165,43 @@ class ConfigSchemaTest extends TestCase {
 				"{$dotpath} defaults to {$meta['default']}, below its min of {$meta['min']}"
 			);
 		}
+	}
+
+	// ---- select options -----------------------------------------------------
+
+	/** A select must offer its own default, or the form could never show it as chosen. */
+	public function testSelectDefaultsAreOneOfTheirOptions(): void {
+		foreach (configSchema::getAllFields() as $dotpath => $meta) {
+			if ($meta['type'] !== configSchema::TYPE_SELECT) {
+				$this->assertSame([], $meta['options'], "{$dotpath} is not a select but declares options");
+				continue;
+			}
+
+			$this->assertTrue($meta['options'] !== [], "{$dotpath} is a select with no options");
+			$this->assertSame($meta['default'], configSchema::matchOption($meta, $meta['default']), "{$dotpath} defaults to a value it does not offer");
+		}
+	}
+
+	/** Option labels are language keys named after the dot-path and the value, and exist in en_US. */
+	public function testSelectOptionLabelsAreLanguageKeys(): void {
+		$language = [];
+		require KOKO_TEST_ROOT . '/code/Kokonotsuba/lang/en_US.php';
+
+		foreach (configSchema::getAllFields() as $dotpath => $meta) {
+			foreach ($meta['options'] as $value => $labelKey) {
+				$this->assertSame("config_option_{$dotpath}.{$value}", $labelKey, "{$dotpath} option {$value} has a label that is not its language key");
+				$this->assertTrue(isset($language[$labelKey]), "missing language entry: {$labelKey}");
+			}
+		}
+	}
+
+	public function testMatchOptionKeepsTheOptionsOwnType(): void {
+		$meta = configSchema::getFieldMeta('modules.displayIp.IPTOGGLE');
+
+		$this->assertSame(2, configSchema::matchOption($meta, '2'));
+		$this->assertSame(1, configSchema::matchOption($meta, ' 1 '));
+		$this->assertNull(configSchema::matchOption($meta, '3'));
+		$this->assertNull(configSchema::matchOption($meta, ['1']));
 	}
 
 	// ---- language keys ------------------------------------------------------
