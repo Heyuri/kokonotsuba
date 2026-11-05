@@ -157,7 +157,7 @@ function getBoardStyleSet(array $config): array {
 function getBoardStylesheetsFromConfig(array $config): string {
 	[$styleKey, $styles] = getBoardStyleSet($config);
 
-	return generateBoardStylesheets($styles, $config['STATIC_URL'] ?? '', 'css/' . $styleKey . '/');
+	return generateBoardStylesheets($styles, $config['STATIC_URL'] ?? '', $styleKey);
 }
 
 /**
@@ -166,11 +166,12 @@ function getBoardStylesheetsFromConfig(array $config): string {
  *
  * @param array  $styles    Associative array of style name => CSS filename.
  * @param string $staticUrl Base URL for static assets (e.g. 'https://static.example.net/').
- * @param string $cssDir    CSS subdirectory path (e.g. 'css/kokoimg/').
- * @return string Generated <link> HTML tags.
+ * @param string $styleKey  Style set, which is also the CSS subdirectory (e.g. 'kokoimg').
+ * @return string Generated <link> HTML tags, tagged with data-style-set for style.js.
  */
-function generateBoardStylesheets(array $styles, string $staticUrl, string $cssDir): string {
+function generateBoardStylesheets(array $styles, string $staticUrl, string $styleKey): string {
 	$html = '';
+	$cssDir = 'css/' . $styleKey . '/';
 	$first = true;
 
 	foreach ($styles as $title => $filename) {
@@ -178,7 +179,8 @@ function generateBoardStylesheets(array $styles, string $staticUrl, string $cssD
 		$rel = $first ? 'stylesheet' : 'stylesheet alternate';
 		$html .= "\t" . '<link class="linkstyle" rel="' . $rel . '" href="'
 			. sanitizeStr($staticUrl . $cssDir . $filename)
-			. '" title="' . sanitizeStr($title) . '">' . "\n";
+			. '" title="' . sanitizeStr($title)
+			. '" data-style-set="' . sanitizeStr($styleKey) . '">' . "\n";
 		$first = false;
 	}
 

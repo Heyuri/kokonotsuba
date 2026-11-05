@@ -6,7 +6,8 @@ namespace Kokonotsuba\routers;
  * Security headers for every koko.php response.
  *
  * Staff sessions also get a script-focused CSP: inline scripts are still allowed (the pages carry
- * some), but foreign script hosts, plugins, <base> hijacks and off-site form posts are blocked.
+ * some), but scripts from outside the site's domain, plugins, <base> hijacks
+ * and off-site form posts are blocked.
  * Images, media and frames are left open for embeds, ads and the upload CDN.
  */
 final class securityHeaders {
@@ -15,8 +16,9 @@ final class securityHeaders {
 	 * @param string      $staticUrl  STATIC_URL, where scripts are served from.
 	 * @param string      $websiteUrl WEBSITE_URL, where every board's koko.php lives.
 	 * @param string|null $cdnUrl     CDN_URL when USE_CDN is on.
+	 * @param string      $pageHost   The request's Host header; its domain and subdomains may serve scripts.
 	 */
-	public static function send(bool $isStaff, string $staticUrl, string $websiteUrl, ?string $cdnUrl = null): void {
+	public static function send(bool $isStaff, string $staticUrl, string $websiteUrl, ?string $cdnUrl = null, string $pageHost = ''): void {
 		if (headers_sent()) {
 			return;
 		}
@@ -25,13 +27,22 @@ final class securityHeaders {
 		header('Referrer-Policy: strict-origin-when-cross-origin');
 
 		if ($isStaff) {
-			header('Content-Security-Policy: ' . self::staffPolicy($staticUrl, $websiteUrl, $cdnUrl));
+			header('Content-Security-Policy: ' . self::staffPolicy($staticUrl, $websiteUrl, $cdnUrl, $pageHost));
 		}
 	}
 
 	/** The staff CSP, with the configured origins added to 'self'. */
-	public static function staffPolicy(string $staticUrl, string $websiteUrl, ?string $cdnUrl = null): string {
+	public static function staffPolicy(string $staticUrl, string $websiteUrl, ?string $cdnUrl = null, string $pageHost = ''): string {
+		// accepted URLs that scripts can be loaded from
 		$scriptSources = self::sources(["'self'"], [$staticUrl, $cdnUrl ?? '']);
+		
+		// add the page's base domain and its subdomains to the accepted script sources (skipping any already listed)
+		foreach (self::domainSources($pageHost) as $source) {
+			if (!in_array($source, explode(' ', $scriptSources), true)) {
+				$scriptSources .= ' ' . $source;
+			}
+		}
+		
 		$formTargets = self::sources(["'self'"], [$websiteUrl]);
 
 		return "script-src $scriptSources 'unsafe-inline' 'wasm-unsafe-eval'; "
@@ -50,6 +61,21 @@ final class securityHeaders {
 		}
 
 		return implode(' ', $sources);
+	}
+
+	/**
+	 * The base domain of a host (its last two labels) and every subdomain of it, scheme-less so they
+	 * follow the page's scheme. Empty for an IP, a single-label host or anything malformed.
+	 * Two labels is wrong for suffixes like co.uk, where it would cover the whole suffix.
+	 */
+	private static function domainSources(string $host): array {
+		$host = strtolower(preg_replace('/:\d+$/', '', trim($host)));
+		if ($host === '' || filter_var($host, FILTER_VALIDATE_IP) || !preg_match('/^[a-z0-9-]+(\.[a-z0-9-]+)+$/', $host)) {
+			return [];
+		}
+
+		$baseDomain = implode('.', array_slice(explode('.', $host), -2));
+		return [$baseDomain, '*.' . $baseDomain];
 	}
 
 	/**

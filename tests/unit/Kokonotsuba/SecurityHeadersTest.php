@@ -44,4 +44,18 @@ class SecurityHeadersTest extends TestCase {
 		$policy = securityHeaders::staffPolicy('javascript:alert(1)', '/');
 		$this->assertStringNotContains('javascript', $policy);
 	}
+
+	public function testPageDomainAndSubdomainsAreScriptSources(): void {
+		$policy = securityHeaders::staffPolicy('/static/', '/', null, 'Boards.Example.net:8080');
+
+		$this->assertStringContains("script-src 'self' example.net *.example.net 'unsafe-inline'", $policy);
+		$this->assertStringNotContains('example.net', explode('script-src', $policy)[0] . explode(';', $policy, 2)[1]);
+	}
+
+	public function testIpAndSingleLabelHostsAddNoDomain(): void {
+		$bare = "script-src 'self' 'unsafe-inline'";
+		$this->assertStringContains($bare, securityHeaders::staffPolicy('/static/', '/', null, '127.0.0.1:8080'));
+		$this->assertStringContains($bare, securityHeaders::staffPolicy('/static/', '/', null, 'localhost'));
+		$this->assertStringContains($bare, securityHeaders::staffPolicy('/static/', '/', null, 'evil.net/ x'));
+	}
 }

@@ -81,7 +81,8 @@ class modeHandler {
 			getRoleLevelFromSession()->isStaff(),
 			(string) ($globalConfig['STATIC_URL'] ?? ''),
 			(string) ($globalConfig['WEBSITE_URL'] ?? ''),
-			!empty($globalConfig['USE_CDN']) ? (string) ($globalConfig['CDN_URL'] ?? '') : null
+			!empty($globalConfig['USE_CDN']) ? (string) ($globalConfig['CDN_URL'] ?? '') : null,
+			$request->getHttpHost()
 		);
 
 		$entry = (is_string($mode) ? $this->routes[$mode] ?? null : null)
