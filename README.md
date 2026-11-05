@@ -5,7 +5,7 @@
 
 ## Required stack
 Kokonotsuba is designed and tested on the following stack, and isn't guaranteed to work on any other stack.
-- OS: Debian 10\~12
+- OS: Debian 12-13
 - Web server: nginx (but seems to work fine on Apache)
 - DB: MariaDB
 - PHP: PHP8.3\~PHP8.5
