@@ -46,6 +46,12 @@ function kkStyleSave(title) {
 	if (kkStyleCookieGet() !== title) kkStyleCookieSet(title);
 }
 
+/** Remove the load-time copy of the saved style once a different one is active. */
+function kkDropBootStyle(title) {
+	var boot = document.getElementById("kkstyleboot");
+	if (boot && boot.getAttribute("data-title") !== title) boot.remove();
+}
+
 /** Enable the link titled `title`; false when this set has no such style. */
 function kkApplyStyle(title) {
 	var link = document.getElementsByClassName("linkstyle");
@@ -54,6 +60,7 @@ function kkApplyStyle(title) {
 		if (link[i].title === title) found = true;
 	}
 	if (!found) return false;
+	kkDropBootStyle(title);
 	for (var i = 0; i < link.length; i++) {
 		link[i].disabled = link[i].title !== title;
 	}
@@ -64,7 +71,16 @@ function kkApplyStyle(title) {
 (function() {
 	// Every pick writes the cookie, so it is the newest copy; push it to the hub if the mirror lags
 	var savedStyle = kkStyleCookieGet() || kkStore.get(KKSTYLE_KEY);
-	if (savedStyle && kkApplyStyle(savedStyle)) kkStyleSave(savedStyle);
+	if (!savedStyle || !kkApplyStyle(savedStyle)) return;
+	kkStyleSave(savedStyle);
+	// A sheet enabled from script does not block rendering; a written one does, so no unstyled paint
+	var link = document.getElementsByClassName("linkstyle");
+	for (var i = 0; i < link.length; i++) {
+		if (link[i].title !== savedStyle || link[i].rel.indexOf("alt") === -1) continue;
+		var esc = function(v) { return v.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); };
+		document.write('<link id="kkstyleboot" rel="stylesheet" href="' + esc(link[i].href) + '" data-title="' + esc(savedStyle) + '">');
+		break;
+	}
 })();
 
 document.write('<style id="usercss"></style>');
@@ -189,6 +205,7 @@ const kkstyle = {
 				return;
 			} else {
 				active = kkstyle.get_active_stylesheet();
+				kkDropBootStyle(active);
 				kkStyleSave(active);
 			}
 		} else {
