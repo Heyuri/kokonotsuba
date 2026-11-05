@@ -46,6 +46,7 @@ final class securityHeaders {
 		$formTargets = self::sources(["'self'"], [$websiteUrl]);
 
 		return "script-src $scriptSources 'unsafe-inline' 'wasm-unsafe-eval'; "
+			. "worker-src $scriptSources blob:; "
 			. "object-src 'none'; base-uri 'self'; form-action $formTargets";
 	}
 
