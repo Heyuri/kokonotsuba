@@ -173,9 +173,20 @@ const kkstyle = {
 		var usercssElement = document.getElementById("usercss");
 		if (usercssElement) {
 			usercssElement.textContent = value;
-			kkStore.set(KKUSERCSS_KEY, value);
+			// Save once typing pauses, so keystrokes never trip kkStore's flood guard
+			kkstyle._usercssPending = value;
+			clearTimeout(kkstyle._usercssTimer);
+			kkstyle._usercssTimer = setTimeout(kkstyle.flush_usercss, 500);
 		}
 	},
+	flush_usercss: function() {
+		clearTimeout(kkstyle._usercssTimer);
+		if (kkstyle._usercssPending === null) return;
+		kkStore.set(KKUSERCSS_KEY, kkstyle._usercssPending);
+		kkstyle._usercssPending = null;
+	},
+	_usercssPending: null,
+	_usercssTimer: null,
 	set_stylesheet: function(styletitle, _scroll = true) {
 		var active = null;
 		if (styletitle) {
@@ -251,6 +262,9 @@ window.addEventListener('load', function() {
 		}
 	});
 });
+
+// Leaving the page mid-pause still saves the last edit
+window.addEventListener('pagehide', function() { kkstyle.flush_usercss(); });
 
 /* Register */
 if (typeof(KOKOJS) != "undefined") {
