@@ -4,7 +4,7 @@
 	<script src="{$STATIC_URL}js/qu2.js?v=3" defer></script>
 	<script src="{$STATIC_URL}js/quoteLookup.js?v=1" defer></script>
 	<script src="{$STATIC_URL}js/qu3.js?v=26" defer></script>
-	<script src="{$STATIC_URL}js/style.js?v=4"></script>
+	<script src="{$STATIC_URL}js/style.js?v=5"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
 	<script src="{$STATIC_URL}js/gallery.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/attachmentExpander.js?v=7" defer></script>

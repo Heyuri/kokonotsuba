@@ -1,6 +1,6 @@
 <!--&HEADER_IMG_BASE/-->
 	<script src="{$STATIC_URL}js/koko.js?v=25"></script>
-	<script src="{$STATIC_URL}js/style.js?v=4"></script>
+	<script src="{$STATIC_URL}js/style.js?v=5"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
 	<script src="{$STATIC_URL}js/inline.js?v=4" defer></script>
 	<script src="{$STATIC_URL}js/admin.js?v=7" defer></script>
