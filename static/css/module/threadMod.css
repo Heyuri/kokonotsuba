@@ -2,41 +2,20 @@
 
 /* ---- threadMod: posts hidden by the thread's OP ---- */
 
-/* A summary-only <details> follows the comment as a child of the post; while it is closed the
-   post's other children are hidden, so the post is that one line and [Show] works without script. --color-bg-op-deleted
-   comes from each style sheet. */
+/* An OP-deleted reply is drawn in full and hidden with the thread's deletion stubs until the
+   OP's "View" ticks the toggle (globalBase.css). */
+
+.stubToggle:not(:checked) ~ .reply-container:has(.post.opDeleted),
+.stubToggle:not(:checked) ~ * .reply-container:has(.post.opDeleted) {
+	display: none;
+}
 
 .post.opDeleted {
-	background: var(--color-bg-op-deleted, #f8d7d7);
+	opacity: 0.75;
 }
 
-.post.opDeleted:not(:has(> .opDeletedDetails[open])) > :not(.opDeletedDetails) {
-	display: none;
-}
-
-.opDeletedSummary {
-	cursor: pointer;
-	list-style: none;
-	color: var(--color-fg-omitted, #707070);
-}
-
-.opDeletedSummary::-webkit-details-marker {
-	display: none;
-}
-
-.opDeletedSummary .opDeletedShow,
-.opDeletedSummary .opDeletedHide {
-	color: var(--color-fg-link);
-}
-
-.opDeletedSummary .opDeletedHide,
-.opDeletedDetails[open] .opDeletedShow,
-.opDeletedDetails[open] .replyPosition {
-	display: none;
-}
-
-.opDeletedDetails[open] .opDeletedHide {
-	display: inline;
+.opDeletedLabel {
+	color: var(--color-fg-warning);
 }
 
 /* the ## OP box beside the name field, shown by threadMod.js for the thread's mods */
