@@ -5,6 +5,6 @@
 			<div class="threadHeader">
 				<!--&IF($MODULE_THREAD_HEADER,'{$MODULE_THREAD_HEADER}','')-->
 			</div>
-			{$THREAD_OP}
+			{$STUB_TOGGLE}{$THREAD_OP}
 			{$REPLIES}
 		</div>

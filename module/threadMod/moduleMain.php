@@ -17,6 +17,7 @@ use Kokonotsuba\module_classes\traits\listeners\OpeningPostListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostCssClassListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\RegistPostInsertedListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\ThreadDeletedPostCountListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ThreadReplyListenerTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\ban\visitorTokenSigner;
@@ -45,6 +46,7 @@ class moduleMain extends abstractModuleMain {
 	use PostCssClassListenerTrait;
 	use RegistBeginListenerTrait;
 	use RegistPostInsertedListenerTrait;
+	use ThreadDeletedPostCountListenerTrait;
 	use ThreadReplyListenerTrait;
 
 	public const CHECKPOINT = 'threadMod';
@@ -112,6 +114,7 @@ class moduleMain extends abstractModuleMain {
 
 		$this->listenModuleHeader('onGenerateModuleHeader');
 		$this->listenPostCssClass('onPostCssClass');
+		$this->listenThreadDeletedPostCount('onThreadDeletedPostCount');
 		// last, after PostComment and BelowComment have finished with the values it wraps
 		$this->listenThreadReply('onRenderReply', -100);
 		$this->listenOpeningPost('onRenderOpeningPost');
@@ -158,10 +161,14 @@ class moduleMain extends abstractModuleMain {
 		}
 	}
 
+	/** @param Post[] $posts */
+	private function onThreadDeletedPostCount(int &$count, array $posts): void {
+		$count += count(array_filter($posts, fn(Post $post) => threadModService::isOpDeleted($post)));
+	}
+
 	/**
-	 * Collapse an OP-deleted reply to one line: a summary-only <details> goes below the comment as
-	 * a child of the post ({$MODULE_POST_FOOTER}) and the CSS hides the post's other children until
-	 * it is open. Plain HTML, so it works without script.
+	 * Label an OP-deleted reply below its comment. The post is drawn in full; it is hidden with
+	 * the thread's deletion stubs until the OP's "View" ticks them open.
 	 */
 	private function onRenderReply(array &$templateValues, Post &$post, array &$threadPosts): void {
 		$deletion = threadModService::deletionOf($post);
@@ -177,18 +184,8 @@ class moduleMain extends abstractModuleMain {
 			$title = ' title="' . sanitizeStr(_T('threadmod_deleted_by_token', substr($deletion['hash'], 0, visitorTokenSigner::DISPLAY_LENGTH))) . '"';
 		}
 
-		$position = '';
-
-		if (!empty($templateValues['{$POST_POSITION_ENABLED}'])) {
-			$position = '<span class="replyPosition">' . (int)($templateValues['{$POST_POSITION}'] ?? 0) . '</span> ';
-		}
-
-		$templateValues['{$MODULE_POST_FOOTER}'] = ($templateValues['{$MODULE_POST_FOOTER}'] ?? '') . '<details class="opDeletedDetails">'
-			. '<summary class="opDeletedSummary"' . $title . '>' . $position
-			. '<span class="opDeletedLabel">' . sanitizeStr($label) . '</span> '
-			. '<span class="opDeletedToggle">[<span class="opDeletedShow">' . sanitizeStr(_T('threadmod_show')) . '</span>'
-			. '<span class="opDeletedHide">' . sanitizeStr(_T('threadmod_hide')) . '</span>]</span>'
-			. '</summary></details>';
+		$templateValues['{$MODULE_POST_FOOTER}'] = ($templateValues['{$MODULE_POST_FOOTER}'] ?? '')
+			. '<div class="opDeletedLabel"' . $title . '>' . sanitizeStr($label) . '</div>';
 	}
 
 	/** A plain link to the tools page under every OP, for readers without script. */

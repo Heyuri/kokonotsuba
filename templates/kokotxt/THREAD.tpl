@@ -2,7 +2,7 @@
 		<div class="innerbox">
 			{$BOARD_THREAD_NAME}
 			<div class="tnav">{$THREADNAV}</div>
-			{$THREAD_OP}
+			{$STUB_TOGGLE}{$THREAD_OP}
 			<div class="repliesOmitted"></div>
 			<div class="latestReplies">
 				{$REPLIES}

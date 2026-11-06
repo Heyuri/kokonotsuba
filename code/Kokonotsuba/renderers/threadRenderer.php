@@ -91,6 +91,12 @@ class threadRenderer {
 
 		$templateValues['{$THREAD_OP}'] = '';
 
+		// deleted posts stay hidden until this checkbox is ticked through the OP's notice (css, works without js)
+		$deletedCount = $this->countDeletedPosts($posts);
+		$templateValues['{$STUB_TOGGLE}'] = $deletedCount > 0
+			? '<input type="checkbox" class="stubToggle" id="' . $this->stubToggleId($thread) . '" aria-hidden="true">'
+			: '';
+
 		// Expose pagination position so the client-side incremental updater can tell
 		// whether this page shows the tail (newest posts) of the thread. On an earlier
 		// page the newest on-page post isn't the newest in the thread, so the updater
@@ -136,7 +142,8 @@ class threadRenderer {
 						$thread,
 						$currentPage,
 						$totalPages,
-						$recentRepliesCount
+						$recentRepliesCount,
+						$deletedCount
 			);
 			if($i === 0) {
 				$templateValues['{$THREAD_OP}'] = $postHtml;
@@ -156,6 +163,21 @@ class threadRenderer {
 		$templateValues['{$THREADNAV}'] = $threadNav;
 
 		return $this->templateEngine->ParseBlock('THREAD', $templateValues);
+	}
+
+	/**
+	 * Stubs drawn for the thread, plus what modules hide the same way (threadMod's OP deletions).
+	 *
+	 * @param Post[] $posts
+	 */
+	private function countDeletedPosts(array $posts): int {
+		$count = count(array_filter($posts, fn(Post $post) => $post->getStubKind() !== null));
+		$this->moduleEngine->dispatch('ThreadDeletedPostCount', [&$count, $posts]);
+		return $count;
+	}
+
+	private function stubToggleId(Thread $thread): string {
+		return 'stubs' . $thread->getBoardUID() . '_' . $thread->getOpNumber();
 	}
 
 	/** The separator drawn after a thread. Modules (ads) key it on the thread's position on the page. */
@@ -196,7 +218,8 @@ class threadRenderer {
 		Thread $thread,
 		int $currentPage = 0,
 		int $totalPages = 1,
-		?int $recentRepliesCount = null
+		?int $recentRepliesCount = null,
+		int $deletedCount = 0
 	): string {
 		$isReply = $i > 0;
 
@@ -214,6 +237,14 @@ class threadRenderer {
 			$warnHidePost .= '<div class="omittedposts" data-gap="1">'._T('notice_viewing_last_posts', $shownReplies, $shownReplies === 1 ? _T('post_singular') : _T('post_multiple')).'</div>';
 		} elseif (!$isReply && $totalPages > 1) {
 			$warnHidePost .= '<div class="omittedposts" data-gap="' . ($currentPage > 1 ? '1' : '0') . '">'._T('notice_viewing_page', $currentPage, max(1, $totalPages)).'</div>';
+		}
+
+		// Deleted post notice, its label ticks the thread's stub toggle
+		if (!$isReply && $deletedCount > 0) {
+			$warnHidePost .= '<div class="deletedStubNotice"><small>'
+				. _T('deleted_stub_notice', $deletedCount, $deletedCount === 1 ? _T('post_singular') : _T('post_multiple'))
+				. ' <label for="' . $this->stubToggleId($thread) . '"><u class="stubView">' . _T('deleted_stub_view') . '</u><u class="stubHide">' . _T('deleted_stub_hide') . '</u></label>'
+				. '</small></div>';
 		}
 
 		// bind post op number to resto

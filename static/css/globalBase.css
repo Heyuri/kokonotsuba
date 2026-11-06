@@ -1717,16 +1717,28 @@ caption h3 {
 
 /* A deleted post's place in the thread: its position and who deleted it, nothing else. */
 .reply.deletedStub {
-	color: var(--color-fg-omitted, #707070);
 	padding: 0.25em;
 }
 
-.reply.deletedStub-user {
-	background: var(--color-bg-deleted-user, #d7f0d7);
+.deletedStubLabel {
+	color: var(--color-fg-warning);
 }
 
-.reply.deletedStub-staff {
-	background: var(--color-bg-deleted-staff, #d7e3f8);
+/* Stubs are hidden until the thread's toggle (ticked by the OP's notice) is checked */
+.stubToggle,
+.stubToggle:not(:checked) ~ .deletedStubContainer,
+.stubToggle:not(:checked) ~ * .deletedStubContainer,
+.stubToggle:not(:checked) ~ * .deletedStubNotice .stubHide,
+.stubToggle:checked ~ * .deletedStubNotice .stubView {
+	display: none;
+}
+
+.deletedStubNotice {
+	color: var(--color-fg-main);
+}
+
+.deletedStubNotice label {
+	cursor: pointer;
 }
 
 /* Form stored at the bottom: hidden at the top until koko.js moves it, so nothing shifts */

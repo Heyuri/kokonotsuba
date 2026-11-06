@@ -599,7 +599,7 @@
 
 		// a reply the OP deleted is shown in full, so the undo is an informed one
 		post.classList.remove('opDeleted');
-		post.querySelectorAll('.opDeletedDetails').forEach(function (el) { el.remove(); });
+		post.querySelectorAll('.opDeletedLabel').forEach(function (el) { el.remove(); });
 
 		cell.appendChild(post);
 	}
