@@ -200,7 +200,14 @@ class moduleMain extends abstractModuleMain {
 			'{$BEFORE_UID_DESC}'           => _T('post_api_before_uid_desc'),
 			'{$QUOTE_TEXT_DESC}'           => _T('post_api_quote_text_desc', textQuoteMatcher::MAX_NEEDLE_LENGTH),
 			'{$QUOTE_QUOTED_DESC}'         => _T('post_api_quote_quoted_desc'),
+			'{$EXAMPLE_RESPONSE}'          => _T('post_api_example_response'),
+			'{$EXAMPLE_ERROR}'             => _T('post_api_example_error'),
+			'{$EXAMPLE_QUOTE_MISS}'        => _T('post_api_example_quote_miss'),
 		]);
+
+		// the examples are drawn like [code] blocks, from the bbCode module's sheet
+		$unusedHeader = '';
+		$this->includeStylesheet('bbCode.css', $unusedHeader);
 
 		$html = $board->getBoardHead(_T('post_api_title'));
 		$html .= $infoHtml;

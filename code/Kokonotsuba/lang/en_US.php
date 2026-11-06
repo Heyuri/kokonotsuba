@@ -581,6 +581,9 @@ $language['post_api_returns_json_quote_source'] = 'Returns the nearest earlier p
 $language['post_api_before_uid_desc']         = 'The post_uid of the quoting post. Only posts before it are searched';
 $language['post_api_quote_text_desc']         = 'The quoted text without its leading ">", at most %d characters. A number is looked up as a post number, and a name with an extension also matches attachment file names';
 $language['post_api_quote_quoted_desc']       = 'Set to 1 for a ">>text" quote of a quote, which only matches posts that quote something themselves';
+$language['post_api_example_response'] = 'Example response';
+$language['post_api_example_error'] = 'A post that does not exist answers 404 with the message as a JSON string:';
+$language['post_api_example_quote_miss'] = 'The same object as a single post. When no earlier post matches, it answers 404 with "Post not found!".';
 
 // banner module
 $language['banner_no_file'] = 'No file uploaded.';
