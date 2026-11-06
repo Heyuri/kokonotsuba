@@ -10,7 +10,7 @@
 		<div class="tableViewportWrapper">
 		<table class="postlists">
 			<tr><th>{$TH_PARAMETER}</th><th>{$TH_TYPE}</th><th>{$TH_DESCRIPTION}</th></tr>
-			<tr><td><code>post_uid</code></td><td>integer</td><td>{$POST_UID_DESC}</td></tr>
+			<tr><td>post_uid</td><td>integer</td><td>{$POST_UID_DESC}</td></tr>
 		</table>
 		</div>
 
@@ -18,18 +18,18 @@
 		<div class="tableViewportWrapper">
 		<table class="postlists">
 			<tr><th>{$TH_FIELD}</th><th>{$TH_TYPE}</th><th>{$TH_DESCRIPTION}</th></tr>
-			<tr><td><code>post_uid</code></td><td>integer</td><td>{$FIELD_POST_UID}</td></tr>
-			<tr><td><code>timestamp</code></td><td>string</td><td>{$FIELD_TIMESTAMP}</td></tr>
-			<tr><td><code>name</code></td><td>string</td><td>{$FIELD_NAME}</td></tr>
-			<tr><td><code>tripcode</code></td><td>string</td><td>{$FIELD_TRIPCODE}</td></tr>
-			<tr><td><code>secure_tripcode</code></td><td>string</td><td>{$FIELD_SECURE_TRIPCODE}</td></tr>
-			<tr><td><code>capcode</code></td><td>string</td><td>{$FIELD_CAPCODE}</td></tr>
-			<tr><td><code>email</code></td><td>string</td><td>{$FIELD_EMAIL}</td></tr>
-			<tr><td><code>subject</code></td><td>string</td><td>{$FIELD_SUBJECT}</td></tr>
-			<tr><td><code>comment</code></td><td>string</td><td>{$FIELD_COMMENT}</td></tr>
-			<tr><td><code>parent_thread_uid</code></td><td>integer</td><td>{$FIELD_PARENT_THREAD_UID}</td></tr>
-			<tr><td><code>parent_post_number</code></td><td>integer</td><td>{$FIELD_PARENT_POST_NUMBER}</td></tr>
-			<tr><td><code>html</code></td><td>string</td><td>{$FIELD_HTML}</td></tr>
+			<tr><td>post_uid</td><td>integer</td><td>{$FIELD_POST_UID}</td></tr>
+			<tr><td>timestamp</td><td>string</td><td>{$FIELD_TIMESTAMP}</td></tr>
+			<tr><td>name</td><td>string</td><td>{$FIELD_NAME}</td></tr>
+			<tr><td>tripcode</td><td>string</td><td>{$FIELD_TRIPCODE}</td></tr>
+			<tr><td>secure_tripcode</td><td>string</td><td>{$FIELD_SECURE_TRIPCODE}</td></tr>
+			<tr><td>capcode</td><td>string</td><td>{$FIELD_CAPCODE}</td></tr>
+			<tr><td>email</td><td>string</td><td>{$FIELD_EMAIL}</td></tr>
+			<tr><td>subject</td><td>string</td><td>{$FIELD_SUBJECT}</td></tr>
+			<tr><td>comment</td><td>string</td><td>{$FIELD_COMMENT}</td></tr>
+			<tr><td>parent_thread_uid</td><td>integer</td><td>{$FIELD_PARENT_THREAD_UID}</td></tr>
+			<tr><td>parent_post_number</td><td>integer</td><td>{$FIELD_PARENT_POST_NUMBER}</td></tr>
+			<tr><td>html</td><td>string</td><td>{$FIELD_HTML}</td></tr>
 		</table>
 		</div>
 
@@ -40,8 +40,8 @@
 		<div class="tableViewportWrapper">
 		<table class="postlists">
 			<tr><th>{$TH_PARAMETER}</th><th>{$TH_TYPE}</th><th>{$TH_DESCRIPTION}</th></tr>
-			<tr><td><code>thread_uid</code></td><td>string</td><td>{$THREAD_UID_DESC}</td></tr>
-			<tr><td><code>page</code></td><td>integer</td><td>{$PAGE_PARAM_DESC}</td></tr>
+			<tr><td>thread_uid</td><td>string</td><td>{$THREAD_UID_DESC}</td></tr>
+			<tr><td>page</td><td>integer</td><td>{$PAGE_PARAM_DESC}</td></tr>
 		</table>
 		</div>
 
@@ -55,8 +55,8 @@
 		<div class="tableViewportWrapper">
 		<table class="postlists">
 			<tr><th>{$TH_PARAMETER}</th><th>{$TH_TYPE}</th><th>{$TH_DESCRIPTION}</th></tr>
-			<tr><td><code>board_uid</code></td><td>integer</td><td>{$BOARD_UID_DESC}</td></tr>
-			<tr><td><code>page</code></td><td>integer</td><td>{$PAGE_PARAM_DESC}</td></tr>
+			<tr><td>board_uid</td><td>integer</td><td>{$BOARD_UID_DESC}</td></tr>
+			<tr><td>page</td><td>integer</td><td>{$PAGE_PARAM_DESC}</td></tr>
 		</table>
 		</div>
 
@@ -65,11 +65,11 @@
 		<div class="tableViewportWrapper">
 		<table class="postlists">
 			<tr><th>{$TH_FIELD}</th><th>{$TH_TYPE}</th><th>{$TH_DESCRIPTION}</th></tr>
-			<tr><td><code>thread_uid</code></td><td>string</td><td>{$THREAD_LIST_FIELD_THREAD_UID}</td></tr>
-			<tr><td><code>subject</code></td><td>string</td><td>{$THREAD_LIST_FIELD_SUBJECT}</td></tr>
-			<tr><td><code>last_bump_time</code></td><td>string</td><td>{$THREAD_LIST_FIELD_LAST_BUMP_TIME}</td></tr>
-			<tr><td><code>thread_created_time</code></td><td>string</td><td>{$THREAD_LIST_FIELD_CREATED_TIME}</td></tr>
-			<tr><td><code>post_count</code></td><td>integer</td><td>{$THREAD_LIST_FIELD_POST_COUNT}</td></tr>
+			<tr><td>thread_uid</td><td>string</td><td>{$THREAD_LIST_FIELD_THREAD_UID}</td></tr>
+			<tr><td>subject</td><td>string</td><td>{$THREAD_LIST_FIELD_SUBJECT}</td></tr>
+			<tr><td>last_bump_time</td><td>string</td><td>{$THREAD_LIST_FIELD_LAST_BUMP_TIME}</td></tr>
+			<tr><td>thread_created_time</td><td>string</td><td>{$THREAD_LIST_FIELD_CREATED_TIME}</td></tr>
+			<tr><td>post_count</td><td>integer</td><td>{$THREAD_LIST_FIELD_POST_COUNT}</td></tr>
 		</table>
 		</div>
 
@@ -80,10 +80,10 @@
 		<div class="tableViewportWrapper">
 		<table class="postlists">
 			<tr><th>{$TH_PARAMETER}</th><th>{$TH_TYPE}</th><th>{$TH_DESCRIPTION}</th></tr>
-			<tr><td><code>thread_uid</code></td><td>string</td><td>{$THREAD_UID_DESC}</td></tr>
-			<tr><td><code>before_uid</code></td><td>integer</td><td>{$BEFORE_UID_DESC}</td></tr>
-			<tr><td><code>text</code></td><td>string</td><td>{$QUOTE_TEXT_DESC}</td></tr>
-			<tr><td><code>quoted</code></td><td>0 | 1</td><td>{$QUOTE_QUOTED_DESC}</td></tr>
+			<tr><td>thread_uid</td><td>string</td><td>{$THREAD_UID_DESC}</td></tr>
+			<tr><td>before_uid</td><td>integer</td><td>{$BEFORE_UID_DESC}</td></tr>
+			<tr><td>text</td><td>string</td><td>{$QUOTE_TEXT_DESC}</td></tr>
+			<tr><td>quoted</td><td>0 | 1</td><td>{$QUOTE_QUOTED_DESC}</td></tr>
 		</table>
 		</div>
 	</div>
