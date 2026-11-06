@@ -135,6 +135,12 @@ class templateEngine {
 		$this->templateDir = getBackendDir() . 'templates/' . $templateName . '/';
 	}
 
+	/** The template directory name this engine draws from (e.g. 'kokoimg'). */
+	public function getTemplateFile(): string {
+		// last path segment of the template directory
+		return basename(rtrim($this->templateDir, '/'));
+	}
+
 	public function BlockValue(string $blockName) {
 		return trim($this->_readBlock($blockName));
 	}
