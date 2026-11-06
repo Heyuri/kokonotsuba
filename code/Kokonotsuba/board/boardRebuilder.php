@@ -263,7 +263,8 @@ class boardRebuilder {
 	 */
 	public function warmIndexFragments(array $threads): void {
 		if ($threads !== [] && $this->fragmentCache(true) !== null) {
-			$this->renderThreadsToPteVals($threads, $this->buildPteVals(false), false, false, true);
+			// index fragments are shared by every reader, so draw them with the index template
+			$this->withIndexTemplate(fn() => $this->renderThreadsToPteVals($threads, $this->buildPteVals(false), false, false, true));
 		}
 	}
 
@@ -391,12 +392,15 @@ class boardRebuilder {
 			? $this->threadService->getThreadsFromBoard($this->board, $totalPagesToRebuild * $threadsPerPage)
 			: [];
 
-		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
+		// static pages are index pages whatever request triggered the rebuild
+		$this->withIndexTemplate(function () use ($totalPagesToRebuild, $threads, $threadsPerPage, $totalThreadCount) {
+			[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
 
-		for ($page = 1; $page <= $totalPagesToRebuild; $page++) {
-			$threadsInPage = array_slice($threads, ($page - 1) * $threadsPerPage, $threadsPerPage);
-			$this->renderStaticPage($page, $threadsInPage, $totalThreadCount, $headerHtml, $formHtml, $footHtml, $pte_vals);
-		}
+			for ($page = 1; $page <= $totalPagesToRebuild; $page++) {
+				$threadsInPage = array_slice($threads, ($page - 1) * $threadsPerPage, $threadsPerPage);
+				$this->renderStaticPage($page, $threadsInPage, $totalThreadCount, $headerHtml, $formHtml, $footHtml, $pte_vals);
+			}
+		});
 
 		if ($logRebuild) {
 			$this->actionLoggerService->logAction(
@@ -415,12 +419,15 @@ class boardRebuilder {
 
 		$threads = $this->threadService->getThreadsFromBoard($this->board, $threadsPerPage * $lastPageToRebuild);
 
-		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
+		// static pages are index pages whatever request triggered the rebuild
+		$this->withIndexTemplate(function () use ($lastPageToRebuild, $threads, $threadsPerPage, $totalThreadCountForBoard) {
+			[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
 
-		for ($page = 1; $page <= $lastPageToRebuild; $page++) {
-			$threadsInPage = array_slice($threads, ($page - 1) * $threadsPerPage, $threadsPerPage);
-			$this->renderStaticPage($page, $threadsInPage, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals);
-		}
+			for ($page = 1; $page <= $lastPageToRebuild; $page++) {
+				$threadsInPage = array_slice($threads, ($page - 1) * $threadsPerPage, $threadsPerPage);
+				$this->renderStaticPage($page, $threadsInPage, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals);
+			}
+		});
 	}
 
 	public function rebuildBoardPageHtml(int $targetPage, bool $logRebuild): void {
@@ -433,9 +440,12 @@ class boardRebuilder {
 
 		$threads = $this->threadService->getThreadsFromBoard($this->board, $threadsPerPage, ($targetPage - 1) * $threadsPerPage);
 
-		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
+		// static pages are index pages whatever request triggered the rebuild
+		$this->withIndexTemplate(function () use ($targetPage, $threads, $totalThreadCountForBoard) {
+			[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
 
-		$this->renderStaticPage($targetPage, $threads, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals);
+			$this->renderStaticPage($targetPage, $threads, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals);
+		});
 
 		if ($logRebuild) {
 			$this->actionLoggerService->logAction(
@@ -443,6 +453,31 @@ class boardRebuilder {
 				$this->board->getBoardUID(),
 				actionType::BOARD_REBUILD
 			);
+		}
+	}
+
+	/**
+	 * Run $work with the board's engine on its index template (TEMPLATE_FILE), then put back the
+	 * template the request had. A thread view (?res=) builds the engine on REPLY_TEMPLATE_FILE, and
+	 * a rebuild ticked from one (bumpLimitSweeper) would otherwise draw index pages, and cache
+	 * index fragments, in the reply template.
+	 */
+	private function withIndexTemplate(Closure $work): mixed {
+		// the template index pages are drawn with
+		$indexTemplate = str_replace('.tpl', '', (string)$this->board->getConfigValue('TEMPLATE_FILE'));
+		$previous = $this->templateEngine->getTemplateFile();
+
+		// already on it, or no index template configured
+		if ($indexTemplate === '' || $indexTemplate === $previous) {
+			return $work();
+		}
+
+		// switch for the duration of the work only
+		$this->templateEngine->setTemplateFile($indexTemplate);
+		try {
+			return $work();
+		} finally {
+			$this->templateEngine->setTemplateFile($previous);
 		}
 	}
 
