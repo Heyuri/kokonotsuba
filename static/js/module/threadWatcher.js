@@ -1222,10 +1222,10 @@ const kktwch = { name: "KK Thread watcher",
 		return kktwch.threadUidOfElement(document.querySelector('.post.op'));
 	},
 
-	// Unread count as shown in the UI. Unread badges only appear on the index/overboard, so
-	// while viewing a thread there's nothing to show.
+	// Unread count as shown in the UI. The thread being read is left out, since its new
+	// posts are already on screen through the thread updater.
 	getDisplayUnreadCount: function (entry) {
-		if (kktwch.onThreadPage()) return 0;
+		if (kktwch.currentThreadUid() === entry.threadUid) return 0;
 		return kktwch.getUnreadCount(entry);
 	},
 
@@ -1742,7 +1742,8 @@ const kktwch = { name: "KK Thread watcher",
 
 		// Contribute our unread total to the shared title controller instead of writing
 		// document.title directly, so we don't fight the thread updater over the prefix.
-		kkTitle.set('threadWatcher', total);
+		// The (x) is index-only: on a thread page the prefix belongs to the thread updater.
+		kkTitle.set('threadWatcher', kktwch.onThreadPage() ? 0 : total);
 
 		kktwch.updateToplink(total > 0, anyQuote);
 	},
