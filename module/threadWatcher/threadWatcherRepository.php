@@ -9,6 +9,9 @@ use Kokonotsuba\database\databaseConnection;
 
 /** Repository for thread-watcher batch lookups (post counts, OP previews, quote-reply counts). */
 class threadWatcherRepository extends baseRepository {
+	/** Seconds a replied-to thread stays refreshed on every poll, covering replies landing in the same second. */
+	private const RECENT_ACTIVITY_SECONDS = 30;
+
 	public function __construct(
 		databaseConnection $databaseConnection,
 		string $threadTable,
@@ -20,6 +23,44 @@ class threadWatcherRepository extends baseRepository {
 	) {
 		parent::__construct($databaseConnection, $threadTable);
 		self::validateTableNames($postTable, $deletedPostsTable, $boardTable, $fileTable, $quoteLinkTable);
+	}
+
+	/**
+	 * Cheap per-poll check of every watched thread: its board, ages and OP flags, with no
+	 * per-post work. Threads that are deleted or do not exist are omitted from the result.
+	 *
+	 * @param string[] $threadUids
+	 * @return array Rows with keys: thread_uid, boardUID, thread_created_time, last_reply_time,
+	 *               status, recently_active
+	 */
+	public function batchGetThreadState(array $threadUids): array {
+		// Nothing watched, nothing to look up.
+		if (empty($threadUids)) {
+			return [];
+		}
+
+		// One placeholder per watched thread.
+		$placeholders = $this->buildInClause($threadUids);
+		// Window for treating a thread as still changing.
+		$recentSeconds = self::RECENT_ACTIVITY_SECONDS;
+
+		// Index lookups only: one thread row and one OP row per watched thread.
+		$query = "
+			SELECT
+				t.thread_uid,
+				t.boardUID,
+				t.thread_created_time,
+				t.last_reply_time,
+				COALESCE(p_op.status, '') AS status,
+				t.last_reply_time >= (NOW() - INTERVAL {$recentSeconds} SECOND) AS recently_active
+			FROM {$this->table} t
+			LEFT JOIN {$this->postTable} p_op ON p_op.post_uid = t.post_op_post_uid
+			WHERE t.thread_uid IN {$placeholders}
+			  AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 't.post_op_post_uid') . "
+		";
+
+		// Run it with the watch list bound.
+		return $this->queryAll($query, array_values($threadUids));
 	}
 
 	/**
@@ -181,57 +222,46 @@ class threadWatcherRepository extends baseRepository {
 	}
 
 	/**
-	 * For each watched thread, return the post `no` of the first post the client hasn't
-	 * seen yet, given how many posts from the top it has already read.
+	 * For each thread, return the post `no` of its first unread post. The caller gives the
+	 * number of live posts newer than that post, so each lookup walks back from the newest
+	 * post over the unread range only, whatever the thread's total size.
 	 *
-	 * "Seen" is a count of live posts counted from the OP down (OP = 1), matching the
-	 * client's lastSeenCount. The first unread post is therefore the one at chronological
-	 * position seen+1. Posts are ranked with the SAME deleted-post filter used by
-	 * batchGetThreadMeta()'s post_count, so the ranking lines up with that count.
-	 * Threads where seen+1 is past the live post count (nothing unread, or a stale count
-	 * after deletions) simply return no row and are omitted.
-	 *
-	 * @param array<string,int> $seenMap thread_uid => number of posts already seen
+	 * @param array<string,int> $offsetsFromNewest thread_uid => live posts newer than the first unread
 	 * @return array<string,int> thread_uid => first-unread post number (only threads with one)
 	 */
-	public function batchGetFirstUnreadNo(array $seenMap): array {
-		if (empty($seenMap)) {
+	public function batchGetFirstUnreadNo(array $offsetsFromNewest): array {
+		// Nothing unread, nothing to look up.
+		if (empty($offsetsFromNewest)) {
 			return [];
 		}
 
-		$threadUids = array_keys($seenMap);
-		$threadPlaceholders = $this->buildInClause($threadUids);
-		$pairPlaceholders = '(' . implode(', ', array_fill(0, count($seenMap), '(?, ?)')) . ')';
-
-		$pairParams = [];
-		foreach ($seenMap as $uid => $seen) {
-			$pairParams[] = (string) $uid;
-			// Chronological position (1-based) of the first post past what's been seen.
-			$pairParams[] = max(0, (int) $seen) + 1;
+		// One seek per thread, collected into a single statement.
+		$selects = [];
+		// The thread uid bound to each seek.
+		$params = [];
+		foreach ($offsetsFromNewest as $uid => $offset) {
+			$selects[] = $this->buildFirstUnreadSelect((int) $offset);
+			$params[] = (string) $uid;
 		}
 
-		$query = "
-			SELECT ranked.thread_uid AS thread_uid, ranked.no AS no
-			FROM (
-				SELECT
-					p.thread_uid AS thread_uid,
-					p.no AS no,
-					ROW_NUMBER() OVER (PARTITION BY p.thread_uid ORDER BY p.no ASC) AS rn
-				FROM {$this->postTable} p
-				WHERE p.thread_uid IN {$threadPlaceholders}
-				  AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid') . "
-			) ranked
-			WHERE (ranked.thread_uid, ranked.rn) IN {$pairPlaceholders}
-		";
+		// Each thread's seek sits in its own parenthesised select.
+		$rows = $this->queryAll(implode(' UNION ALL ', $selects), $params);
+		// Index the answers by thread.
+		return array_column($rows, 'no', 'thread_uid');
+	}
 
-		$params = array_merge(array_map('strval', $threadUids), $pairParams);
-		$rows = $this->queryAll($query, $params);
+	/** One thread's newest-first seek, offset past the posts newer than the first unread. */
+	private function buildFirstUnreadSelect(int $offset): string {
+		// Negative offsets can't reach the database from a stale count.
+		$offset = max(0, $offset);
 
-		$out = [];
-		foreach ($rows as $row) {
-			$out[(string) $row['thread_uid']] = (int) $row['no'];
-		}
-		return $out;
+		// Walks idx_posts_thread_no backwards, so only the unread range is read.
+		return "(SELECT p.thread_uid AS thread_uid, p.no AS no
+			FROM {$this->postTable} p
+			WHERE p.thread_uid = ?
+			  AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid') . "
+			ORDER BY p.no DESC
+			LIMIT 1 OFFSET {$offset})";
 	}
 
 	/** SQL fragment + params for excluding blacklisted board UIDs. Returns ['', []] when empty. */

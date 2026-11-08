@@ -63,6 +63,12 @@
 	opacity: 0.7;
 }
 
+/* A thread that can no longer be replied to. */
+.threadWatcherEntryClosed {
+	opacity: 0.7;
+	filter: grayscale(1);
+}
+
 /* Watcher status colors: green = unread replies, red = an unread reply quotes you.
    Applies to both the admin-bar top-link and the watched-thread list entries. */
 

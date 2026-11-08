@@ -7,15 +7,9 @@
 const kktwch = { name: "KK Thread watcher",
 	STORAGE_KEY: 'threadWatcher',
 	POLL_INTERVAL: 15000,
-	// Watched threads asked about per request. The whole list in one query string runs
-	// past the web server's URI limit (414), so a poll fans out over several requests.
-	POLL_CHUNK_SIZE: 50,
-	// Character budget for a chunk's thread lists. A uid is sent up to three times (asked
-	// about, seen, quotes seen), so 64 character uids fill a URI long before 50 of them.
-	POLL_CHUNK_MAX_CHARS: 3500,
-	// Character budget for the own-post list repeated on every chunk, so a long posting
-	// history can't push the URI over the limit either.
-	OWN_TOKENS_MAX_CHARS: 2000,
+	// How often a poll ignores the per-thread stamps and refreshes everything, so changes
+	// that leave a thread's last reply time alone (a deleted reply, an edit) still arrive.
+	FULL_SYNC_INTERVAL: 300000,
 	// How long to wait before retrying a manual refresh that failed to reach the server.
 	REFRESH_RETRY_DELAY: 3000,
 	_pollTimer: null,
@@ -790,9 +784,12 @@ const kktwch = { name: "KK Thread watcher",
 
 	// Watched thread UIDs to ask the server about, capped to what the endpoint will answer
 	// for (it truncates anything past its own limit). Most recently watched first, so the
-	// threads that drop off are the stalest ones rather than an arbitrary tail.
-	threadUidsToPoll: function (watched) {
-		var uids = Object.keys(watched);
+	// threads that drop off are the stalest ones rather than an arbitrary tail. Closed threads
+	// can't change, so only a manual refresh (includeClosed) asks about them again.
+	threadUidsToPoll: function (watched, includeClosed) {
+		var uids = Object.keys(watched).filter(function (uid) {
+			return includeClosed || !watched[uid].closed;
+		});
 		var meta = document.querySelector('meta[name="threadWatcherMaxThreads"]');
 		var max = meta ? parseInt(meta.content, 10) : NaN;
 		if (!(max > 0)) max = 300;
@@ -803,58 +800,57 @@ const kktwch = { name: "KK Thread watcher",
 		}).slice(0, max);
 	},
 
-	// Split the watch list into chunks that each fit the URI budget, whatever mix of short
-	// and long uids it holds.
-	chunkThreadUids: function (threadUids) {
-		var chunks = [];
-		var chunk = [];
-		var used = 0;
+	// True when this entry's answer has to be fetched whatever its stamp says: it was never
+	// answered, or the reader moved since its first-unread links were resolved.
+	needsRefresh: function (entry) {
+		if (!entry.stamp) return true;
+		if (entry.lastSeenCount === null || entry.lastSeenCount === undefined) return true;
+		if (kktwch.getUnreadCount(entry) > 0 && entry.firstUnreadAt !== entry.lastSeenCount) return true;
+		return kktwch.hasUnreadQuote(entry) && entry.firstQuoteAt !== entry.seenQuoteCount;
+	},
+
+	// True when the last complete refresh of every thread is old enough to need another.
+	isFullSyncDue: function () {
+		var lastFull = parseInt(localStorage.getItem('kktwch_lastFull') || '0', 10);
+		return Date.now() - lastFull >= kktwch.FULL_SYNC_INTERVAL;
+	},
+
+	// Join "uid:value" pairs for the threads that have a value.
+	uidPairsParam: function (name, uids, valueOf) {
+		var pairs = [];
+		uids.forEach(function (uid) {
+			var value = valueOf(uid);
+			if (value !== null && value !== undefined) pairs.push(encodeURIComponent(uid) + ':' + value);
+		});
+		return pairs.length ? [name + '=' + pairs.join(',')] : [];
+	},
+
+	// Build the poll's form body, recording the read counts sent so the answers can be pinned
+	// to them even if the local counts move while the request is out.
+	buildPollParams: function (watched, threadUids, isFullSync, sentSeen, sentQuoteSeen) {
 		threadUids.forEach(function (uid) {
-			// The uid in each of the three lists, plus separators and two counts.
-			var cost = 3 * (encodeURIComponent(uid).length + 1) + 12;
-			if (chunk.length && (chunk.length >= kktwch.POLL_CHUNK_SIZE || used + cost > kktwch.POLL_CHUNK_MAX_CHARS)) {
-				chunks.push(chunk);
-				chunk = [];
-				used = 0;
-			}
-			chunk.push(uid);
-			used += cost;
+			var e = watched[uid];
+			if (e.lastSeenCount !== null && e.lastSeenCount !== undefined) sentSeen[uid] = e.lastSeenCount || 0;
+			if (e.seenQuoteCount !== null && e.seenQuoteCount !== undefined) sentQuoteSeen[uid] = e.seenQuoteCount || 0;
 		});
-		if (chunk.length) chunks.push(chunk);
-		return chunks;
-	},
 
-	// Encode the own-post tokens as the `you` parameter's value, dropping the oldest ones
-	// once they'd push a chunk's URI past the budget. Every chunk carries this list, so it
-	// has to stay short whatever the poster's history looks like.
-	ownTokensParam: function (tokens) {
-		var out = '';
-		for (var i = 0; i < tokens.length; i++) {
-			var piece = (out === '' ? '' : ',') + encodeURIComponent(tokens[i]);
-			if (out.length + piece.length > kktwch.OWN_TOKENS_MAX_CHARS) break;
-			out += piece;
+		var params = [];
+		if (!threadUids.length) return params;
+
+		params.push('thread_uids=' + threadUids.map(encodeURIComponent).join(','));
+		// Without a stamp the server answers for that thread in full.
+		if (!isFullSync) {
+			params = params.concat(kktwch.uidPairsParam('stamps', threadUids, function (uid) {
+				return kktwch.needsRefresh(watched[uid]) ? null : watched[uid].stamp;
+			}));
 		}
-		return out;
-	},
-
-	// Fold the per-chunk poll responses back into the single shape the poll handler
-	// expects. Each chunk only reports on the threads it was asked about, so the maps
-	// merge cleanly; `newThreads` is carried by one chunk only.
-	mergePollResponses: function (responses) {
-		var merged = { threads: {}, deleted: [] };
-		responses.forEach(function (data) {
-			if (!data) return;
-			if (data.threads && typeof data.threads === 'object') {
-				Object.keys(data.threads).forEach(function (uid) {
-					merged.threads[uid] = data.threads[uid];
-				});
-			}
-			if (Array.isArray(data.deleted)) {
-				merged.deleted = merged.deleted.concat(data.deleted);
-			}
-			if (data.newThreads) merged.newThreads = data.newThreads;
-		});
-		return merged;
+		// The user's own posts, so the server can flag threads that quote them.
+		var ownTokens = kktwch.getOwnPostTokens().map(encodeURIComponent).join(',');
+		if (ownTokens !== '') params.push('you=' + ownTokens);
+		// Read positions, used to resolve each thread's first unread post and quote.
+		params = params.concat(kktwch.uidPairsParam('seen', threadUids, function (uid) { return sentSeen[uid]; }));
+		params = params.concat(kktwch.uidPairsParam('qseen', threadUids, function (uid) { return sentQuoteSeen[uid]; }));
+		return params;
 	},
 
 	// `force` (manual refresh) bypasses the cross-tab poll lock. Returns the fetch
@@ -862,7 +858,7 @@ const kktwch = { name: "KK Thread watcher",
 	// nothing to fetch).
 	checkAllThreads: function (force) {
 		var watched = kktwch.getWatchedThreads();
-		var threadUids = kktwch.threadUidsToPoll(watched);
+		var threadUids = kktwch.threadUidsToPoll(watched, !!force);
 		var wantNewThreads = _kkSetting('threadWatcherNewThreads');
 
 		// Nothing to do if not watching anything and new-thread alerts are off.
@@ -905,81 +901,35 @@ const kktwch = { name: "KK Thread watcher",
 		// Seen counts as sent to the server, so the reply the response points at can be
 		// pinned to a thread position even if the local count moves meanwhile.
 		var sentSeen = {};
-		var ownTokens = threadUids.length ? kktwch.ownTokensParam(kktwch.getOwnPostTokens()) : '';
-		var separator = apiUrl.includes('?') ? '&' : '?';
+		var sentQuoteSeen = {};
+		// A manual refresh always rechecks everything, closed threads included.
+		var isFullSync = !!force || kktwch.isFullSyncDue();
+		var params = kktwch.buildPollParams(watched, threadUids, isFullSync, sentSeen, sentQuoteSeen);
 
-		// A whole watch list in one query string overruns the server's URI limit (414), so
-		// the threads are split into chunks, each fetched as its own request. The requests
-		// run concurrently and their responses are merged before anything is applied, so a
-		// poll still lands as one update.
-		var urls = [];
-		var chunks = kktwch.chunkThreadUids(threadUids);
-		for (var i = 0; i < chunks.length; i++) {
-			var chunk = chunks[i];
-			var params = ['thread_uids=' + chunk.map(encodeURIComponent).join(',')];
-			// Send the user's own posts so the server can flag threads that quote them.
-			if (ownTokens !== '') {
-				params.push('you=' + ownTokens);
-			}
-			// Send per-thread seen counts so the server can resolve each thread's
-			// first-unread post number (used to anchor the watch-list link). Only
-			// seeded entries have a meaningful count.
-			var seenPairs = [];
-			chunk.forEach(function (uid) {
-				var e = watched[uid];
-				if (e && e.lastSeenCount !== null && e.lastSeenCount !== undefined) {
-					sentSeen[uid] = e.lastSeenCount || 0;
-					seenPairs.push(encodeURIComponent(uid) + ':' + sentSeen[uid]);
-				}
-			});
-			if (seenPairs.length) {
-				params.push('seen=' + seenPairs.join(','));
-			}
-			// Likewise the seen-quote counts, so the server can resolve the first unread
-			// reply that quotes the user.
-			var quoteSeenPairs = [];
-			chunk.forEach(function (uid) {
-				var e = watched[uid];
-				if (e && e.seenQuoteCount !== null && e.seenQuoteCount !== undefined) {
-					quoteSeenPairs.push(encodeURIComponent(uid) + ':' + (e.seenQuoteCount || 0));
-				}
-			});
-			if (quoteSeenPairs.length) {
-				params.push('qseen=' + quoteSeenPairs.join(','));
-			}
-			urls.push(apiUrl + separator + params.join('&'));
-		}
-
-		// New-thread alerts are global rather than per-thread, so they ride along on the
-		// first chunk (or get a request of their own when nothing is watched).
+		// New-thread alerts are global rather than per-thread.
 		if (wantNewThreads) {
-			var newParams = ['newthreads=1'];
+			params.push('newthreads=1');
 			var sinceMark = localStorage.getItem('kktwch_lastThreadSeen') || '';
-			if (sinceMark) newParams.push('since=' + encodeURIComponent(sinceMark));
-			var newQuery = newParams.join('&');
-			if (urls.length) urls[0] += '&' + newQuery;
-			else urls.push(apiUrl + separator + newQuery);
+			if (sinceMark) params.push('since=' + encodeURIComponent(sinceMark));
 		}
 
-		// Tracks whether every chunk of this poll reached the server and parsed, so a
-		// manual refresh knows whether to stop spinning or keep retrying.
+		// Tracks whether the poll reached the server and parsed, so a manual refresh knows
+		// whether to stop spinning or keep retrying.
 		var succeeded = false;
 
-		return Promise.all(urls.map(function (url) {
-			return fetch(url)
-				.then(function (res) {
-					if (!res.ok) return null;
-					return res.json();
-				})
-				// Silently fail on network errors: the merge below just skips this chunk.
-				.catch(function () { return null; });
-		}))
-			.then(function (responses) {
-				// A chunk that failed contributes nothing. What did arrive is still applied,
-				// but only a complete poll counts as a success.
-				var arrived = responses.filter(function (r) { return r; });
-				if (!arrived.length) return;
-				var data = kktwch.mergePollResponses(arrived);
+		// POST so the whole watch list fits in one request, whatever its size.
+		return fetch(apiUrl, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			body: params.join('&')
+		})
+			.then(function (res) {
+				if (!res.ok) return null;
+				return res.json();
+			})
+			.then(function (data) {
+				// A failed poll changes nothing and is retried on the next tick.
+				if (!data) return;
 
 				var watched = kktwch.getWatchedThreads();
 				var changed = false;
@@ -1034,6 +984,11 @@ const kktwch = { name: "KK Thread watcher",
 						// sits at thread position firstUnreadAt + 1 (see resolveReplyPosOffset).
 						entry.firstUnreadAt = (threadUid in sentSeen) ? sentSeen[threadUid] : null;
 
+						// Sent back on later polls to skip this thread while it is unchanged.
+						entry.stamp = info.stamp;
+						// A closed thread is greyed out and left out of background polls.
+						entry.closed = info.closed === true;
+
 						if (typeof info.board_title === 'string') {
 							entry.boardTitle = info.board_title;
 						}
@@ -1064,6 +1019,8 @@ const kktwch = { name: "KK Thread watcher",
 						entry.firstUnreadQuoteNo = (typeof info.first_unread_quote_no === 'number')
 							? info.first_unread_quote_no
 							: null;
+						// The seen-quote count that number was resolved against.
+						entry.firstQuoteAt = (threadUid in sentQuoteSeen) ? sentQuoteSeen[threadUid] : null;
 
 						// Only count growth once seeded, so first watching a thread never
 						// notifies for posts that already existed.
@@ -1120,7 +1077,10 @@ const kktwch = { name: "KK Thread watcher",
 				kkStore.set('kktwch_lastUpdated', Date.now());
 				kktwch.updateUpdatedLabel();
 
-				succeeded = arrived.length === responses.length;
+				// Only a poll that really refreshed everything restarts the full-sync clock.
+				if (isFullSync) kkStore.set('kktwch_lastFull', Date.now());
+
+				succeeded = true;
 			})
 			.catch(function () {
 				// Silently fail on network errors
@@ -1716,6 +1676,12 @@ const kktwch = { name: "KK Thread watcher",
 			link.href = kktwch.buildThreadUrl(entry);
 			link.textContent = displayName;
 			link.title = displayName;
+			// A thread that can no longer be replied to stays listed, greyed out.
+			if (entry.closed) {
+				row.querySelector('.threadWatcherEntry').classList.add('threadWatcherEntryClosed');
+				var closedTitle = document.querySelector('meta[name="threadWatcherClosedTitle"]');
+				if (closedTitle) link.title = displayName + ' (' + closedTitle.content + ')';
+			}
 			link.setAttribute('data-thread-uid', threadUid);
 			// Red when an unread reply quotes you, otherwise green when there are unread posts.
 			if (hasQuote) link.classList.add('twQuoted');
@@ -1802,6 +1768,7 @@ if (typeof(KOKOJS) != "undefined") {
 		'kkOwnPosts',             // the user's own posts (for quote detection)
 		'kktwch_lastPoll',        // cross-tab poll lock
 		'kktwch_lastUpdated',     // last successful refresh time (for the "updated" label)
+		'kktwch_lastFull',        // last full sync time (ignoring per-thread stamps)
 		'kktwch_lastThreadSeen',  // new-thread high-water mark
 		'kktwch_lastDing',        // cross-tab audio-ding dedup
 		'threadWatcherNotifs',    // settings
