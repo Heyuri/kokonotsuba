@@ -10,8 +10,8 @@ use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\OpeningPostListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
+use Kokonotsuba\post\FlagHelper;
 use Kokonotsuba\post\Post;
-use Kokonotsuba\request\request;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
@@ -29,6 +29,12 @@ class moduleMain extends abstractModuleMain {
 
 	/** Max characters for a generated thread label (subject / comment preview / filename). */
 	private const LABEL_MAX_LENGTH = 25;
+
+	/** oldThread's own fallback, used when a board's config has no reply age limit stored. */
+	private const DEFAULT_REPLY_LIMIT_HOURS = 336;
+
+	/** @var array<int,int> Reply age limit in hours per board, read once per request. */
+	private array $replyLimitHours = [];
 
 	/**
 	 * Max watched threads answered for in one poll (and the matching cap on the seen-count
@@ -69,22 +75,27 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// The watcher window is opened from a top-link in the admin bar.
 		$this->listenTopLinks('onRenderTopLinks');
-		$this->registerScript('threadWatcher.js?v=27');
+		$this->registerScript('threadWatcher.js?v=29');
 		$this->listenModuleHeader('onGenerateModuleHeader');
 		$this->listenOpeningPost('onRenderOpeningPost');
 	}
 
 	/**
-	 * Batch counts endpoint:
-	 *   ?mode=module&load=threadWatcher&pageName=counts&thread_uids=uid1,uid2,...&you=board:no,board:no,...
+	 * Batch counts endpoint, polled with POST so a whole watch list fits in one request:
+	 *   ?mode=module&load=threadWatcher&pageName=counts
+	 *   thread_uids=a,b&stamps=a:stamp,b:stamp&you=board:no,...&seen=a:n,...&qseen=a:n,...
 	 *
-	 * Returns, per thread: post_count, board_title, label (display text), quote_count
-	 * (number of live posts that quote one of the caller's own posts), first_unread_no
-	 * (from `seen`) and first_unread_quote_no (from `qseen`, per-thread seen-quote counts).
+	 * Every listed thread is checked for deletion and closure. Only threads whose stamp
+	 * differs from the client's get the per-post work, so a poll without stamps is a full sync.
+	 *
+	 * Each returned thread has: post_count, board_title, label, url, quote_count,
+	 * first_unread_no, first_unread_quote_no, stamp and closed.
 	 */
 	public function ModulePage(): void {
+		// The poll endpoint is the only page here.
 		$pageName = $this->moduleContext->request->getParameter('pageName', 'GET', '');
 
+		// Anything else is a bad link.
 		if ($pageName !== 'counts') {
 			renderJsonErrorPage('Not found', 404);
 		}
@@ -92,15 +103,45 @@ class moduleMain extends abstractModuleMain {
 		// The response is specific to this visitor's watch list, own posts and read counts.
 		header('Cache-Control: no-store');
 
-		$request = $this->moduleContext->request;
-		$threadUids = $this->parseThreadUids($request->getParameter('thread_uids', 'GET', ''));
-		$ownPosts = $this->parseOwnPosts($request->getParameter('you', 'GET', ''));
-		$seenMap = $this->parseSeen($request->getParameter('seen', 'GET', ''));
-		$quoteSeenMap = $this->parseSeen($request->getParameter('qseen', 'GET', ''));
-		$wantNewThreads = $request->getParameter('newthreads', 'GET', '') !== '';
+		// Answer the poll.
+		renderJsonPage($this->buildPollResponse());
+	}
 
+	/** Build the whole poll answer: watched threads plus any new-thread alerts. */
+	private function buildPollResponse(): array {
+		// One repository serves the whole poll.
+		$repo = $this->createRepository();
+		// Used to skip the board's placeholder comment in labels.
+		$defaultComment = (string) $this->getConfig('DEFAULT_NOCOMMENT', '');
+		// The watch list as sent, sanitized and capped.
+		$threadUids = $this->parseThreadUids($this->pollParameter('thread_uids'));
+
+		// Watched-thread counts and quote-replies.
+		$response = $this->buildWatchedThreads($repo, $threadUids, $defaultComment);
+
+		// New-thread alerts across listed, non-blacklisted boards.
+		if ($this->pollParameter('newthreads') !== '') {
+			$response['newThreads'] = $this->buildNewThreads($repo, $defaultComment);
+		}
+
+		return $response;
+	}
+
+	/** Read one poll field from the body or the query string, as a string. */
+	private function pollParameter(string $name): string {
+		// Null source: query string first, then POST body.
+		$value = $this->moduleContext->request->getParameter($name, null, '');
+		
+		// An array-shaped field (name[]=x) is treated as absent.
+		return is_string($value) ? $value : '';
+	}
+
+	/** Build the watcher repository from this install's table names. */
+	private function createRepository(): threadWatcherRepository {
+		// Logical names resolved for this install.
 		$tableNames = $this->moduleContext->getTableNames();
-		$repo = new threadWatcherRepository(
+
+		return new threadWatcherRepository(
 			databaseConnection::getInstance(),
 			$tableNames['THREAD_TABLE'],
 			$tableNames['POST_TABLE'],
@@ -109,82 +150,231 @@ class moduleMain extends abstractModuleMain {
 			$tableNames['FILE_TABLE'],
 			$tableNames['QUOTE_LINK_TABLE']
 		);
+	}
 
-		$defaultComment = (string) $this->getConfig('DEFAULT_NOCOMMENT', '');
-		$response = ['threads' => [], 'deleted' => []];
-
-		// Watched-thread counts / quote-replies.
-		if (!empty($threadUids)) {
-			$rows = $repo->batchGetThreadMeta($threadUids);
-			$quoteCounts = $repo->batchGetQuoteCounts($threadUids, $ownPosts);
-
-			// Resolve each thread's first-unread post number from the client's seen counts.
-			// Only threads that actually have unread posts are looked up: the ranking query
-			// walks every post of every thread it's given, so fully-read threads (the common
-			// case) would make it scan the whole watch list for nothing.
-			$seenScoped = [];
-			foreach ($rows as $row) {
-				$uid = (string) $row['thread_uid'];
-				if (isset($seenMap[$uid]) && $seenMap[$uid] < (int) $row['post_count']) {
-					$seenScoped[$uid] = $seenMap[$uid];
-				}
-			}
-
-			$firstUnread = !empty($seenScoped) ? $repo->batchGetFirstUnreadNo($seenScoped) : [];
-
-			// Same for the first unread quote-reply, from the client's seen-quote counts.
-			$quoteSeenScoped = [];
-			foreach ($quoteCounts as $uid => $count) {
-				if (isset($quoteSeenMap[$uid]) && $quoteSeenMap[$uid] < $count) {
-					$quoteSeenScoped[$uid] = $quoteSeenMap[$uid];
-				}
-			}
-			$firstUnreadQuote = !empty($quoteSeenScoped)
-				? $repo->batchGetFirstUnreadQuoteNo($quoteSeenScoped, $ownPosts)
-				: [];
-
-			$found = [];
-			foreach ($rows as $row) {
-				$threadUid = (string) $row['thread_uid'];
-				// Each thread's link is built from its own board, so a thread on another
-				// subdomain keeps pointing at that subdomain no matter which board the
-				// watch list is being read on.
-				$threadBoard = searchBoardArrayForBoard((int) $row['boardUID']);
-				$found[$threadUid] = [
-					'post_count'  => (int) $row['post_count'],
-					'board_title' => (string) $row['board_title'],
-					'label'       => $this->buildThreadLabel(
-						(string) $row['subject'],
-						(string) $row['comment'],
-						(string) $row['op_file_name'],
-						$defaultComment
-					),
-					'url'         => $threadBoard !== null
-						? $this->absoluteThreadUrl(
-							$threadBoard->getBoardThreadURL((int) $row['post_op_number']),
-							$threadBoard
-						)
-						: null,
-					'quote_count' => $quoteCounts[$threadUid] ?? 0,
-					// Post number of the first unread reply (null when nothing is unread),
-					// so the client can link straight to it.
-					'first_unread_no' => $firstUnread[$threadUid] ?? null,
-					// Post number of the first unread reply quoting the caller (null when none).
-					'first_unread_quote_no' => $firstUnreadQuote[$threadUid] ?? null,
-				];
-			}
-
-			// Any requested UID not in $found is deleted or non-existent
-			$response['threads'] = $found;
-			$response['deleted'] = array_values(array_diff($threadUids, array_keys($found)));
+	/**
+	 * Check every watched thread cheaply, then do the per-post work for changed ones only.
+	 *
+	 * @param string[] $threadUids
+	 * @return array{threads: array, deleted: string[]}
+	 */
+	private function buildWatchedThreads(threadWatcherRepository $repo, array $threadUids, string $defaultComment): array {
+		// Nothing watched: skip the queries.
+		if (empty($threadUids)) {
+			return ['threads' => [], 'deleted' => []];
 		}
 
-		// New-thread alerts across listed, non-blacklisted boards.
-		if ($wantNewThreads) {
-			$response['newThreads'] = $this->buildNewThreads($repo, $request, $defaultComment);
+		// One cheap row per thread that still exists.
+		$stateRows = $repo->batchGetThreadState($threadUids);
+		// Stamp, closure and whether each thread needs refreshing.
+		$states = $this->resolveThreadStates($stateRows);
+
+		return [
+			'threads' => $this->buildThreadDetails($repo, $states, $defaultComment),
+			// Any requested UID without a state row is deleted or non-existent.
+			'deleted' => array_values(array_diff($threadUids, array_keys($states))),
+		];
+	}
+
+	/**
+	 * Work out each thread's stamp, closure and whether it needs refreshing.
+	 *
+	 * @return array<string,array{stamp: string, closed: bool, refresh: bool}>
+	 */
+	private function resolveThreadStates(array $stateRows): array {
+		// What the client already holds, per thread.
+		$clientStamps = $this->parseStamps($this->pollParameter('stamps'));
+
+		// Filled in per thread below.
+		$states = [];
+		foreach ($stateRows as $row) {
+			$states[(string) $row['thread_uid']] = $this->resolveThreadState($row, $clientStamps);
 		}
 
-		renderJsonPage($response);
+		return $states;
+	}
+
+	/** Resolve one thread's stamp, closure and whether it needs refreshing. */
+	private function resolveThreadState(array $row, array $clientStamps): array {
+		// The stamp is just the last reply time, as digits.
+		$stamp = (string) preg_replace('/\D+/', '', (string) $row['last_reply_time']);
+		// Closed threads leave the client's poll list once it hears about them.
+		$closed = $this->isThreadClosed($row);
+		// What the client last saw for this thread, if anything.
+		$clientStamp = $clientStamps[(string) $row['thread_uid']] ?? '';
+		// Two replies can share a second, so a just-replied thread is refreshed for a little while.
+		$recentlyActive = (bool) $row['recently_active'];
+
+		return [
+			'stamp'   => $stamp,
+			'closed'  => $closed,
+			'refresh' => $closed || $recentlyActive || $clientStamp !== $stamp,
+		];
+	}
+
+	/** Whether a thread can no longer be replied to: locked, or past its board's age limit. */
+	private function isThreadClosed(array $row): bool {
+		// lockThread keeps its flag on the OP.
+		$flags = new FlagHelper((string) $row['status']);
+
+		// A locked thread needs no age check.
+		if ($flags->value('stop')) {
+			return true;
+		}
+
+		return $this->isPastReplyAgeLimit((int) $row['boardUID'], (string) $row['thread_created_time']);
+	}
+
+	/** The same age test oldThread applies to replies, for a thread on any board. */
+	private function isPastReplyAgeLimit(int $boardUid, string $createdTime): bool {
+		// Zero means this board has no limit.
+		$limitHours = $this->getReplyLimitHours($boardUid);
+		if ($limitHours <= 0) {
+			return false;
+		}
+
+		// An unreadable creation time can't be judged old.
+		$createdAt = strtotime($createdTime);
+		if ($createdAt === false) {
+			return false;
+		}
+
+		return (time() - $createdAt) >= $limitHours * 3600;
+	}
+
+	/** A board's reply age limit in hours, 0 when none applies. Read once per board per request. */
+	private function getReplyLimitHours(int $boardUid): int {
+		// Boards repeat heavily across a watch list.
+		if (!isset($this->replyLimitHours[$boardUid])) {
+			$this->replyLimitHours[$boardUid] = $this->readReplyLimitHours($boardUid);
+		}
+
+		return $this->replyLimitHours[$boardUid];
+	}
+
+	/** Read a board's reply age limit from its config, 0 when oldThread is off there. */
+	private function readReplyLimitHours(int $boardUid): int {
+		// The thread may live on any board.
+		$board = searchBoardArrayForBoard($boardUid);
+
+		// No board, or the module is off: no limit is enforced.
+		if ($board === null || !$board->getConfigValue('ModuleList.oldThread', false)) {
+			return 0;
+		}
+
+		return (int) $board->getConfigValue('modules.oldThread.THREAD_REPLY_TIME_LIMIT', self::DEFAULT_REPLY_LIMIT_HOURS);
+	}
+
+	/** Build the per-thread answers for the threads that need refreshing. */
+	private function buildThreadDetails(threadWatcherRepository $repo, array $states, string $defaultComment): array {
+		// Only these get per-post work.
+		$uids = $this->selectThreadsToRefresh($states);
+
+		// A quiet poll ends here.
+		if (empty($uids)) {
+			return [];
+		}
+
+		// The caller's own posts, for quote detection.
+		$ownPosts = $this->parseOwnPosts($this->pollParameter('you'));
+		// Live post counts, labels and links.
+		$rows = $repo->batchGetThreadMeta($uids);
+		// Replies quoting the caller, per thread.
+		$quoteCounts = $repo->batchGetQuoteCounts($uids, $ownPosts);
+		// First unread post per thread.
+		$firstUnread = $this->resolveFirstUnread($repo, $rows);
+		// First unread quoting post per thread.
+		$firstUnreadQuote = $this->resolveFirstUnreadQuote($repo, $quoteCounts, $ownPosts);
+
+		// Filled in per thread below.
+		$details = [];
+		foreach ($rows as $row) {
+			$details[(string) $row['thread_uid']] = $this->formatThreadDetail($row, $states, $quoteCounts, $firstUnread, $firstUnreadQuote, $defaultComment);
+		}
+
+		return $details;
+	}
+
+	/** Pick the UIDs flagged for refreshing, as strings. */
+	private function selectThreadsToRefresh(array $states): array {
+		// Filled in per thread below.
+		$uids = [];
+		foreach ($states as $uid => $state) {
+			if ($state['refresh']) {
+				$uids[] = (string) $uid;
+			}
+		}
+
+		return $uids;
+	}
+
+	/** Resolve first-unread post numbers for the refreshed threads that have unread posts. */
+	private function resolveFirstUnread(threadWatcherRepository $repo, array $rows): array {
+		// How far each client has read.
+		$seenMap = $this->parseSeen($this->pollParameter('seen'));
+
+		// Filled in per thread below.
+		$offsets = [];
+		foreach ($rows as $row) {
+			$uid = (string) $row['thread_uid'];
+			// Fully read threads (the common case) need no lookup.
+			if (isset($seenMap[$uid]) && $seenMap[$uid] < (int) $row['post_count']) {
+				// Live posts newer than the first unread one.
+				$offsets[$uid] = (int) $row['post_count'] - $seenMap[$uid] - 1;
+			}
+		}
+
+		return $repo->batchGetFirstUnreadNo($offsets);
+	}
+
+	/** Resolve first-unread quote numbers for the threads with quotes the client hasn't seen. */
+	private function resolveFirstUnreadQuote(threadWatcherRepository $repo, array $quoteCounts, array $ownPosts): array {
+		// How many quotes each client has already seen.
+		$quoteSeenMap = $this->parseSeen($this->pollParameter('qseen'));
+
+		// Filled in per thread below.
+		$quoteSeenScoped = [];
+		foreach ($quoteCounts as $uid => $count) {
+			if (isset($quoteSeenMap[$uid]) && $quoteSeenMap[$uid] < $count) {
+				$quoteSeenScoped[$uid] = $quoteSeenMap[$uid];
+			}
+		}
+
+		return $repo->batchGetFirstUnreadQuoteNo($quoteSeenScoped, $ownPosts);
+	}
+
+	/** Shape one refreshed thread for the client. */
+	private function formatThreadDetail(array $row, array $states, array $quoteCounts, array $firstUnread, array $firstUnreadQuote, string $defaultComment): array {
+		$uid = (string) $row['thread_uid'];
+		// Each thread's link is built from its own board, so a thread on another subdomain
+		// keeps pointing at that subdomain whichever board the list is read on.
+		$threadBoard = searchBoardArrayForBoard((int) $row['boardUID']);
+
+		return [
+			'post_count'  => (int) $row['post_count'],
+			'board_title' => (string) $row['board_title'],
+			'label'       => $this->buildThreadLabel(
+				(string) $row['subject'],
+				(string) $row['comment'],
+				(string) $row['op_file_name'],
+				$defaultComment
+			),
+			'url'         => $threadBoard !== null
+				? $this->absoluteThreadUrl(
+					$threadBoard->getBoardThreadURL((int) $row['post_op_number']),
+					$threadBoard
+				)
+				: null,
+			'quote_count' => $quoteCounts[$uid] ?? 0,
+			// Post number of the first unread reply (null when nothing is unread).
+			'first_unread_no' => isset($firstUnread[$uid]) ? (int) $firstUnread[$uid] : null,
+			// Post number of the first unread reply quoting the caller (null when none).
+			'first_unread_quote_no' => $firstUnreadQuote[$uid] ?? null,
+			// Sent back on later polls to skip this thread while it is unchanged.
+			'stamp'  => $states[$uid]['stamp'],
+			// A closed thread is greyed out and dropped from background polls.
+			'closed' => $states[$uid]['closed'],
+		];
 	}
 
 	/**
@@ -192,9 +382,9 @@ class moduleMain extends abstractModuleMain {
 	 * threads created since the client's last marker. Boards on the user's overboard
 	 * blacklist are excluded server-side.
 	 */
-	private function buildNewThreads(threadWatcherRepository $repo, request $request, string $defaultComment): array {
+	private function buildNewThreads(threadWatcherRepository $repo, string $defaultComment): array {
 		$blacklist = $this->getBoardBlacklist();
-		$since = (string) $request->getParameter('since', 'GET', '');
+		$since = $this->pollParameter('since');
 
 		// First run (or malformed marker): seed silently with the current newest time.
 		if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $since)) {
@@ -320,33 +510,65 @@ class moduleMain extends abstractModuleMain {
 	/**
 	 * Parse the client's per-thread seen counts from a "uid:count,uid:count,..." list into a
 	 * thread_uid => count map. Counts how many posts (OP + replies) the client has already read.
-	 * Capped to keep the first-unread query bounded; malformed entries are skipped.
 	 *
 	 * @return array<string,int>
 	 */
 	private function parseSeen(string $raw): array {
+		// Counts are small non-negative integers.
+		return array_map('intval', $this->parseUidPairs($raw, '/^\d{1,9}$/'));
+	}
+
+	/**
+	 * Parse the client's per-thread stamps from a "uid:stamp,uid:stamp,..." list.
+	 *
+	 * @return array<string,string> thread_uid => stamp
+	 */
+	private function parseStamps(string $raw): array {
+		// A stamp is a timestamp reduced to its 14 digits.
+		return $this->parseUidPairs($raw, '/^\d{14}$/');
+	}
+
+	/**
+	 * Parse a capped "uid:value,uid:value,..." list, skipping malformed entries.
+	 *
+	 * @return array<string,string>
+	 */
+	private function parseUidPairs(string $raw, string $valuePattern): array {
+		// Empty field, empty map.
 		if ($raw === '') {
 			return [];
 		}
 
-		$seen = [];
-		foreach (array_slice(explode(',', $raw), 0, self::MAX_WATCHED_THREADS) as $part) {
-			$bits = explode(':', trim($part), 2);
-			if (count($bits) !== 2) {
-				continue;
-			}
-			$uid = trim($bits[0]);
-			$count = trim($bits[1]);
-			// thread_uid is VARCHAR(255); count is a small non-negative integer.
-			if ($uid === '' || !preg_match('/^[a-zA-Z0-9_\-]{1,255}$/', $uid)) {
-				continue;
-			}
-			if (!preg_match('/^\d{1,9}$/', $count)) {
-				continue;
-			}
-			$seen[$uid] = (int) $count;
+		// Capped to keep the work per poll bounded.
+		$parts = array_slice(explode(',', $raw), 0, self::MAX_WATCHED_THREADS);
+
+		// Filled in per entry below.
+		$pairs = [];
+		foreach ($parts as $part) {
+			$this->addUidPair($pairs, $part, $valuePattern);
 		}
-		return $seen;
+
+		return $pairs;
+	}
+
+	/** Add one "uid:value" entry to the map when both halves are well formed. */
+	private function addUidPair(array &$pairs, string $part, string $valuePattern): void {
+		// Split on the first colon only.
+		$bits = explode(':', trim($part), 2);
+		if (count($bits) !== 2) {
+			return;
+		}
+
+		$uid = trim($bits[0]);
+		$value = trim($bits[1]);
+		// thread_uid is VARCHAR(255) of alphanumerics, dashes and underscores.
+		$uidIsValid = preg_match('/^[a-zA-Z0-9_\-]{1,255}$/', $uid) === 1;
+		// The value's shape depends on the list.
+		$valueIsValid = preg_match($valuePattern, $value) === 1;
+
+		if ($uidIsValid && $valueIsValid) {
+			$pairs[$uid] = $value;
+		}
 	}
 
 	/**
@@ -437,6 +659,9 @@ class moduleMain extends abstractModuleMain {
 		// How many of the visitor's own posts a poll may carry, so the client trims the list
 		// to what the server reads instead of sending a query string that can't be answered.
 		$moduleHeader .= '<meta name="threadWatcherMaxOwnPosts" content="' . self::MAX_OWN_POSTS . '">';
+
+		// Tooltip for a greyed-out thread that can no longer be replied to.
+		$moduleHeader .= '<meta name="threadWatcherClosedTitle" content="' . sanitizeStr(_T('thread_watch_closed_title')) . '">';
 
 		// Current board's title, so watching from a single-board page (thread/index) can
 		// label the entry "Board - Subject" immediately (the overboard uses its per-thread
