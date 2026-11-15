@@ -8,6 +8,16 @@
 	window.attachmentExpander = window.attachmentExpander || {};
 	var attachmentExpander = window.attachmentExpander;
 
+	// Lock Ruffle down before ruffle.js runs
+	attachmentExpander.ruffleSafeOptions = {
+		allowScriptAccess: false,
+		allowNetworking: "internal",
+		openUrlMode: "deny",
+	};
+	window.RufflePlayer = window.RufflePlayer || {};
+	window.RufflePlayer.config = Object.assign({}, window.RufflePlayer.config,
+		attachmentExpander.ruffleSafeOptions, { polyfills: false });
+
 	attachmentExpander.imageExtensions = Array("png","jpg","jpeg","gif","giff","bmp","jfif", 'webp');
 	attachmentExpander.videoExtensions = Array("webm","mp4");
 	attachmentExpander.audioExtensions = Array("mp3","ogg","wav", "flac", "m4a");
@@ -81,7 +91,8 @@
 	};
 
 	attachmentExpander.loadRuffle = function () {
-		if (window.RufflePlayer) return Promise.resolve(window.RufflePlayer);
+		// the config stub above also sets RufflePlayer, so check for the real API
+		if (window.RufflePlayer && window.RufflePlayer.newest) return Promise.resolve(window.RufflePlayer);
 		if (attachmentExpander._rufflePromise) return attachmentExpander._rufflePromise;
 
 		attachmentExpander._rufflePromise = new Promise(function (resolve, reject) {
@@ -391,6 +402,13 @@
 			obj.type   = "application/x-shockwave-flash";
 			obj.style.width  = "100%";
 			obj.style.height = "100%";
+			// same restrictions for a real Flash plugin (e.g. Pale Moon / Basilisk)
+			[["allowScriptAccess", "never"], ["allowNetworking", "internal"]].forEach(function (p) {
+				var param = document.createElement("param");
+				param.name  = p[0];
+				param.value = p[1];
+				obj.appendChild(param);
+			});
 			host.appendChild(obj);
 		} else {
 			// ruffle emulator, fill host - it's fetched on demand here, which can
@@ -409,7 +427,7 @@
 				player.style.width  = "100%";
 				player.style.height = "100%";
 				host.appendChild(player);
-				player.load(anchor.href);
+				player.load(Object.assign({ url: anchor.href }, attachmentExpander.ruffleSafeOptions));
 			}).catch(function () {
 				status.textContent = "Failed to load Ruffle";
 			});

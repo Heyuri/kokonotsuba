@@ -2,6 +2,16 @@
 var scriptUrl = document.currentScript.src; // Get the current script's URL
 const closebuttan = scriptUrl.substring(0, scriptUrl.lastIndexOf('/')).replace('/js', '/image/cross2embed.png'); // Construct the URL for close button
 
+// Lock Ruffle down. This file loads before the deferred ruffle.js on flash boards, so the
+// global config is in place before Ruffle starts.
+const RUFFLE_SAFE_OPTIONS = {
+	allowScriptAccess: false,
+	allowNetworking: "internal",
+	openUrlMode: "deny",
+};
+window.RufflePlayer = window.RufflePlayer || {};
+window.RufflePlayer.config = Object.assign({}, window.RufflePlayer.config, RUFFLE_SAFE_OPTIONS, { polyfills: false });
+
 function openFlashEmbedWindow(file, name, extension, w, h) {
 	if (!document.getElementById("swfWindow")) {
 		const darkenoverlay = document.createElement("div");
@@ -108,7 +118,7 @@ function openFlashEmbedWindow(file, name, extension, w, h) {
 					const blobUrl = URL.createObjectURL(blob);
 			
 					setStatus("Loading Ruffle…");
-					await rufflePlayer.load(blobUrl);
+					await rufflePlayer.load({ url: blobUrl, ...RUFFLE_SAFE_OPTIONS });
 			
 					hideStatus();
 					rufflePlayer.style.visibility = "visible";
