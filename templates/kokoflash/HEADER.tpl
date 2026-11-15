@@ -6,7 +6,7 @@
 	<script src="{$STATIC_URL}js/admin.js?v=7" defer></script>
 	<script src="{$STATIC_URL}js/clipboard.js" defer></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
-	<script src="{$STATIC_URL}js/flashembed.js?v=3"></script>
+	<script src="{$STATIC_URL}js/flashembed.js?v=4"></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/message.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/dropdownMenu.js" defer></script>
