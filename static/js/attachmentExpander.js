@@ -8,6 +8,16 @@
 	window.attachmentExpander = window.attachmentExpander || {};
 	var attachmentExpander = window.attachmentExpander;
 
+	// Lock Ruffle down before ruffle.js runs
+	attachmentExpander.ruffleSafeOptions = {
+		allowScriptAccess: false,
+		allowNetworking: "internal",
+		openUrlMode: "deny",
+	};
+	window.RufflePlayer = window.RufflePlayer || {};
+	window.RufflePlayer.config = Object.assign({}, window.RufflePlayer.config,
+		attachmentExpander.ruffleSafeOptions, { polyfills: false });
+
 	attachmentExpander.imageExtensions = Array("png","jpg","jpeg","gif","giff","bmp","jfif", 'webp');
 	attachmentExpander.videoExtensions = Array("webm","mp4");
 	attachmentExpander.audioExtensions = Array("mp3","ogg","wav", "flac", "m4a");
@@ -33,6 +43,17 @@
 	// full-bleed "Loading Ruffle..." cover for a flash host, matching the overlay
 	// the standalone flash window uses. Returns the element with setStatus()/done()
 	// bolted on
+	/**
+	 * Three-character dot frame: "   ", ".  ", ".. ", "...", " ..", "  ." for frames 0-5.
+	 */
+	attachmentExpander.loadingDots = function (frame) {
+		// filling: dots grow from the left
+		if (frame <= 3) return ".".repeat(frame) + " ".repeat(3 - frame);
+
+		// clearing: dots drop off from the left
+		return " ".repeat(frame - 3) + ".".repeat(6 - frame);
+	};
+
 	attachmentExpander.createRuffleOverlay = function (label) {
 		var overlay = document.createElement("div"),
 			dots    = 0,
@@ -50,6 +71,8 @@
 		overlay.style.fontSize        = "12px";
 		overlay.style.zIndex          = "10";
 		overlay.style.pointerEvents   = "none";
+		// keep the dot padding spaces so the text doesn't shift as they change
+		overlay.style.whiteSpace      = "pre";
 
 		overlay.setStatus = function (msg, animate) {
 			if (timer) clearInterval(timer);
@@ -62,10 +85,11 @@
 
 			// trailing dots so a slow fetch doesn't look like a frozen board
 			dots = 0;
-			overlay.textContent = msg;
+			overlay.textContent = msg + "   ";
 			timer = setInterval(function () {
-				dots = (dots + 1) % 4;
-				overlay.textContent = msg + " ".repeat(3 - dots) + ".".repeat(dots);
+				// six frames: dots fill left to right, then clear left to right
+				dots = (dots + 1) % 6;
+				overlay.textContent = msg + attachmentExpander.loadingDots(dots);
 			}, 400);
 		};
 
@@ -81,7 +105,8 @@
 	};
 
 	attachmentExpander.loadRuffle = function () {
-		if (window.RufflePlayer) return Promise.resolve(window.RufflePlayer);
+		// the config stub above also sets RufflePlayer, so check for the real API
+		if (window.RufflePlayer && window.RufflePlayer.newest) return Promise.resolve(window.RufflePlayer);
 		if (attachmentExpander._rufflePromise) return attachmentExpander._rufflePromise;
 
 		attachmentExpander._rufflePromise = new Promise(function (resolve, reject) {
@@ -391,30 +416,66 @@
 			obj.type   = "application/x-shockwave-flash";
 			obj.style.width  = "100%";
 			obj.style.height = "100%";
+			// same restrictions for a real Flash plugin (e.g. Pale Moon / Basilisk)
+			[["allowScriptAccess", "never"], ["allowNetworking", "internal"]].forEach(function (p) {
+				var param = document.createElement("param");
+				param.name  = p[0];
+				param.value = p[1];
+				obj.appendChild(param);
+			});
 			host.appendChild(obj);
 		} else {
-			// ruffle emulator, fill host - it's fetched on demand here, which can
-			// take a moment, so cover the host with a loading overlay until it's up
-			var status = document.createElement("div");
-			status.className      = "ruffleLoadingStatus";
-			status.style.padding  = "4px";
-			status.style.fontSize = "12px";
-			status.textContent    = "Loading Ruffle…";
-			host.appendChild(status);
+			// ruffle emulator, fetched on demand - cover the host with a progress overlay until it's up
+			var overlay = attachmentExpander.createRuffleOverlay("Loading Ruffle");
+			host.appendChild(overlay);
 
-			attachmentExpander.loadRuffle().then(function (RufflePlayer) {
-				status.remove();
+			attachmentExpander.loadRuffle().then(async function (RufflePlayer) {
+				// stream the swf ourselves so the overlay can count the bytes
+				var resp = await fetch(anchor.href);
+				if (!resp.ok) throw new Error("HTTP " + resp.status);
 
+				// no Content-Length (e.g. compressed) means only a KB count can be shown
+				var total  = +resp.headers.get("Content-Length") || 0,
+					reader = resp.body.getReader(),
+					chunks = [],
+					loaded = 0;
+
+				// read chunk by chunk, updating the overlay after each one
+				while (true) {
+					var chunk = await reader.read();
+					if (chunk.done) break;
+					chunks.push(chunk.value);
+					loaded += chunk.value.byteLength;
+					overlay.setStatus(total
+						? "Loading " + Math.min(100, Math.floor(loaded / total * 100)) + "%"
+						: "Loading " + Math.floor(loaded / 1024) + " KB", false);
+				}
+
+				// the multi-megabyte wasm core downloads during load(), so say so
+				overlay.setStatus("Starting Ruffle");
+
+				// player fills the host, hidden under the overlay until it's running
 				var player = RufflePlayer.newest().createPlayer();
-				player.style.width  = "100%";
-				player.style.height = "100%";
+				player.style.width      = "100%";
+				player.style.height     = "100%";
+				player.style.visibility = "hidden";
 				host.appendChild(player);
-				player.load(anchor.href);
+
+				// hand over the bytes; base keeps the swf's relative loads next to the original file
+				await player.load(Object.assign({
+					data:        await new Blob(chunks).arrayBuffer(),
+					swfFileName: anchor.href.split("/").pop(),
+					base:        anchor.href,
+				}, attachmentExpander.ruffleSafeOptions));
+
+				// running: lift the overlay
+				overlay.done();
+				player.style.visibility = "visible";
 			}).catch(function () {
-				status.textContent = "Failed to load Ruffle";
+				overlay.setStatus("Failed to load Flash", false);
 			});
 		}
-		
+
 		return true;
 	};
 
