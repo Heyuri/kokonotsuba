@@ -48,6 +48,62 @@ final class commentMarker {
 	}
 
 	/**
+	 * Keep only the markers that already were in the original text.
+	 *
+	 * For an edit: markers may be moved or deleted, but one that was changed or typed in is
+	 * dropped. Each original marker is kept at most as many times as it appeared.
+	 *
+	 * @param string $text     Edited text.
+	 * @param string $original Text before the edit.
+	 * @return string The edited text with unknown markers removed.
+	 */
+	public static function retainOriginal(string $text, string $original): string {
+		// How many times each original marker may still be used
+		$allowance = self::countMarkers($original);
+
+		// One pass over every marker-shaped token, strict or smuggled
+		return (string)preg_replace_callback(
+			self::STRIP_PATTERN,
+			function (array $m) use (&$allowance): string {
+				return self::takeAllowance($allowance, $m[0]) ? $m[0] : '';
+			},
+			$text
+		);
+	}
+
+	/**
+	 * Count each distinct marker in text.
+	 *
+	 * @param string $text Text to scan.
+	 * @return array<string, int> Marker => occurrences.
+	 */
+	private static function countMarkers(string $text): array {
+		// Every genuine marker in the text
+		preg_match_all(self::PATTERN, $text, $matches);
+
+		return array_count_values($matches[0]);
+	}
+
+	/**
+	 * Use up one occurrence of a marker, if any are left.
+	 *
+	 * @param array<string, int> &$allowance Remaining occurrences per marker.
+	 * @param string $marker The marker found.
+	 * @return bool Whether it may be kept.
+	 */
+	private static function takeAllowance(array &$allowance, string $marker): bool {
+		// None left, or never there
+		if (($allowance[$marker] ?? 0) < 1) {
+			return false;
+		}
+
+		// Spend one
+		$allowance[$marker]--;
+
+		return true;
+	}
+
+	/**
 	 * Replace markers of one kind with the handler's output.
 	 *
 	 * @param string   $html    Comment HTML being assembled.

@@ -2,13 +2,15 @@
 
 namespace Kokonotsuba\Modules\edit;
 
+use Kokonotsuba\post\commentMarker;
 use Kokonotsuba\post\textFormat;
 
 /**
  * Conversions between a stored post comment and the text the edit form shows.
  *
  * A plain-text comment already is the text to edit, so it round-trips untouched - markers left
- * by a dice roll included, which is what keeps a roll intact through an edit.
+ * by a dice roll included. On the way back only the post's own markers are kept, so a roll can be
+ * moved or deleted but never changed or made up.
  *
  * A comment stored before the plain-text switch is HTML: whatever the poster typed was escaped
  * at post time, line breaks became <br>, and modules may have left markup of their own in it.
@@ -37,13 +39,17 @@ final class editPostFields {
 	/**
 	 * Turn edited textarea text back into a stored comment.
 	 *
-	 * @param string     $text   Text as typed into the edit form.
-	 * @param textFormat $format The post's stored text format.
+	 * @param string     $text     Text as typed into the edit form.
+	 * @param textFormat $format   The post's stored text format.
+	 * @param string     $original The comment as stored before the edit; its markers are the only ones kept.
 	 * @return string Comment ready for the database.
 	 */
-	public static function editableTextToComment(string $text, textFormat $format): string {
+	public static function editableTextToComment(string $text, textFormat $format, string $original = ''): string {
 		// Normalize the line endings the browser sent before anything counts them.
 		$text = str_replace(["\r\n", "\r"], "\n", $text);
+
+		// Markers are not editable: drop any that were changed or typed in
+		$text = commentMarker::retainOriginal($text, $original);
 
 		if (!$format->commentIsHtml()) {
 			return $text;
