@@ -39,6 +39,33 @@ body:not(.sideNavHidden) {
 	z-index: 101;
 }
 
+/* Drag handle on the nav's right edge (added by sideNav.js) */
+.sideNavResize {
+	position: absolute;
+	top: 0;
+	right: -3px;
+	width: 6px;
+	height: 100%;
+	cursor: col-resize;
+	z-index: 1;
+	touch-action: none;
+}
+
+.sideNavResize:hover,
+.sideNavResizing .sideNavResize {
+	background-color: var(--color-lo-contrast-border);
+}
+
+/* No text selection while dragging */
+.sideNavResizing {
+	cursor: col-resize;
+	user-select: none;
+}
+
+.sideNavEditorPreview .sideNavResize {
+	display: none;
+}
+
 .sideNavPanel {
 	height: 100%;
 	overflow-y: auto;
