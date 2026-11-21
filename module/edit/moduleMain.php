@@ -352,7 +352,7 @@ class moduleMain extends abstractModuleMain {
 				'name' => $name,
 				'email' => $email,
 				'sub' => $subject,
-				'com' => editPostFields::editableTextToComment($comment, $post->getTextFormat()),
+				'com' => editPostFields::editableTextToComment($comment, $post->getTextFormat(), $post->getComment()),
 				'tag' => $tag,
 			]);
 
@@ -392,7 +392,7 @@ class moduleMain extends abstractModuleMain {
 			], static fn($value) => $value !== null);
 
 			if (isset($fields['com'])) {
-				$fields['com'] = editPostFields::editableTextToComment((string)$fields['com'], $post->getTextFormat());
+				$fields['com'] = editPostFields::editableTextToComment((string)$fields['com'], $post->getTextFormat(), $post->getComment());
 			}
 
 			$this->revisions->record($post, $accountId);

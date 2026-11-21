@@ -162,9 +162,33 @@ final class EditPostFieldsTest extends TestCase {
 			$stored,
 			editPostFields::editableTextToComment(
 				editPostFields::commentToEditableText($stored, textFormat::PLAIN_TEXT),
-				textFormat::PLAIN_TEXT
+				textFormat::PLAIN_TEXT,
+				$stored
 			)
 		);
+	}
+
+	public function testEditCannotChangeAMarkersValues(): void {
+		$stored = "rolling\n[[koko:dice:2d6:4,5]]";
+
+		$this->assertSame("rolling\n", editPostFields::editableTextToComment("rolling\n[[koko:dice:2d6:6,6]]", textFormat::PLAIN_TEXT, $stored));
+	}
+
+	public function testEditCannotAddAMarker(): void {
+		$this->assertSame('hi ', editPostFields::editableTextToComment('hi [[koko:fortune:3]]', textFormat::PLAIN_TEXT, 'hi'));
+	}
+
+	public function testEditMayMoveOrDeleteAMarker(): void {
+		$stored = "a [[koko:dice:1d6:3]] b";
+
+		$this->assertSame("[[koko:dice:1d6:3]] a b", editPostFields::editableTextToComment("[[koko:dice:1d6:3]] a b", textFormat::PLAIN_TEXT, $stored));
+		$this->assertSame("a b", editPostFields::editableTextToComment("a b", textFormat::PLAIN_TEXT, $stored));
+	}
+
+	public function testEditCannotDuplicateAMarker(): void {
+		$marker = '[[koko:dice:1d6:3]]';
+
+		$this->assertSame($marker . ' ', editPostFields::editableTextToComment($marker . ' ' . $marker, textFormat::PLAIN_TEXT, $marker));
 	}
 
 	public function testRawHtmlCommentIsTreatedAsMarkup(): void {

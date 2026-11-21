@@ -93,4 +93,10 @@ final class CommentMarkerTest extends TestCase {
 			$this->assertSame('a  b', commentMarker::strip("a [[koko:fortune:{$hidden}0]] b"));
 		}
 	}
+
+	public function testRetainOriginalDropsASmuggledCopyOfAnOriginalMarker(): void {
+		$original = 'x [[koko:fortune:0]]';
+
+		$this->assertSame('x [[koko:fortune:0]] ', commentMarker::retainOriginal("x [[koko:fortune:0]] [[koko:fortune:\x010]]", $original));
+	}
 }

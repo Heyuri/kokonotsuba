@@ -71,6 +71,12 @@ class moduleMain extends abstractModuleMain {
 		// bind the poster_hash to the placeholder
 		$templateValues['{$POSTER_HASH}'] = sanitizeStr($post->getPosterHash());
 
+		// Heaven (sage) posts share one ID, so a count would be meaningless
+		if (trim($post->getPosterHash()) === 'Heaven') {
+			$templateValues['{$POSTER_HASH_COUNT}'] = '';
+			return;
+		}
+
 		// get count of posts by this poster hash
 		$posterHashCount = $this->getPosterHashCount($threadPosts, $post->getPosterHash());
 

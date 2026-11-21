@@ -9,6 +9,9 @@
 	'use strict';
 
 	var COLLAPSED_KEY = 'sideNavCollapsed';
+	var WIDTH_KEY = 'sideNavWidth';
+	var WIDTH_MIN = 140;
+	var WIDTH_MAX = 600;
 
 	if (typeof kkSetting !== 'undefined') kkSetting.add({ key: 'sidenav', label: 'Side navigation',
 		onChange: function (v) { document.body.classList.toggle('sideNavHidden', !v); } }, 'Layout');
@@ -50,6 +53,47 @@
 	} else if (styleSelect) {
 		styleSelect.parentNode.parentNode.remove();
 	}
+
+	/** Drag handle on the nav's edge; the width is kept and applied before paint by the inline script. */
+	function addResizeHandle() {
+		// The admin preview's nav is not pinned, so it gets no handle
+		if (nav.closest('.sideNavEditorPreview')) return;
+
+		var handle = document.createElement('div');
+		handle.className = 'sideNavResize';
+		handle.title = 'Drag to resize, double-click to reset';
+		nav.appendChild(handle);
+
+		// Width under the pointer, clamped to what the inline script accepts
+		function clampWidth(x) {
+			return Math.round(Math.min(WIDTH_MAX, Math.max(WIDTH_MIN, x)));
+		}
+
+		handle.addEventListener('pointerdown', function (e) {
+			e.preventDefault();
+			handle.setPointerCapture(e.pointerId);
+			document.body.classList.add('sideNavResizing');
+		});
+
+		handle.addEventListener('pointermove', function (e) {
+			if (!handle.hasPointerCapture(e.pointerId)) return;
+			document.documentElement.style.setProperty('--side-nav-width', clampWidth(e.clientX) + 'px');
+		});
+
+		handle.addEventListener('pointerup', function (e) {
+			handle.releasePointerCapture(e.pointerId);
+			document.body.classList.remove('sideNavResizing');
+			try { localStorage.setItem(WIDTH_KEY, String(nav.getBoundingClientRect().width)); } catch (err) {}
+		});
+
+		// Back to the stylesheet's width
+		handle.addEventListener('dblclick', function () {
+			document.documentElement.style.removeProperty('--side-nav-width');
+			try { localStorage.removeItem(WIDTH_KEY); } catch (err) {}
+		});
+	}
+
+	addResizeHandle();
 
 	var collapsed = readCollapsed();
 	nav.querySelectorAll('.sideNavGroup').forEach(function (group) {

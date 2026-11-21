@@ -19,8 +19,9 @@ class sideNavRenderer {
 	/** A main group's automatic links, in their default order. */
 	private const MAIN_SOURCES = ['home', 'overboard', 'dirs', 'hide'];
 
-	/** Hides the nav and shows board directories before it paints, per the reader (or the board default). */
-	private const HIDE_SCRIPT = '<script>(function(){var v=null,r=null;try{v=localStorage.getItem("sidenav");r=localStorage.getItem("sideNavDirs")}catch(e){}'
+	/** Hides the nav, shows board directories and applies the dragged width before it paints, per the reader (or the board default). */
+	private const HIDE_SCRIPT = '<script>(function(){var v=null,r=null,w=null;try{v=localStorage.getItem("sidenav");r=localStorage.getItem("sideNavDirs");w=parseInt(localStorage.getItem("sideNavWidth"),10)}catch(e){}'
+		. 'if(w>=140&&w<=600)document.documentElement.style.setProperty("--side-nav-width",w+"px");'
 		. 'var d=window.KOKO_DEFAULT_SETTINGS||{};'
 		. 'if(v!==null?v==="false":d.sidenav===false)document.body.classList.add("sideNavHidden");'
 		. 'if(r==="true")document.body.classList.add("sideNavShowDirs")})();</script>';
