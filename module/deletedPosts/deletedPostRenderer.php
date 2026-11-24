@@ -204,7 +204,7 @@ class deletedPostRenderer {
 		];
 
 		// parse the page
-		$pageHtml = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', $pageContent, true);
+		$pageHtml = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', $pageContent, true, true);
 		
 		// echo output to browser
 		echo $pageHtml;
