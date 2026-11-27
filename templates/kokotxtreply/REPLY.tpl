@@ -7,7 +7,7 @@
 			<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')--> 
 			<span class="postnum">{$QUOTEBTN}</span>
 			<span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span>
-			<span class="time">{$NOW}</span>
+			<span class="time" data-timestamp="{$POST_EPOCH}">{$NOW}</span>
 			<!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')-->
 			<!--&IF($TAG,'<span class="tag" title="{$TAG_TITLE}">[{$TAG}]</span>','')-->
 			<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>

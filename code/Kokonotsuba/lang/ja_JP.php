@@ -203,4 +203,17 @@ $language['ip_dnsbl_banned']			= 'DNSBL(%1$s) ブラックリストに記載さ�
 // mainscript.js // regist_withoutcomment,regist_upload_notsupport,js_convert_sakura
 $language['js_convert_sakura']			= '櫻花仮名を検出した。変換します。';
 
-?>
+// post date hover, filled with a count by relativeTime.js
+$language['relative_time_now'] = 'たった今';
+$language['relative_time_second_one'] = '%s秒前';
+$language['relative_time_second_other'] = '%s秒前';
+$language['relative_time_minute_one'] = '%s分前';
+$language['relative_time_minute_other'] = '%s分前';
+$language['relative_time_hour_one'] = '%s時間前';
+$language['relative_time_hour_other'] = '%s時間前';
+$language['relative_time_day_one'] = '%s日前';
+$language['relative_time_day_other'] = '%s日前';
+$language['relative_time_month_one'] = '%sヶ月前';
+$language['relative_time_month_other'] = '%sヶ月前';
+$language['relative_time_year_one'] = '%s年前';
+$language['relative_time_year_other'] = '%s年前';

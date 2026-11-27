@@ -2110,3 +2110,18 @@ $language['front_news_page_title'] = 'News, page %s';
 $language['front_news_permalink'] = 'Link to this post';
 $language['front_news_by'] = 'by %s';
 $language['front_news_draft'] = '(draft)';
+
+// post date hover, filled with a count by relativeTime.js
+$language['relative_time_now'] = 'Now';
+$language['relative_time_second_one'] = '%s second ago';
+$language['relative_time_second_other'] = '%s seconds ago';
+$language['relative_time_minute_one'] = '%s minute ago';
+$language['relative_time_minute_other'] = '%s minutes ago';
+$language['relative_time_hour_one'] = '%s hour ago';
+$language['relative_time_hour_other'] = '%s hours ago';
+$language['relative_time_day_one'] = '%s day ago';
+$language['relative_time_day_other'] = '%s days ago';
+$language['relative_time_month_one'] = '%s month ago';
+$language['relative_time_month_other'] = '%s months ago';
+$language['relative_time_year_one'] = '%s year ago';
+$language['relative_time_year_other'] = '%s years ago';

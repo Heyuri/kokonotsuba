@@ -17,4 +17,6 @@
 	<script src="{$STATIC_URL}js/backgroundTaskPoller.js" defer></script>
 	<script src="{$STATIC_URL}js/attachmentDownload.js" defer></script>
 	{$JS_DEFAULT_SETTINGS}
+	{$JS_RELATIVE_TIME}
+	<script src="{$STATIC_URL}js/relativeTime.js?v=1" defer></script>
 	{$CUSTOM_HEAD}

@@ -13,6 +13,7 @@ use Kokonotsuba\post\helper\postDateFormatter;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\generateEarlySettingsScript;
+use function Kokonotsuba\libraries\html\generateRelativeTimeScript;
 use function Kokonotsuba\libraries\html\getBoardStylesheetsFromConfig;
 use function Kokonotsuba\libraries\getCsrfMetaTag;
 use function Kokonotsuba\libraries\html\getDefaultFooterLinks;
@@ -125,6 +126,7 @@ final class frontPageRenderer {
 			'{$MODULE_HEADER_HTML}'      => ($isStaff ? getCsrfMetaTag() : '') . $moduleHeader,
 			'{$BOARD_STYLESHEETS}'       => getBoardStylesheetsFromConfig($this->siteConfig),
 			'{$JS_DEFAULT_SETTINGS}'     => '<script>window.KOKO_DEFAULT_SETTINGS=' . json_encode((object)($this->siteConfig['JS_DEFAULT_SETTINGS'] ?? []), JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>',
+			'{$JS_RELATIVE_TIME}'        => generateRelativeTimeScript(),
 			'{$CUSTOM_HEAD}'             => (string)($this->siteConfig['CUSTOM_HEAD'] ?? ''),
 			'{$EARLY_JS_SETTINGS}'       => generateEarlySettingsScript(),
 			'{$HOME}'                    => '[<a href="' . sanitizeStr($this->links->home()) . '">' . _T('head_home') . '</a>]',

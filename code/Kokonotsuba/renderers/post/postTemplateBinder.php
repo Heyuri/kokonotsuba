@@ -64,6 +64,7 @@ final class postTemplateBinder {
 			'{$NAME}' => $this->nameHtml($post),
 			'{$NAME_TEXT}' => _T('post_name'),
 			'{$NOW}' => $post->getTimestamp(),
+			'{$POST_EPOCH}' => $post->getRootEpoch(),
 			'{$CATEGORY}' => $this->elements->processCategoryLinks($post->getCategory(), $ctx->crossLink, $post->getTextFormat()),
 			'{$CATEGORY_TEXT}' => _T('post_category'),
 			'{$TAG}' => $tag->label,
