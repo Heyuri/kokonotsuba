@@ -14,4 +14,6 @@
 	{$BOARD_STYLESHEETS}
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">
 	{$JS_DEFAULT_SETTINGS}
+	{$JS_RELATIVE_TIME}
+	<script src="{$STATIC_URL}js/relativeTime.js?v=1" defer></script>
 	{$CUSTOM_HEAD}

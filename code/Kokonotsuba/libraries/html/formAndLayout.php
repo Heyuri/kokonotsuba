@@ -47,6 +47,27 @@ function generateEarlySettingsScript(): string {
 		'if(c.length)document.body.classList.add.apply(document.body.classList,c)})();</script>';
 }
 
+/**
+ * Inline script handing relativeTime.js its translated strings, one singular/plural pair per unit.
+ *
+ * @return string Script tag setting window.KOKO_RELATIVE_TIME
+ */
+function generateRelativeTimeScript(): string {
+	// units the hover text can count in, smallest first
+	$units = ['second', 'minute', 'hour', 'day', 'month', 'year'];
+
+	// the "just posted" word, then each unit's pair
+	$strings = ['now' => _T('relative_time_now'), 'units' => []];
+
+	// _T always runs sprintf, so '%s' is handed back in to keep the placeholder for the script
+	foreach ($units as $unit) {
+		$strings['units'][$unit] = [_T("relative_time_{$unit}_one", '%s'), _T("relative_time_{$unit}_other", '%s')];
+	}
+
+	// encoded so a translation can never close the tag
+	return '<script>window.KOKO_RELATIVE_TIME=' . json_encode($strings, JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
+}
+
 function generateHeadHtml(array $config, templateEngine $templateEngine, moduleEngine $moduleEngine, string $pageTitle = '', int $resno = 0, bool $isStaff = false, array $options = []) {
 	$html = '';
 
@@ -77,6 +98,9 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 	$jsDefaults = $config['JS_DEFAULT_SETTINGS'] ?? [];
 	// Cast to object to ensure json_encode always produces {} not [] when the array is empty
 	$pte_vals['{$JS_DEFAULT_SETTINGS}'] = '<script>window.KOKO_DEFAULT_SETTINGS=' . json_encode((object)$jsDefaults, JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
+
+	// strings for the post date's "x ago" hover
+	$pte_vals['{$JS_RELATIVE_TIME}'] = generateRelativeTimeScript();
 
 	// admin-set, so drawn raw like FOOTTEXT
 	$pte_vals['{$CUSTOM_HEAD}'] = (string) ($config['CUSTOM_HEAD'] ?? '');

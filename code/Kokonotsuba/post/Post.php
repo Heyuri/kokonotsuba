@@ -73,6 +73,23 @@ class Post implements JsonSerializable {
 	public function hasVisitorTokenHash(): bool { return ($this->data['visitor_token_hash'] ?? null) !== null; }
 	public function getTimestamp(): string { return (string)($this->data['now'] ?? ''); }
 	public function getRoot(): string { return (string)($this->data['root'] ?? ''); }
+	/**
+	 * Unix time the post was made, converted by MariaDB so its session zone is respected.
+	 *
+	 * @return int Epoch seconds, 0 when the post has no stored time
+	 */
+	public function getRootEpoch(): int {
+		// the query's own conversion, when the post came from getBasePostQuery
+		if (isset($this->data['root_epoch'])) {
+			return (int)$this->data['root_epoch'];
+		}
+
+		// other loaders fall back to PHP's reading of the stored time
+		$epoch = strtotime($this->getRoot());
+
+		// an empty or unreadable time renders as no timestamp
+		return $epoch === false ? 0 : $epoch;
+	}
 	public function getPassword(): string { return (string)($this->data['pwd'] ?? ''); }
 	public function getPosterHash(): string { return (string)($this->data['poster_hash'] ?? ''); }
 	public function getCountryCode(): string { return (string)($this->data['country_flag_country'] ?? ''); }

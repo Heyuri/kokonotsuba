@@ -155,6 +155,7 @@ function getBasePostQuery(
 				dp.restored_by,
 
 				p.*,
+				UNIX_TIMESTAMP(p.root) AS root_epoch,
 				t.post_op_number,
 
 				{$attachmentColumnsCoalesced},
@@ -237,6 +238,7 @@ function getBasePostQuery(
     $query = "
         SELECT
             p.*,
+            UNIX_TIMESTAMP(p.root) AS root_epoch,
             {$objectivePositionColumn}
             t.post_op_number,
 			{$countryFlagColumn}

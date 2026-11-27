@@ -4,7 +4,7 @@
 			<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]{$WATCH_STAR}</div>
 			<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span>
 				<span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span>
-				<span class="time">{$NOW}</span> <!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')--> 
+				<span class="time" data-timestamp="{$POST_EPOCH}">{$NOW}</span> <!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')--> 
 				<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
 				<div class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></div>
 			</div>
